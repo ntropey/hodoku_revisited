@@ -23,6 +23,12 @@ export interface SolverOptions {
   restrictChainLength: number;
   restrictNiceLoopLength: number;
   onlyOneAlsPerStep: boolean;
+  /** Tabling: number of look-ahead rounds with singles when searching for nets. */
+  anzTableLookAhead: number;
+  /** Tabling: only the shortest chain for every elimination. */
+  onlyOneChainPerStep: boolean;
+  /** Tabling: allow ALS nodes in chains (not supported yet). */
+  allowAlsInTablingChains: boolean;
   allowAlsOverlap: boolean;
 }
 
@@ -37,5 +43,8 @@ export const DEFAULT_SOLVER_OPTIONS: Readonly<SolverOptions> = {
   restrictChainLength: 20,
   restrictNiceLoopLength: 10,
   onlyOneAlsPerStep: true,
+  anzTableLookAhead: 4,
+  onlyOneChainPerStep: true,
+  allowAlsInTablingChains: false,
   allowAlsOverlap: false,
 };

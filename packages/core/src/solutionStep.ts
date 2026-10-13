@@ -90,6 +90,11 @@ export class SolutionStep {
     this.candidatesToDelete.push(new Candidate(index, candidate));
   }
 
+  /** Add an existing chain object (not a copy). */
+  addChainObject(chain: Chain): void {
+    this.chains.push(chain);
+  }
+
   addChain(start: number, end: number, chain: number[]): void {
     this.chains.push(new Chain(start, end, chain));
   }
@@ -160,10 +165,44 @@ export class SolutionStep {
     this.candidatesToDelete = sorted.filter((c, i) => i === 0 || compareCandidates(sorted[i - 1], c) !== 0);
   }
 
-  /** A key that identifies the set of eliminations (used to detect the same step twice). */
-  getCandidateKey(): string {
+  /**
+   * A key that identifies the set of eliminations (used to detect the same step twice); with
+   * `withType` the step type is part of the key. Sorts the candidates to delete.
+   */
+  getCandidateKey(withType = false): string {
     this.normalizeCandidatesToDelete();
-    return this.candidatesToDelete.map((c) => `${c.value}:${c.index}`).join(' ');
+    const key = this.candidatesToDelete.map((c) => `${c.value}:${c.index}`).join(' ');
+    return withType ? `${this.type}|${key}` : key;
+  }
+
+  /** A key that identifies a step that sets cells: type, cells and value. */
+  getSingleCandidateKey(): string {
+    const cells = [...new Set(this.indices)].sort((a, b) => a - b).join(',');
+    return `${this.type}|${cells}=${this.values[0]}`;
+  }
+
+  /** True if a chain of the step contains a net (a negative node). */
+  isNet(): boolean {
+    for (const chain of this.chains) {
+      for (let j = chain.start; j <= chain.end; j++) {
+        if (chain.chain[j] < 0) return true;
+      }
+    }
+    return false;
+  }
+
+  /** Compare the candidates to delete: more first, then one by one by cell and digit. */
+  compareCandidatesToDelete(o: SolutionStep): number {
+    const size1 = this.candidatesToDelete.length;
+    const size2 = o.candidatesToDelete.length;
+    if (size1 !== size2) return size2 - size1; // descending
+    for (let i = 0; i < size1; i++) {
+      const c1 = this.candidatesToDelete[i];
+      const c2 = o.candidatesToDelete[i];
+      const result = c1.index * 10 + c1.value - (c2.index * 10 + c2.value);
+      if (result !== 0) return result;
+    }
+    return 0;
   }
 
   /** Total number of cells in all ALS of the step. */

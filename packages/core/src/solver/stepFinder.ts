@@ -20,6 +20,7 @@ import { FishSolver } from './fishSolver.js';
 import { MiscellaneousSolver } from './miscellaneousSolver.js';
 import { SimpleSolver } from './simpleSolver.js';
 import { SingleDigitPatternSolver } from './singleDigitPatternSolver.js';
+import { TablingSolver } from './tablingSolver.js';
 import { UniquenessSolver } from './uniquenessSolver.js';
 import { WingSolver } from './wingSolver.js';
 
@@ -35,6 +36,7 @@ export class SudokuStepFinder {
    */
   private stepNumber = 0;
   private readonly solvers: AbstractSolver[];
+  private readonly simpleSolver: SimpleSolver;
 
   // Data used by more than one solver; computed lazily, recomputed after every change.
   private readonly candidates = Array.from({ length: 10 }, () => new SudokuSet());
@@ -61,9 +63,20 @@ export class SudokuStepFinder {
   /** collect RCs for forward search only */
   private rcOnlyForward = true;
 
-  constructor(readonly options: SolverOptions = { ...DEFAULT_SOLVER_OPTIONS }) {
+  /**
+   * @param simpleOnly if true the finder only has a SimpleSolver (used by the tabling solver for nets)
+   */
+  constructor(
+    readonly options: SolverOptions = { ...DEFAULT_SOLVER_OPTIONS },
+    simpleOnly = false,
+  ) {
+    this.simpleSolver = new SimpleSolver(this);
+    if (simpleOnly) {
+      this.solvers = [this.simpleSolver];
+      return;
+    }
     // same order as in the original: the first solver that finds a step wins
-    this.solvers = [new SimpleSolver(this), new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this)];
+    this.solvers = [this.simpleSolver, new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this), new TablingSolver(this)];
   }
 
   getSudoku(): Sudoku2 {
@@ -137,6 +150,18 @@ export class SudokuStepFinder {
     }
     for (let i = 1; i < 10; i++) this.candidatesAllowed[i].and(this.emptyCells);
     this.candidatesAllowedDirty = false;
+  }
+
+  /** All Naked Singles of `sudoku` (without changing it). */
+  findAllNakedSingles(sudoku: Sudoku2): SolutionStep[] {
+    this.setSudoku(sudoku);
+    return this.simpleSolver.findAllNakedSingles();
+  }
+
+  /** All Hidden Singles of `sudoku` (without changing it). */
+  findAllHiddenSingles(sudoku: Sudoku2): SolutionStep[] {
+    this.setSudoku(sudoku);
+    return this.simpleSolver.findAllHiddenSingles();
   }
 
   /** The next step of the given type, or null. */

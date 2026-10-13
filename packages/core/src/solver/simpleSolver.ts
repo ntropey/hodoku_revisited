@@ -145,6 +145,59 @@ export class SimpleSolver extends AbstractSolver {
     return null;
   }
 
+  /** All Naked Singles in the queue (the queue is not changed). */
+  findAllNakedSingles(): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    const result: SolutionStep[] = [];
+    const nsQueue = this.sudoku.nsQueue;
+    let queueIndex = nsQueue.getFirstIndex();
+    while (queueIndex !== -1) {
+      const index = nsQueue.getIndex(queueIndex);
+      const value = nsQueue.getValue(queueIndex);
+      if (this.sudoku.getValue(index) === 0) {
+        const step = new SolutionStep('NAKED_SINGLE');
+        step.addValue(value);
+        step.addIndex(index);
+        result.push(step);
+      }
+      queueIndex = nsQueue.getNextIndex();
+    }
+    return result.sort((a, b) => a.compareTo(b));
+  }
+
+  /**
+   * All Hidden Singles in the queue (the queue is not changed). Only one single is recorded
+   * per cell.
+   */
+  findAllHiddenSingles(): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    const result: SolutionStep[] = [];
+    const singleFound = new Array<boolean>(81).fill(false);
+    const free = this.sudoku.free;
+    const hsQueue = this.sudoku.hsQueue;
+    let queueIndex = hsQueue.getFirstIndex();
+    while (queueIndex !== -1) {
+      const index = hsQueue.getIndex(queueIndex);
+      const value = hsQueue.getValue(queueIndex);
+      if (this.sudoku.getValue(index) === 0 && !singleFound[index]) {
+        // the cell is still a valid Hidden Single and wasn't found yet; which unit?
+        for (let i = 0; i < CONSTRAINTS[index].length; i++) {
+          if (free[CONSTRAINTS[index][i]][value] === 1) {
+            const step = new SolutionStep('HIDDEN_SINGLE');
+            step.addValue(value);
+            step.addIndex(index);
+            step.entity = i;
+            result.push(step);
+            singleFound[index] = true;
+            break;
+          }
+        }
+      }
+      queueIndex = hsQueue.getNextIndex();
+    }
+    return result.sort((a, b) => a.compareTo(b));
+  }
+
   /** The next Naked Single in the grid (removed from the queue). */
   private findNakedSingle(): SolutionStep | null {
     const nsQueue = this.sudoku.nsQueue;

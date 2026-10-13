@@ -4,9 +4,10 @@ A modern TypeScript port of [HoDoKu](https://hodoku.sourceforge.net/), the Sudok
 generator, solver, trainer and analyzer. HoDoKu has had no release since 2012;
 this project brings it to a native Windows app (Electron) with a new UI.
 
-**Status:** M1 done. The core engine has the board model, the singles/subsets/locked-candidates
-solver and difficulty rating, verified step by step against the original Java solver.
-Everything else (fish, chains, ALS, ... , generator, UI) is still to port; see the plan.
+**Status:** M2 done. The core engine solves puzzles with every technique of HoDoKu's default
+configuration (singles up to forcing nets) and rates their difficulty, verified step by step against
+the original Java solver on 404 puzzles. Still to do: generator, import/export formats, "find all
+steps", Kraken fish, the Electron app and the website; see the plan.
 
 - [Port plan](docs/PORT-PLAN.md)
 - [License audit](docs/LICENSE-AUDIT.md)

@@ -143,6 +143,14 @@ export class SudokuSet {
     this.cache = null;
   }
 
+  /** this |= ~b (limited to the 81 cells) */
+  orNot(b: SudokuSet): void {
+    this.m0 |= ~b.m0;
+    this.m1 |= ~b.m1;
+    this.m2 = (this.m2 | ~b.m2) & MAX_MASK_2;
+    this.cache = null;
+  }
+
   not(): void {
     this.m0 = ~this.m0;
     this.m1 = ~this.m1;
