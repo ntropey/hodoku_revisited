@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#2b5fb3"/>
+  <rect x="96" y="96" width="320" height="320" rx="16" fill="#fff"/>
+  <g stroke="#2b5fb3" stroke-width="6"><path d="M203 96v320M309 96v320M96 203h320M96 309h320"/></g>
+  <g fill="#2b5fb3" font-family="sans-serif" font-weight="700" font-size="84" text-anchor="middle">
+    <text x="150" y="178">H</text><text x="256" y="284">9</text><text x="362" y="390">R</text>
+  </g>
+</svg>

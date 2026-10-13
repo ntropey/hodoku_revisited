@@ -52,7 +52,7 @@ rating.
 2. **M1** Model and simple solver with golden tests. *(done)*
 3. **M2** All solvers of the default configuration. *(done)*
 4. **M3** Generator, last-resort solvers, remaining formats. *(done, except Kraken fish, Template Set/Delete and "find all steps"; see Status)*
-5. **M4** PWA (React + Vite): board, hints, candidates, undo, settings, print, import/export.
+5. **M4** PWA (React + Vite): board, hints, candidates, undo, settings, print, import/export. *(first version done, see below)*
    The solver runs in a Web Worker; a service worker makes it work offline. It installs as an app
    on phones and as a desktop app on Windows (Chrome/Edge) without an installer or code signing.
 6. **M5** Website with technique guides (also the basis for search traffic and ads), then ads,
@@ -109,6 +109,20 @@ Known gaps:
 
 The big constant tables (all 111 solution types with their English names, and the 92 default
 solver steps with scores) are generated from the original source by `scripts/gen-tables.py`.
+
+## Status (M4, first version)
+
+`packages/app` is an installable PWA: React + Vite, the solver and generator run in a Web Worker
+(`worker.ts`, started and cancelled by `solverClient.ts`), `public/sw.js` caches the app so it works
+offline, and `manifest.webmanifest` makes it installable. Features: new puzzles by level
+(Easy to Unfair), keyboard and number-pad input, pencil marks, undo/redo, logical hints
+(technique name, highlighted cells, struck-out eliminations, "Apply"), mistake marking, import of
+any format `@hodoku/core` reads, copy, dark mode, autosave in localStorage. Game logic is in
+`game.ts` (pure, unit tested); a browser run with Playwright covered hint, import and offline reload.
+
+Not yet: step-by-step explanations of chains, a "Show solution path" trainer, settings for which
+techniques the hints may use, print, German translation, PNG icons for older browsers, a precomputed
+puzzle bank (Unfair puzzles can take a while to generate), and Extreme puzzles.
 
 ## Business notes (GPL)
 

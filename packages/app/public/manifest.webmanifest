@@ -1,0 +1,13 @@
+{
+  "name": "Hodoku Revisited",
+  "short_name": "Hodoku",
+  "description": "A sudoku trainer with logical hints, based on HoDoKu.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6fa",
+  "theme_color": "#2b5fb3",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
