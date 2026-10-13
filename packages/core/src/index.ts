@@ -6,6 +6,7 @@
  */
 export { SudokuSet } from './sudokuSet.js';
 export { Sudoku2 } from './sudoku2.js';
+export { formatSudoku, parseSudoku, type ClipboardMode } from './formats.js';
 export { SinglesQueue } from './singlesQueue.js';
 export { SolutionStep, Candidate } from './solutionStep.js';
 export { SOLUTION_TYPE_INFO, SOLUTION_TYPE_NAMES, isSingle, isHiddenSubset } from './solutionType.js';

@@ -4,6 +4,7 @@
  * Copyright (C) 2026 Hodoku Revisited contributors
  * GPL-3.0-or-later; see LICENSE. Modified version of HoDoKu's Sudoku2 (Java).
  */
+import { type ClipboardMode, formatSudoku, parseSudoku } from './formats.js';
 import { SinglesQueue } from './singlesQueue.js';
 import {
   ALL_UNITS,
@@ -25,8 +26,8 @@ import {
  * singles cheap.
  *
  * Differences to the Java original (Sudoku2):
- *  - `setSudoku` currently understands plain 81-character puzzles and 9-line
- *    grids (digits and '.'/'0'); the PM-grid and library formats come later.
+ *  - `setSudoku` rejects input with other than 81 cells (the original silently accepts it);
+ *    `getSudoku` has no step variants yet (see formats.ts).
  *  - The cached difficulty/status fields used by the Swing UI are omitted.
  */
 /** Validity of a puzzle, as far as it is known. */
@@ -116,26 +117,24 @@ export class Sudoku2 {
   }
 
   /**
-   * Load a puzzle from a string: 81 characters (digits, '0' or '.' for empty),
-   * or a 9-line grid. Every character that is not a digit or '.' is ignored,
-   * so grids with borders ('|', '-', '+') work too. Throws if the string
-   * does not contain exactly 81 cells.
+   * Load a puzzle from a string. See {@link parseSudoku} for the accepted formats
+   * (81 characters, grids, PM grids, SimpleSudoku, HoDoKu library format, gsf taxonomy).
+   * Throws if the text does not contain exactly 81 cells.
    */
-  setSudoku(init: string): void {
-    this.clearSudoku();
-    const chars = [...init].filter((ch) => (ch >= '0' && ch <= '9') || ch === '.');
-    if (chars.length !== LENGTH) {
-      throw new Error(`Invalid puzzle: expected 81 cells, found ${chars.length}`);
+  setSudoku(init: string, saveInitialState = true): void {
+    parseSudoku(this, init, saveInitialState);
+  }
+
+  /** The current state as text, see {@link ClipboardMode}. */
+  getSudoku(mode: ClipboardMode, zeroForDot = false): string {
+    return formatSudoku(this, mode, zeroForDot);
+  }
+
+  /** Mark every cell that has a digit in the 81 character string `givens` as given, all others as not given. */
+  setGivens(givens: string): void {
+    for (let i = 0; i < givens.length && i < LENGTH; i++) {
+      this.fixed[i] = givens[i] >= '1' && givens[i] <= '9';
     }
-    for (let i = 0; i < LENGTH; i++) {
-      const digit = chars[i] === '.' ? 0 : Number(chars[i]);
-      if (digit > 0) this.setCell(i, digit, true, true);
-    }
-    this.initialState = this.getValuesString();
-    // like the original for batch use: the puzzle is simply assumed to be valid
-    // (it has exactly one solution); no check is made here
-    this.status = 'VALID';
-    this.statusGivens = 'VALID';
   }
 
   /** The values as 81-character string, '.' for empty cells. */
