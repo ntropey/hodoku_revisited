@@ -8,7 +8,7 @@ Source: HoDoKu 2.2.0 (78 Java files). Sizes: `solver` 22 files / ~15.9k lines,
 ```
 packages/
   core/      pure TypeScript engine, no DOM, no Node APIs. Runs in Electron and in the browser.
-  app/       Electron + React + Vite desktop app (Windows installer via electron-builder)
+  app/       PWA (React + Vite): installable on phones and desktops, solver in a Web Worker
   website/   static site: docs, downloads, in-browser demo using packages/core
 ```
 
@@ -52,8 +52,12 @@ rating.
 2. **M1** Model and simple solver with golden tests. *(done)*
 3. **M2** All solvers of the default configuration. *(done)*
 4. **M3** Generator, last-resort solvers (templates, brute force, Kraken), remaining formats, "find all steps".
-5. **M4** Electron app: board, hints, candidates, undo, settings, print, import/export.
-6. **M5** Windows installer, code signing, auto-update, website.
+5. **M4** PWA (React + Vite): board, hints, candidates, undo, settings, print, import/export.
+   The solver runs in a Web Worker; a service worker makes it work offline. It installs as an app
+   on phones and as a desktop app on Windows (Chrome/Edge) without an installer or code signing.
+6. **M5** Website with technique guides (also the basis for search traffic and ads), then ads,
+   then an optional paid tier (no ads, cloud sync, puzzle packs, themes). Electron/Tauri or a
+   Capacitor wrapper stay possible later but are not planned.
 
 ## Reproducing the reference source
 
@@ -92,3 +96,12 @@ Known gaps:
 
 The big constant tables (all 111 solution types with their English names, and the 92 default
 solver steps with scores) are generated from the original source by `scripts/gen-tables.py`.
+
+## Business notes (GPL)
+
+The project is GPL-3.0-or-later, which allows ads and charging money but not hiding code:
+keep the repository public and link it from the site. Paid extras should be things a copy of the
+code does not give you: an ad-free tier, cloud sync (server side), original puzzle packs and
+themes (separately licensed content), support. Start on the web (Apple's App Store terms have
+historically conflicted with the GPL). AdSense needs real content pages and a consent banner for
+EU/UK visitors; check its policy for installed PWAs before relying on it.
