@@ -9,8 +9,11 @@ import type { SolutionType } from '../solutionType.js';
 import type { Sudoku2 } from '../sudoku2.js';
 import type { AbstractSolver } from './abstractSolver.js';
 import { DEFAULT_SOLVER_OPTIONS, type SolverOptions } from '../solverOptions.js';
-import { BUDDIES, LENGTH, POSSIBLE_VALUES } from '../tables.js';
+import { Als } from '../als.js';
+import { RestrictedCommon } from '../restrictedCommon.js';
+import { ALL_UNITS, ANZ_VALUES, BUDDIES, LENGTH, POSSIBLE_VALUES } from '../tables.js';
 import { SudokuSet } from '../sudokuSet.js';
+import { AlsSolver } from './alsSolver.js';
 import { ChainSolver } from './chainSolver.js';
 import { ColoringSolver } from './coloringSolver.js';
 import { FishSolver } from './fishSolver.js';
@@ -42,9 +45,25 @@ export class SudokuStepFinder {
   private readonly emptyCells = new SudokuSet();
   private candidatesAllowedDirty = true;
 
+  // ALS and restricted commons cache (valid for one step number)
+  private alsesOnlyLargerThanOne: Als[] | null = null;
+  private alsesOnlyLargerThanOneStepNumber = -1;
+  private alsesWithOne: Als[] | null = null;
+  private alsesWithOneStepNumber = -1;
+  private restrictedCommons: RestrictedCommon[] = [];
+  /** start/end indices into `restrictedCommons` for every ALS */
+  private startIndices: number[] = [];
+  private endIndices: number[] = [];
+  private lastRcAllowOverlap = false;
+  private lastRcStepNumber = -1;
+  private lastRcAlsList: Als[] | null = null;
+  private lastRcOnlyForward = true;
+  /** collect RCs for forward search only */
+  private rcOnlyForward = true;
+
   constructor(readonly options: SolverOptions = { ...DEFAULT_SOLVER_OPTIONS }) {
     // same order as in the original: the first solver that finds a step wins
-    this.solvers = [new SimpleSolver(this), new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new MiscellaneousSolver(this)];
+    this.solvers = [new SimpleSolver(this), new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this)];
   }
 
   getSudoku(): Sudoku2 {
@@ -141,5 +160,130 @@ export class SudokuStepFinder {
       }
     }
     throw new Error(`Invalid solution step in doStep() (${step.type})`);
+  }
+
+  // ---- ALS and restricted commons (cached until the sudoku changes)
+
+  /** All ALS of the current grid. With `onlyLargerThanOne` single cells (bivalue cells) are left out. */
+  getAlses(onlyLargerThanOne = false): Als[] {
+    if (onlyLargerThanOne) {
+      if (this.alsesOnlyLargerThanOneStepNumber !== this.stepNumber || this.alsesOnlyLargerThanOne === null) {
+        this.alsesOnlyLargerThanOne = this.doGetAlses(true);
+        this.alsesOnlyLargerThanOneStepNumber = this.stepNumber;
+      }
+      return this.alsesOnlyLargerThanOne;
+    }
+    if (this.alsesWithOneStepNumber !== this.stepNumber || this.alsesWithOne === null) {
+      this.alsesWithOne = this.doGetAlses(false);
+      this.alsesWithOneStepNumber = this.stepNumber;
+    }
+    return this.alsesWithOne;
+  }
+
+  private doGetAlses(onlyLargerThanOne: boolean): Als[] {
+    const alses: Als[] = [];
+    const indexSet = new SudokuSet();
+    const candSets = new Array<number>(10).fill(0);
+    const check = (anzahl: number, startIndex: number, indexe: readonly number[]): void => {
+      anzahl++;
+      if (anzahl > indexe.length - 1) return;
+      for (let i = startIndex; i < indexe.length; i++) {
+        const houseIndex = indexe[i];
+        if (this.sudoku.getValue(houseIndex) !== 0) continue;
+        indexSet.add(houseIndex);
+        candSets[anzahl] = candSets[anzahl - 1] | this.sudoku.getCell(houseIndex);
+        if (ANZ_VALUES[candSets[anzahl]] - anzahl === 1) {
+          if (!onlyLargerThanOne || indexSet.size() > 1) {
+            const newAls = new Als(indexSet, candSets[anzahl]);
+            if (!alses.some((a) => a.equals(newAls))) alses.push(newAls);
+          }
+        }
+        check(anzahl, i + 1, indexe);
+        indexSet.remove(houseIndex);
+      }
+    };
+    for (const unit of ALL_UNITS) {
+      for (let j = 0; j < unit.length; j++) {
+        indexSet.clear();
+        candSets[0] = 0;
+        check(0, j, unit);
+      }
+    }
+    for (const als of alses) als.computeFields(this.getCandidates());
+    return alses;
+  }
+
+  /** Collect restricted commons for forward references only (the default) or in both directions. */
+  setRcOnlyForward(onlyForward: boolean): void {
+    this.rcOnlyForward = onlyForward;
+  }
+
+  getRestrictedCommons(alses: Als[], allowOverlap: boolean): RestrictedCommon[] {
+    if (
+      this.lastRcStepNumber !== this.stepNumber ||
+      this.lastRcAllowOverlap !== allowOverlap ||
+      this.lastRcAlsList !== alses ||
+      this.lastRcOnlyForward !== this.rcOnlyForward
+    ) {
+      this.restrictedCommons = this.doGetRestrictedCommons(alses, allowOverlap);
+      this.lastRcStepNumber = this.stepNumber;
+      this.lastRcAllowOverlap = allowOverlap;
+      this.lastRcOnlyForward = this.rcOnlyForward;
+      this.lastRcAlsList = alses;
+    }
+    return this.restrictedCommons;
+  }
+
+  /** The index of the first RC in the RC list for every ALS. */
+  getStartIndices(): number[] {
+    return this.startIndices;
+  }
+
+  /** The index of the last RC + 1 in the RC list for every ALS. */
+  getEndIndices(): number[] {
+    return this.endIndices;
+  }
+
+  private doGetRestrictedCommons(alses: Als[], withOverlap: boolean): RestrictedCommon[] {
+    this.startIndices = new Array<number>(alses.length).fill(0);
+    this.endIndices = new Array<number>(alses.length).fill(0);
+    const rcs: RestrictedCommon[] = [];
+    const intersectionSet = new SudokuSet();
+    const indexSet = new SudokuSet();
+    const buddiesSet = new SudokuSet();
+    for (let i = 0; i < alses.length; i++) {
+      const als1 = alses[i];
+      this.startIndices[i] = rcs.length;
+      const start = this.rcOnlyForward ? i + 1 : 0;
+      for (let j = start; j < alses.length; j++) {
+        if (i === j) continue;
+        const als2 = alses[j];
+        intersectionSet.set(als1.indices);
+        intersectionSet.and(als2.indices);
+        if (!withOverlap && !intersectionSet.isEmpty()) continue;
+        const possibleRestrictedCommonsSet = als1.candidates & als2.candidates;
+        if (possibleRestrictedCommonsSet === 0) continue;
+        let rcAnz = 0;
+        let newRC: RestrictedCommon | null = null;
+        for (const cand of POSSIBLE_VALUES[possibleRestrictedCommonsSet]) {
+          indexSet.set(als1.indicesPerCandidat[cand]);
+          indexSet.or(als2.indicesPerCandidat[cand]);
+          if (!indexSet.andEmpty(intersectionSet)) continue;
+          buddiesSet.setAnd(als1.buddiesAlsPerCandidat[cand], als2.buddiesAlsPerCandidat[cand]);
+          // all occurrences of the candidate in both ALS see each other
+          if (buddiesSet.containsSet(indexSet)) {
+            if (rcAnz === 0) {
+              newRC = new RestrictedCommon(i, j, cand);
+              rcs.push(newRC);
+            } else {
+              newRC!.cand2 = cand;
+            }
+            rcAnz++;
+          }
+        }
+      }
+      this.endIndices[i] = rcs.length;
+    }
+    return rcs;
   }
 }

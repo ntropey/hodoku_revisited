@@ -5,6 +5,7 @@
  * GPL-3.0-or-later; see LICENSE. Modified version of HoDoKu's SolutionStep and Candidate (Java).
  */
 import { Chain } from './chain.js';
+import type { RestrictedCommon } from './restrictedCommon.js';
 import { SudokuSet } from './sudokuSet.js';
 import type { SolutionType } from './generated/solutionType.js';
 import { compareTypes, isFish, isKrakenFish } from './solutionType.js';
@@ -60,6 +61,8 @@ export class SolutionStep {
   /** Fish that is part of a Kraken Fish step: the type of the fish. */
   subType: SolutionType | null = null;
   isSiamese = false;
+  /** ALS techniques: the restricted commons that link the ALS. */
+  restrictedCommons: RestrictedCommon[] = [];
   /** Fish: the units of the base set and of the cover set. */
   baseEntities: Entity[] = [];
   coverEntities: Entity[] = [];
@@ -132,6 +135,7 @@ export class SolutionStep {
     s.chains = this.chains.map((c) => c.clone());
     s.subType = this.subType;
     s.isSiamese = this.isSiamese;
+    s.restrictedCommons = this.restrictedCommons.map((r) => r.clone());
     s.baseEntities = this.baseEntities.map((e) => ({ ...e }));
     s.coverEntities = this.coverEntities.map((e) => ({ ...e }));
     s.potentialEliminations = this.potentialEliminations.clone();
@@ -160,6 +164,16 @@ export class SolutionStep {
   getCandidateKey(): string {
     this.normalizeCandidatesToDelete();
     return this.candidatesToDelete.map((c) => `${c.value}:${c.index}`).join(' ');
+  }
+
+  /** Total number of cells in all ALS of the step. */
+  getAlsesIndexCount(): number {
+    return this.alses.reduce((n, a) => n + a.indices.length, 0);
+  }
+
+  /** The weighted sum of the indices of the candidates to delete (sort criterion). */
+  getIndexSumme(): number {
+    return getIndexSumme(this.candidatesToDelete);
   }
 
   getChainLength(): number {
