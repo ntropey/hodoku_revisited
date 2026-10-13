@@ -5,7 +5,7 @@
  * GPL-3.0-or-later; see LICENSE. Modified version of HoDoKu's FishSolver (Java).
  */
 import { SolutionStep } from '../solutionStep.js';
-import { getFishSize, isBasicFish, isFrankenFish, isMutantFish, isSashimiFish, type SolutionType } from '../solutionType.js';
+import { compareTypes, getFishSize, isBasicFish, isFrankenFish, isMutantFish, isSashimiFish, type SolutionType } from '../solutionType.js';
 import { SudokuSet } from '../sudokuSet.js';
 import {
   ALL_CONSTRAINTS_TEMPLATES,
@@ -16,6 +16,7 @@ import {
 } from '../tables.js';
 import { AbstractSolver } from './abstractSolver.js';
 import type { SudokuStepFinder } from './stepFinder.js';
+import type { TablingSolver } from './tablingSolver.js';
 
 /*
  * The definitions of the Ultimate Fish Guide apply (http://www.sudoku.com/boards/viewtopic.php?t=4993).
@@ -25,7 +26,7 @@ import type { SudokuStepFinder } from './stepFinder.js';
  *  - Sets of cells are three int32 words (a0, a1, a2 = cells 0-31, 32-63, 64-80) instead of two longs.
  *  - The template check is not implemented. It only prunes the search for really large fish
  *    (it cannot change which fish are found), so results are the same.
- *  - Kraken Fish and Siamese fish (allowDualsAndSiamese) are not supported yet.
+ *  - Siamese fish (allowDualsAndSiamese) are not supported yet.
  */
 
 const BASIC_TYPES: SolutionType[] = ['X_WING', 'SWORDFISH', 'JELLYFISH', 'SQUIRMBAG', 'WHALE', 'LEVIATHAN'];
@@ -188,6 +189,14 @@ export class FishSolver extends AbstractSolver {
   private siamese = false;
   /** all steps found by the last search */
   private steps: SolutionStep[] = [];
+  /** true while the search is for Kraken fish */
+  private kraken = false;
+  private tablingSolver: TablingSolver | null = null;
+  /** Kraken fish: eliminated candidate (cell + digit) -> index of the step in `steps` */
+  private readonly deletesMap = new Map<string, number>();
+  private readonly krakenDeleteCandSet = new SudokuSet();
+  private readonly krakenFinSet = new SudokuSet();
+  private readonly krakenCannibalisticSet = new SudokuSet();
   /** steps that were found but cannot be used right now (finned <-> sashimi) */
   private cachedSteps: SolutionStep[] = [];
   /** the finder step number of the last executed step */
@@ -199,6 +208,10 @@ export class FishSolver extends AbstractSolver {
 
   getStep(type: SolutionType): SolutionStep | null {
     this.sudoku = this.finder.getSudoku();
+    if (isKraken(type)) {
+      this.searchAll = false;
+      return this.getKrakenFish();
+    }
     const parts = classify(type);
     if (parts === null) return null;
     const { size, kind } = parts;
@@ -223,7 +236,7 @@ export class FishSolver extends AbstractSolver {
 
   doStep(step: SolutionStep): boolean {
     this.sudoku = this.finder.getSudoku();
-    if (classify(step.type) !== null) {
+    if (classify(step.type) !== null || isKraken(step.type)) {
       for (const cand of step.candidatesToDelete) this.sudoku.delCandidate(cand.index, cand.value);
       return true;
     }
@@ -288,6 +301,7 @@ export class FishSolver extends AbstractSolver {
     withEndoFins: boolean,
     fishType: number,
   ): SolutionStep | null {
+    this.deletesMap.clear();
     this.siamese = this.finder.options.allowDualsAndSiamese;
     this.fishType = fishType;
     this.candidate = candidate;
@@ -496,7 +510,7 @@ export class FishSolver extends AbstractSolver {
             const k0 = cEntry.k0 & fb.m0;
             const k1 = cEntry.k1 & fb.m1;
             const k2 = cEntry.k2 & fb.m2;
-            if (t0 !== 0 || t1 !== 0 || t2 !== 0 || k0 !== 0 || k1 !== 0 || k2 !== 0) {
+            if (!this.kraken && (t0 !== 0 || t1 !== 0 || t2 !== 0 || k0 !== 0 || k1 !== 0 || k2 !== 0)) {
               const step = this.createFishStep(
                 this.coverLevel,
                 true,
@@ -505,6 +519,17 @@ export class FishSolver extends AbstractSolver {
                 [k0, k1, k2],
                 [endo0, endo1, endo2],
                 [pot0, pot1, pot2],
+              );
+              if (step !== null) return step;
+            } else if (this.kraken && t0 === 0 && t1 === 0 && t2 === 0 && k0 === 0 && k1 === 0 && k2 === 0) {
+              // nothing can be eliminated right away: check whether chains link the fins to an
+              // elimination. Potential eliminations: cover & ~base, plus the cannibalistic ones.
+              const step = this.searchForKraken(
+                [pot0 | cEntry.k0, pot1 | cEntry.k1, pot2 | cEntry.k2],
+                [base0, base1, base2],
+                [fins0, fins1, fins2],
+                [cEntry.k0, cEntry.k1, cEntry.k2],
+                [endo0, endo1, endo2],
               );
               if (step !== null) return step;
             }
@@ -522,6 +547,149 @@ export class FishSolver extends AbstractSolver {
   }
 
   /**
+   * Find a Kraken Fish: a fish with fins where chains link the fins (type 1) or the cover set
+   * candidates (type 2) to an elimination. The options of the Kraken search replace the fish options
+   * while it runs. The search is slow: no template pruning is possible.
+   */
+  private getKrakenFish(): SolutionStep | null {
+    const options = this.finder.options;
+    this.tablingSolver = this.finder.getTablingSolver();
+    this.steps = [];
+    const oldMaxFins = options.maxFins;
+    const oldMaxEndoFins = options.maxEndoFins;
+    options.maxFins = options.maxKrakenFins;
+    options.maxEndoFins = options.maxKrakenEndoFins;
+    this.kraken = true;
+    try {
+      this.tablingSolver.initForKrakenSearch();
+      // endo fins are only searched for other than basic fish and if the maximum is larger than zero
+      const withEndoFins = options.maxKrakenEndoFins !== 0 && options.krakenMaxFishType > 0;
+      for (let i = 1; i <= 9; i++) {
+        this.getFishesForCandidate(i, 2, options.krakenMaxFishSize, false, true, true, withEndoFins, options.krakenMaxFishType);
+        if (this.steps.length > 0) break;
+      }
+    } finally {
+      this.kraken = false;
+      options.maxFins = oldMaxFins;
+      options.maxEndoFins = oldMaxEndoFins;
+    }
+    if (this.steps.length > 0) {
+      this.steps.sort((a, b) => a.compareTo(b));
+      return this.steps[0];
+    }
+    return null;
+  }
+
+  /**
+   * Search the current base/cover set combination for Kraken Fish.
+   * `deleteSet`: all potential eliminations including cannibalistic ones, `base`: all base candidates,
+   * `fins`: all fins including endo fins, `cannibalistic`: potential cannibalistic eliminations.
+   */
+  private searchForKraken(
+    deleteSet: [number, number, number],
+    base: [number, number, number],
+    fins: [number, number, number],
+    cannibalistic: [number, number, number],
+    endoFins: [number, number, number],
+  ): SolutionStep | null {
+    const tabling = this.tablingSolver!;
+    const candidate = this.candidate;
+    const delSet = this.krakenDeleteCandSet;
+    const finSet = this.krakenFinSet;
+    const canSet = this.krakenCannibalisticSet;
+    // Type 1: we have fins but nothing to delete -> check whether every cover candidate that is not
+    // a base candidate can be linked to every fin (fin set -> cover candidate not set), one at a time
+    if (deleteSet[0] !== 0 || deleteSet[1] !== 0 || deleteSet[2] !== 0) {
+      delSet.setWords(deleteSet[0], deleteSet[1], deleteSet[2]);
+      finSet.setWords(fins[0], fins[1], fins[2]);
+      for (const endIndex of [...delSet.values()]) {
+        if (tabling.checkKrakenTypeOne(finSet, endIndex, candidate)) {
+          canSet.setWords(cannibalistic[0], cannibalistic[1], cannibalistic[2]);
+          if (canSet.contains(endIndex)) {
+            canSet.clear();
+            canSet.add(endIndex);
+          } else {
+            canSet.clear();
+          }
+          // a step without candidates to delete; the elimination is added afterwards
+          let step = this.createFishStep(
+            this.coverLevel,
+            true,
+            fins,
+            [0, 0, 0],
+            [canSet.m0, canSet.m1, canSet.m2],
+            endoFins,
+            deleteSet,
+            true,
+          )!;
+          step.subType = step.type;
+          step.type = 'KRAKEN_FISH_TYPE_1';
+          step.addCandidateToDelete(endIndex, candidate);
+          for (const fin of finSet.values()) step.addChainObject(tabling.getKrakenChain(fin, candidate, endIndex, candidate).clone());
+          tabling.adjustChains(step);
+          const added = this.addKrakenStep(step);
+          if (added !== null) return added;
+        }
+      }
+    }
+    // Type 2: for every cover set find chains from all base candidates and all fins to a single
+    // candidate. Only necessary if the cover unit does not contain only base candidates; for
+    // cannibalistic candidates no chain is needed.
+    canSet.clear();
+    for (let coverIndex = 0; coverIndex < this.numberOfCoverUnits; coverIndex++) {
+      if (!this.coverUnitsUsed[this.coverUnits[coverIndex]]) continue;
+      // base candidates of this cover unit that are not cannibalistic
+      let m0 = this.coverC0[coverIndex] & base[0] & ~cannibalistic[0];
+      let m1 = this.coverC1[coverIndex] & base[1] & ~cannibalistic[1];
+      let m2 = this.coverC2[coverIndex] & base[2] & ~cannibalistic[2];
+      if (this.coverC0[coverIndex] === m0 && this.coverC1[coverIndex] === m1 && this.coverC2[coverIndex] === m2) {
+        continue; // would be a normal Forcing Chain
+      }
+      // now add the fins and check all candidates
+      m0 |= fins[0];
+      m1 |= fins[1];
+      m2 |= fins[2];
+      delSet.setWords(m0, m1, m2);
+      finSet.clear();
+      for (let endCandidate = 1; endCandidate <= 9; endCandidate++) {
+        if (tabling.checkKrakenTypeTwo(delSet, finSet, candidate, endCandidate)) {
+          for (const endIndex of [...finSet.values()]) {
+            let step = this.createFishStep(this.coverLevel, true, fins, [0, 0, 0], [0, 0, 0], endoFins, deleteSet, true)!;
+            step.subType = step.type;
+            step.type = 'KRAKEN_FISH_TYPE_2';
+            step.addCandidateToDelete(endIndex, endCandidate);
+            for (const start of delSet.values()) {
+              step.addChainObject(tabling.getKrakenChain(start, candidate, endIndex, endCandidate).clone());
+            }
+            tabling.adjustChains(step);
+            const added = this.addKrakenStep(step);
+            if (added !== null) return added;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Add a Kraken Fish to `steps` unless an equivalent smaller one exists already. */
+  private addKrakenStep(step: SolutionStep): SolutionStep | null {
+    // like the original, the key sorts the candidates to delete and removes doubles
+    const del = step.getCandidateKey() + ' ' + step.values[0];
+    const oldIndex = this.deletesMap.get(del);
+    const old = oldIndex !== undefined ? this.steps[oldIndex] : null;
+    if (
+      old === null ||
+      compareTypes(step.subType!, old.subType!) < 0 ||
+      (compareTypes(step.subType!, old.subType!) === 0 && step.getChainLength() < old.getChainLength())
+    ) {
+      this.steps.push(step);
+      this.deletesMap.set(del, this.steps.length - 1);
+      return step;
+    }
+    return null;
+  }
+
+  /**
    * Create a new fish step. Returns null if the step can't be used right now: a sashimi fish found
    * while searching finned fish (and vice versa) is cached for a later search.
    */
@@ -533,6 +701,7 @@ export class FishSolver extends AbstractSolver {
     cannibalistic: [number, number, number],
     endoFins: [number, number, number],
     potentialEliminations: [number, number, number],
+    kraken = false,
   ): SolutionStep | null {
     const candidate = this.candidate;
     // masks for the constraint types included in the base and cover sets
@@ -616,10 +785,11 @@ export class FishSolver extends AbstractSolver {
     step.potentialCannibalisticEliminations.setWords(cannibalistic[0], cannibalistic[1], cannibalistic[2]);
 
     // differentiate between finned and sashimi: if the type doesn't fit, cache the step
-    if (this.fishType === BASIC && this.withFins && this.sashimi !== isSashimi) {
+    if (!this.searchAll && this.fishType === BASIC && this.withFins && this.sashimi !== isSashimi) {
       this.cachedSteps.push(step.clone());
       return null;
     }
+    void kraken; // Kraken steps are returned like all others (no step list is kept here)
     return step;
   }
 
@@ -692,7 +862,11 @@ function unitMask(used: readonly boolean[]): number {
 
 type FishKind = 'BASIC' | 'FINNED' | 'SASHIMI' | 'FRANKEN' | 'FINNED_FRANKEN' | 'MUTANT' | 'FINNED_MUTANT';
 
-/** The kind and size of a fish type (Kraken fish are not handled), or null if it is no fish type. */
+function isKraken(type: SolutionType): boolean {
+  return type === 'KRAKEN_FISH' || type === 'KRAKEN_FISH_TYPE_1' || type === 'KRAKEN_FISH_TYPE_2';
+}
+
+/** The kind and size of a fish type (Kraken fish are not handled here), or null if it is no basic/finned/Franken/Mutant fish type. */
 function classify(type: SolutionType): { size: number; kind: FishKind } | null {
   const lists: [FishKind, SolutionType[]][] = [
     ['BASIC', BASIC_TYPES],

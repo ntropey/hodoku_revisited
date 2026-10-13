@@ -40,6 +40,7 @@ export class SudokuStepFinder {
   private stepNumber = 0;
   private readonly solvers: AbstractSolver[];
   private readonly simpleSolver: SimpleSolver;
+  private tablingSolver: TablingSolver | null = null;
 
   // Data used by more than one solver; computed lazily, recomputed after every change.
   private readonly candidates = Array.from({ length: 10 }, () => new SudokuSet());
@@ -86,11 +87,17 @@ export class SudokuStepFinder {
       return;
     }
     // same order as in the original: the first solver that finds a step wins
-    this.solvers = [this.simpleSolver, new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this), new TablingSolver(this), new TemplateSolver(this), new BruteForceSolver(this), new IncompleteSolver(this), new GiveUpSolver(this)];
+    this.solvers = [this.simpleSolver, new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this), (this.tablingSolver = new TablingSolver(this)), new TemplateSolver(this), new BruteForceSolver(this), new IncompleteSolver(this), new GiveUpSolver(this)];
   }
 
   getSudoku(): Sudoku2 {
     return this.sudoku;
+  }
+
+  /** The tabling solver (not available in a finder with only a simple solver); used by the Kraken fish search. */
+  getTablingSolver(): TablingSolver {
+    if (this.tablingSolver === null) throw new Error('no tabling solver in this finder');
+    return this.tablingSolver;
   }
 
   setSudoku(sudoku: Sudoku2): void {

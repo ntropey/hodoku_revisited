@@ -30,6 +30,12 @@ export interface SolverOptions {
   /** Tabling: allow ALS nodes in chains (not supported yet). */
   allowAlsInTablingChains: boolean;
   allowAlsOverlap: boolean;
+  /** Kraken fish: 0 = basic only, 1 = basic + Franken, 2 = basic + Franken + Mutant. */
+  krakenMaxFishType: number;
+  /** Kraken fish: number of units in the base and cover sets. */
+  krakenMaxFishSize: number;
+  maxKrakenFins: number;
+  maxKrakenEndoFins: number;
 }
 
 export const DEFAULT_SOLVER_OPTIONS: Readonly<SolverOptions> = {
@@ -47,4 +53,8 @@ export const DEFAULT_SOLVER_OPTIONS: Readonly<SolverOptions> = {
   onlyOneChainPerStep: true,
   allowAlsInTablingChains: false,
   allowAlsOverlap: false,
+  krakenMaxFishType: 1,
+  krakenMaxFishSize: 4,
+  maxKrakenFins: 2,
+  maxKrakenEndoFins: 0,
 };

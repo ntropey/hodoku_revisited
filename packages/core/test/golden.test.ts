@@ -101,10 +101,12 @@ const PORTED = new Set<SolutionType>([
   'FINNED_FRANKEN_SWORDFISH',
   'TEMPLATE_SET',
   'TEMPLATE_DEL',
+  'KRAKEN_FISH_TYPE_1',
+  'KRAKEN_FISH_TYPE_2',
 ]);
 
 /** Puzzles from HoDoKu's own generator, and from the generator of this port, both solved by the Java jar. */
-const FIXTURES = ['./fixtures/golden.jsonl', './fixtures/golden-ts.jsonl', './fixtures/golden-hard.jsonl', './fixtures/golden-templates.jsonl'];
+const FIXTURES = ['./fixtures/golden.jsonl', './fixtures/golden-ts.jsonl', './fixtures/golden-hard.jsonl', './fixtures/golden-templates.jsonl', './fixtures/golden-kraken.jsonl'];
 const golden: Golden[] = FIXTURES.flatMap((f) =>
   readFileSync(new URL(f, import.meta.url), 'utf8')
     .split('\n')

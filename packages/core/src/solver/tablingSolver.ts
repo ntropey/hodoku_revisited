@@ -249,6 +249,62 @@ export class TablingSolver extends AbstractSolver {
     }
   }
 
+  /**
+   * Fills and expands the tables for a Kraken Fish search. Called by the fish solver before the
+   * search starts; for every fish {@link checkKrakenTypeOne} or {@link checkKrakenTypeTwo} does the check.
+   */
+  initForKrakenSearch(): void {
+    this.initialize();
+    this.sudoku = this.finder.getSudoku();
+    this.checkAlsOption();
+    this.deletesMap.clear();
+    this.chainsOnly = true;
+    this.fillTables();
+    this.fillTablesWithGroupNodes();
+    this.expandTables(this.onTable);
+    this.expandTables(this.offTable);
+  }
+
+  /**
+   * Kraken Fish type 1: if a chain starting and ending with a weak link leads from every fin to
+   * `candidate` in cell `index`, the candidate can be eliminated.
+   */
+  checkKrakenTypeOne(fins: SudokuSet, index: number, candidate: number): boolean {
+    for (const fin of fins.values()) {
+      if (!this.onTable[fin * 10 + candidate].offSets[candidate].contains(index)) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Kraken Fish type 2: if chains from all cells in `indices` (with the fish candidate) lead to
+   * `endCandidate` in a cell, that cell can lose the candidate. `result` receives all such cells.
+   */
+  checkKrakenTypeTwo(indices: SudokuSet, result: SudokuSet, startCandidate: number, endCandidate: number): boolean {
+    result.set(this.finder.getCandidates()[endCandidate]);
+    result.andNot(indices);
+    for (const index of indices.values()) {
+      result.and(this.onTable[index * 10 + startCandidate].offSets[endCandidate]);
+    }
+    return !result.isEmpty();
+  }
+
+  /**
+   * Chains with ALS nodes need their ALS added to the step and the ALS index in the chain adjusted.
+   * ALS nodes in tabling chains are not supported, so there is nothing to do.
+   */
+  adjustChains(_step: SolutionStep): void {
+    this.checkAlsOption();
+  }
+
+  /** The chain from the premise "startCandidate set in startIndex" to "endCandidate deleted from endIndex". */
+  getKrakenChain(startIndex: number, startCandidate: number, endIndex: number, endCandidate: number): Chain {
+    this.newStep('KRAKEN_FISH');
+    this.resetTmpChains();
+    this.addChain(this.onTable[startIndex * 10 + startCandidate], endIndex, endCandidate, false);
+    return this.globalStep.chains[0];
+  }
+
   /** The shortest Nice Loop / AIC in the grid. */
   private getNiceLoops(): SolutionStep | null {
     this.initialize();
