@@ -85,3 +85,11 @@ footer a { color: var(--accent); }
   .cell:not(.given) { color: transparent !important; }
   .cands { display: none; }
 }
+
+.allsteps { margin-top: 10px; padding: 8px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; font-size: 0.9rem; }
+.allsteps h2 { display: flex; justify-content: space-between; align-items: center; font-size: 1rem; margin: 0 0 6px; }
+.allsteps h2 button { padding: 2px 10px; font-size: 0.8rem; }
+.allsteps ul { list-style: none; padding: 0; margin: 4px 0 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+.allsteps li button { padding: 3px 8px; font-size: 0.8rem; }
+.allsteps summary { cursor: pointer; padding: 2px 0; }
+@media print { .allsteps { display: none; } }

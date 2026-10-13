@@ -56,6 +56,7 @@ export function App() {
   const [hint, setHint] = useState<HintResult | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [allSteps, setAllSteps] = useState<{ results: HintResult[]; total: Record<string, number> } | null>(null);
   const [importing, setImporting] = useState(false);
   const [importText, setImportText] = useState('');
   const settingsRef = useRef(settings);
@@ -70,6 +71,7 @@ export function App() {
   const update = useCallback((fn: (g: GameState) => GameState) => {
     setGame((g) => (g ? fn(g) : g));
     setHint(null);
+    setAllSteps(null);
     setMessage(null);
   }, []);
 
@@ -160,6 +162,20 @@ export function App() {
     }
   };
 
+  const askAllSteps = async () => {
+    if (!game) return;
+    setBusy('Looking for all steps...');
+    setHint(null);
+    try {
+      setAllSteps(await solver.current.allHints(game.values, game.cands, settings.hintLevel ?? 5));
+      setMessage(null);
+    } catch (e) {
+      setMessage((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const applyHint = () => {
     if (!hint) return;
     update((g) => {
@@ -235,6 +251,33 @@ export function App() {
         )}
       </div>
 
+      {allSteps && (
+        <section className="allsteps" aria-label="All available steps">
+          <h2>
+            All steps <button onClick={() => setAllSteps(null)}>Close</button>
+          </h2>
+          {allSteps.results.length === 0 && <p>No step available at this hint level.</p>}
+          {Object.entries(
+            allSteps.results.reduce<Record<string, HintResult[]>>((acc, r) => ((acc[r.name] ??= []).push(r), acc), {}),
+          ).map(([name, list]) => (
+            <details key={name} open={list.length <= 4}>
+              <summary>
+                {name} ({allSteps.total[name]})
+              </summary>
+              <ul>
+                {list.map((r, i) => (
+                  <li key={i}>
+                    <button className={r === hint ? 'on' : ''} onClick={() => setHint(r)}>
+                      {r.text.slice(r.name.length + 2)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))}
+        </section>
+      )}
+
       <div className="pad">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
           <button key={d} onClick={() => input(d)} disabled={!game || left[d] === 0} aria-label={`digit ${d}`}>
@@ -265,6 +308,9 @@ export function App() {
         </button>
         <button onClick={applyHint} disabled={!hint}>
           Apply
+        </button>
+        <button onClick={askAllSteps} disabled={!game || solved || !!busy}>
+          All steps
         </button>
         <button onClick={() => update(fillCands)} disabled={!game}>
           Reset notes

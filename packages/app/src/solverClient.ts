@@ -57,6 +57,14 @@ export class SolverClient {
     return this.puzzle({ kind: 'analyze', puzzle });
   }
 
+  /** Every step available now, grouped by technique (at most a dozen per technique are returned). */
+  async allHints(values: number[], cands: number[], level: HintLevel): Promise<{ results: HintResult[]; total: Record<string, number> }> {
+    const r = await this.call({ kind: 'allHints', values, cands, level });
+    if (r.kind === 'error') throw new Error(r.message);
+    if (r.kind !== 'allHints') throw new Error('unexpected response');
+    return { results: r.results, total: r.total };
+  }
+
   async hint(values: number[], cands: number[], level: HintLevel): Promise<HintResult | null> {
     const r = await this.call({ kind: 'hint', values, cands, level });
     if (r.kind === 'error') throw new Error(r.message);

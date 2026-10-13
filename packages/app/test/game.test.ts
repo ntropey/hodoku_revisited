@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells } from '../src/game';
-import { analyze, hint } from '../src/solverApi';
+import { allHints, analyze, hint } from '../src/solverApi';
 
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
 const info = () => analyze(PUZZLE);
@@ -134,4 +134,25 @@ describe('hint level', () => {
     }
     throw new Error('no chain hint found');
   }, 120000);
+});
+
+describe('all steps', () => {
+  it('lists steps of several techniques that never remove a solution digit', () => {
+    const g = newGame(analyze(PUZZLE));
+    const { results, total } = allHints(g.values, g.cands, 5, 5);
+    expect(results.length).toBeGreaterThan(3);
+    expect(Object.keys(total).length).toBeGreaterThan(1);
+    for (const r of results) {
+      for (const p of r.marks.place) expect(p.digit).toBe(g.solution[p.cell]);
+      for (const e of r.marks.elim) expect(e.digit).not.toBe(g.solution[e.cell]);
+    }
+    // the first hint is one of them
+    const first = hint(g.values, g.cands, 5)!;
+    expect(results.some((r) => r.type === first.type)).toBe(true);
+  });
+  it('singles only returns no harder technique', () => {
+    const g = newGame(analyze(PUZZLE));
+    const { results } = allHints(g.values, g.cands, 0, 50);
+    for (const r of results) expect(['FULL_HOUSE', 'NAKED_SINGLE', 'HIDDEN_SINGLE']).toContain(r.type);
+  });
 });

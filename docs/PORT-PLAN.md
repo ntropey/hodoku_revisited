@@ -141,7 +141,8 @@ generator (`packages/app/scripts/gen-bank.ts`, merged by `merge-bank.mjs`). Each
 isomorphism (digit relabeling, row/column permutations, transpose) and re-rated, and the app avoids repeats until a
 level is exhausted. Starting a game is instant; the generator is the fallback.
 
-Trainer update: hints can be limited to a technique level (singles only ... everything), show the pattern
+Trainer update: "All steps" lists every available step by technique (find all steps in the worker; click one to see it,
+"Apply" does it). Hints can be limited to a technique level (singles only ... everything), show the pattern
 (fish base/cover units, ALS, colors, fins, chains with strong/weak links drawn on the board), print the chain in
 AIC notation, give a one-sentence reason and link to the guide page; Print button (givens only). `describeStep`
 in core turns any step into drawable data and is shared with the website diagrams.
@@ -159,8 +160,8 @@ Tests check that every guide exists and that internal links resolve.
 
 Update: every guide has a worked example diagram (inline SVG, light and dark). The examples are not drawn by
 hand: `packages/website/scripts/gen-examples.ts` runs the solver over ~1,900 puzzles, keeps the simplest step of
-each technique, and checks it against the puzzle's real solution before writing `src/examples.json`. Gap: no
-Simple Colors Wrap example (not in the corpus yet).
+each technique, and checks it against the puzzle's real solution before writing `src/examples.json`. A second pass uses "find all steps"
+for techniques the solver rarely picks first (Simple Colors Wrap).
 
 Not yet: a German version, a custom domain, ads. Ads need a consent banner (EU/UK) and a privacy page
 update first; the privacy page currently promises no tracking, so change it in the same commit

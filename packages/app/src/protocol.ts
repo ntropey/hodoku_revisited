@@ -25,7 +25,8 @@ export type WorkerRequest =
   | { id: number; kind: 'generate'; level: number }
   | { id: number; kind: 'bank'; level: number; seen: number[] }
   | { id: number; kind: 'analyze'; puzzle: string }
-  | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel };
+  | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel }
+  | { id: number; kind: 'allHints'; values: number[]; cands: number[]; level: HintLevel };
 
 export interface PuzzleInfo {
   /** 81 characters, '.' for empty cells */
@@ -40,6 +41,7 @@ export interface PuzzleInfo {
 export type WorkerResponse =
   | { id: number; kind: 'puzzle'; info: PuzzleInfo }
   | { id: number; kind: 'hint'; hint: HintResult | null }
+  | { id: number; kind: 'allHints'; results: HintResult[]; total: Record<string, number> }
   | { id: number; kind: 'error'; message: string };
 
 export const LEVEL_NAMES = ['', 'Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'];

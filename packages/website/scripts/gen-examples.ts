@@ -8,7 +8,16 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SOLUTION_TYPE_INFO, Sudoku2, SudokuSolver, describeStep, type SolutionType, type StepMarks } from '@hodoku/core';
+import {
+  SOLUTION_TYPE_INFO,
+  Sudoku2,
+  SudokuSolver,
+  SudokuStepFinder,
+  describeStep,
+  type SolutionStep,
+  type SolutionType,
+  type StepMarks,
+} from '@hodoku/core';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..', '..', '..');
@@ -98,6 +107,46 @@ for (const puzzle of puzzles) {
     });
   }
   if (++n % 200 === 0) console.log(`${n}/${puzzles.length} puzzles, ${best.size}/${wantedTypes.size} types`);
+}
+
+// Second pass: techniques the solver rarely picks first (it prefers simpler steps) are searched with
+// "find all steps" in the state where only singles are left
+const rare: Partial<Record<SolutionType, (f: SudokuStepFinder, s: Sudoku2) => ReturnType<SudokuStepFinder['findAllSimpleColors']>>> = {
+  SIMPLE_COLORS_WRAP: (f, s) => f.findAllSimpleColors(s),
+};
+const stillMissing = () => [...wantedTypes].filter((t) => !best.has(t) && rare[t]);
+if (stillMissing().length > 0) {
+  const finder = new SudokuStepFinder();
+  const singlesSolver = new SudokuSolver();
+  for (const puzzle of puzzles) {
+    if (stillMissing().length === 0) break;
+    const s = new Sudoku2();
+    s.setSudoku(puzzle);
+    singlesSolver.setSudoku(s);
+    let st: SolutionStep | null;
+    while ((st = singlesSolver.getHint(s, true)) !== null) singlesSolver.doStep(s, st);
+    if (s.isSolved()) continue;
+    for (const type of stillMissing()) {
+      for (const step of rare[type]!(finder, s.clone())) {
+        if (step.type !== type) continue;
+        const d = describe(step, s);
+        const size = d.key.length + d.fins.length + d.colors.length;
+        const score = size * 3 + d.elim.length * 2;
+        const old = best.get(type);
+        if (old && old.score <= score) continue;
+        best.set(type, {
+          slug: slugOf(type), type, name: SOLUTION_TYPE_INFO[type].stepName, puzzle,
+          values: Array.from(s.values),
+          cands: Array.from({ length: 81 }, (_, i) => {
+            let mask = 0;
+            for (let dd = 1; dd <= 9; dd++) if (s.isCandidate(i, dd)) mask |= 1 << dd;
+            return mask;
+          }),
+          ...d, score,
+        });
+      }
+    }
+  }
 }
 
 // every example is checked against the real solution of its puzzle

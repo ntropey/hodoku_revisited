@@ -10,6 +10,8 @@ import {
   Sudoku2,
   SudokuGenerator,
   SudokuSolver,
+  SudokuStepFinder,
+  type SolutionStep,
   generatePuzzle,
   cellName,
   tables,
@@ -55,8 +57,8 @@ export function fromBank(level: number, seen: readonly number[], rng: Rng = Math
   return { ...info, bankIndex: index };
 }
 
-/** The next logical step for the given board (values and candidate bitmasks, bit d = digit d). */
-export function hint(values: number[], cands: number[], level: HintLevel = 5): HintResult | null {
+/** The board as the solver sees it: values, and only the candidates the player still has. */
+function boardToSudoku(values: number[], cands: number[]): Sudoku2 {
   const s = new Sudoku2();
   s.setSudoku(values.map((v) => (v === 0 ? '.' : String(v))).join(''));
   for (let i = 0; i < 81; i++) {
@@ -65,12 +67,10 @@ export function hint(values: number[], cands: number[], level: HintLevel = 5): H
       if (s.isCandidate(i, d) && (cands[i] & (1 << d)) === 0) s.setCandidate(i, d, false);
     }
   }
-  const before = s.clone();
-  const solver = new SudokuSolver();
-  solver.setSudoku(s);
-  const configs = defaultSolverSteps().map((c) => ({ ...c, enabled: c.enabled && c.level <= level }));
-  const step = solver.getHint(level === 0, configs);
-  if (step === null || step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') return null;
+  return s;
+}
+
+function toHintResult(step: SolutionStep, before: Sudoku2): HintResult {
   const name = SOLUTION_TYPE_INFO[step.type].stepName;
   const marks = describeStep(step, before);
   const where = (list: { cell: number }[]) => [...new Set(list.map((x) => cellName(x.cell)))].join(', ');
@@ -91,6 +91,77 @@ export function hint(values: number[], cands: number[], level: HintLevel = 5): H
     marks,
     notation: marks.chains.map((c) => chainNotation(c)),
   };
+}
+
+/** The next logical step for the given board (values and candidate bitmasks, bit d = digit d). */
+export function hint(values: number[], cands: number[], level: HintLevel = 5): HintResult | null {
+  const s = boardToSudoku(values, cands);
+  const before = s.clone();
+  const solver = new SudokuSolver();
+  solver.setSudoku(s);
+  const configs = defaultSolverSteps().map((c) => ({ ...c, enabled: c.enabled && c.level <= level }));
+  const step = solver.getHint(level === 0, configs);
+  if (step === null || step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') return null;
+  return toHintResult(step, before);
+}
+
+/**
+ * Every step that is available right now ("find all steps"), grouped by technique and sorted from
+ * easy to hard. Techniques above `level` are skipped (0 = singles only); at most `perType` steps are
+ * returned per technique and `total` tells how many there are.
+ */
+export function allHints(
+  values: number[],
+  cands: number[],
+  level: HintLevel = 5,
+  perType = 12,
+): { results: HintResult[]; total: Record<string, number> } {
+  const s = boardToSudoku(values, cands);
+  const finder = new SudokuStepFinder();
+  const steps: SolutionStep[] = [];
+  const run = (minLevel: number, find: () => SolutionStep[]) => {
+    if (level >= minLevel) steps.push(...find());
+  };
+  const isSingle = (st: SolutionStep) => st.type === 'NAKED_SINGLE' || st.type === 'HIDDEN_SINGLE' || st.type === 'FULL_HOUSE';
+  // singles: Full Houses are Naked Singles, too; the subset searches contain the singles again
+  run(0, () => finder.findAllFullHouses(s.clone()));
+  run(0, () => finder.findAllNakedSingles(s.clone()));
+  run(0, () => finder.findAllHiddenSingles(s.clone()));
+  run(1, () => finder.findAllLockedCandidates(s.clone()));
+  run(1, () => finder.findAllNakedXle(s.clone()).filter((st) => !isSingle(st)));
+  run(1, () => finder.findAllHiddenXle(s.clone()).filter((st) => !isSingle(st)));
+  run(3, () => finder.getAllFishes(s.clone(), 2, 4, 5, 2, -1, 0));
+  run(3, () => finder.findAllSkyScrapers(s.clone()));
+  run(3, () => finder.findAllTwoStringKites(s.clone()));
+  run(3, () => finder.findAllEmptyRectangles(s.clone()));
+  run(3, () => finder.getAllWings(s.clone()));
+  run(3, () => finder.getAllUniqueness(s.clone()));
+  run(3, () => finder.findAllSimpleColors(s.clone()));
+  run(3, () => finder.findAllMultiColors(s.clone()));
+  run(3, () => finder.getAllChains(s.clone()));
+  run(4, () => finder.getAllSueDeCoqs(s.clone()));
+  run(4, () => finder.getAllAlses(s.clone(), true, true, true));
+  run(4, () => finder.getAllDeathBlossoms(s.clone()));
+  run(4, () => finder.getAllNiceLoops(s.clone()));
+  run(4, () => finder.getAllGroupedNiceLoops(s.clone()));
+  run(5, () => finder.getAllForcingChains(s.clone()));
+  run(5, () => finder.getAllForcingNets(s.clone()));
+  // a stable order: by difficulty of the technique, then the order found
+  const order = new Map<string, number>(defaultSolverSteps().map((c, i) => [c.type, i]));
+  const sorted = steps
+    .map((st, i) => ({ st, i }))
+    .sort((a, b) => (order.get(a.st.type) ?? 999) - (order.get(b.st.type) ?? 999) || a.i - b.i)
+    .map((x) => x.st);
+  const total: Record<string, number> = {};
+  const counts: Record<string, number> = {};
+  const results: HintResult[] = [];
+  for (const st of sorted) {
+    const name = SOLUTION_TYPE_INFO[st.type].stepName;
+    total[name] = (total[name] ?? 0) + 1;
+    if ((counts[name] = (counts[name] ?? 0) + 1) > perType) continue;
+    results.push(toHintResult(st, s));
+  }
+  return { results, total };
 }
 
 export const PEERS: readonly (readonly number[])[] = tables.BUDDIES.map((b) => [...b.values()]);
