@@ -2,11 +2,13 @@
  * Hodoku Revisited. GPL-3.0-or-later; see LICENSE.
  * Static site generator: no dependencies. Run `pnpm --filter @hodoku/app build` first to include the app under /play/.
  * Set SITE_URL (e.g. https://example.org/) to also write sitemap.xml and robots.txt.
+ * Set SITE_PASSWORD to put a temporary password gate on every page (see gate.mjs); no sitemap is written then.
  */
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { caption, diagram, legend } from './diagram.mjs';
+import { applyGate } from './gate.mjs';
 import { LEVELS, TECHNIQUES } from './techniques.mjs';
 
 const examples = existsSync(new URL('./examples.json', import.meta.url))
@@ -237,7 +239,8 @@ cpSync(join(here, '..', '..', 'app', 'public', 'icon.svg'), join(out, 'icon.svg'
 if (existsSync(appDist)) cpSync(appDist, join(out, 'play'), { recursive: true });
 else console.warn('packages/app/dist not found: the site is built without /play/');
 
-if (siteUrl !== '/') {
+const gated = Boolean(process.env.SITE_PASSWORD);
+if (!gated && siteUrl !== '/') {
   const urls = pages.map(([p]) => p).filter((p) => p !== '404.html').map((p) => siteUrl + p.replace(/index\.html$/, ''));
   if (existsSync(appDist)) urls.push(siteUrl + 'play/');
   writeFileSync(
@@ -246,4 +249,5 @@ if (siteUrl !== '/') {
   );
   writeFileSync(join(out, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${siteUrl}sitemap.xml\n`);
 }
+if (gated) console.log(`password gate added to ${applyGate(out, process.env.SITE_PASSWORD)} pages`);
 console.log(`wrote ${pages.length} pages to ${out}`);

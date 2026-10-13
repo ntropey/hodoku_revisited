@@ -1,8 +1,18 @@
 # Publishes the website (with the app under /play/) to GitHub Pages. Run it by hand once Pages is enabled
 # for the repository (Settings > Pages > Source: GitHub Actions).
+#
+# While the app is in QA the site is behind a temporary password: add a repository secret SITE_PASSWORD
+# (Settings > Secrets and variables > Actions). The gate is soft (see packages/website/src/gate.mjs): it keeps
+# casual visitors and search engines out, it is not real access control. To open the site to everyone, run the
+# workflow with "public" ticked.
 name: Deploy site
 on:
   workflow_dispatch:
+    inputs:
+      public:
+        description: 'Publish without the password gate (and with sitemap)'
+        type: boolean
+        default: false
 permissions:
   contents: read
   pages: write
@@ -27,9 +37,15 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @hodoku/app build
+      - name: Require the password secret unless publishing publicly
+        if: ${{ !inputs.public && env.SITE_PASSWORD == '' }}
+        run: echo "Add the SITE_PASSWORD repository secret, or run with 'public' ticked." && exit 1
+        env:
+          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
       - run: pnpm --filter @hodoku/website build
         env:
           SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          SITE_PASSWORD: ${{ inputs.public && '' || secrets.SITE_PASSWORD }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: packages/website/dist

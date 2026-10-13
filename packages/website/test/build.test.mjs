@@ -42,3 +42,19 @@ test('technique pages with a worked example contain a diagram', () => {
     assert.match(html, /<svg class="dg"/, slug);
   }
 });
+
+test('SITE_PASSWORD adds a gate without leaking the password, and blocks indexing', () => {
+  execFileSync('node', ['src/build.mjs'], { cwd: root, env: { ...process.env, SITE_PASSWORD: 'correct horse battery' } });
+  for (const f of ['index.html', 'techniques/x-wing.html', 'play/index.html']) {
+    const p = join(dist, f);
+    if (!existsSync(p)) continue;
+    const html = readFileSync(p, 'utf8');
+    assert.match(html, /hodoku-gate/, f);
+    assert.match(html, /noindex/, f);
+    assert.ok(!html.includes('correct horse battery'), f);
+  }
+  assert.match(readFileSync(join(dist, 'robots.txt'), 'utf8'), /Disallow: \//);
+  assert.ok(!existsSync(join(dist, 'sitemap.xml')));
+  // restore the normal build for other tests
+  execFileSync('node', ['src/build.mjs'], { cwd: root, env: { ...process.env, SITE_PASSWORD: '', SITE_URL: 'https://example.org/' } });
+});
