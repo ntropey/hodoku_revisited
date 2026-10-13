@@ -7,7 +7,7 @@ Source: HoDoKu 2.2.0 (78 Java files). Sizes: `solver` 22 files / ~15.9k lines,
 
 ```
 packages/
-  core/      pure TypeScript engine, no DOM, no Node APIs. Runs in Electron and in the browser.
+  core/      pure TypeScript engine, no DOM, no Node APIs. Runs in the browser (and Node).
   app/       PWA (React + Vite): installable on phones and desktops, solver in a Web Worker
   website/   static site: docs, downloads, in-browser demo using packages/core
 ```
