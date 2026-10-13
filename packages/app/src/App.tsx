@@ -392,8 +392,20 @@ export function App() {
       )}
 
       <footer>
-        Based on <a href="https://hodoku.sourceforge.net/">HoDoKu</a> by Bernhard Hobiger. Free software (GPL-3.0-or-later),{' '}
-        <a href="https://github.com/ntropey/hodoku_revisited">source</a>. Not affiliated with the original author.
+        Free software (GPL-3.0-or-later) ·{' '}
+        <details className="about">
+          <summary>About and license</summary>
+          <p>
+            Hodoku Revisited is based on <a href="https://hodoku.sourceforge.net/">HoDoKu</a> by Bernhard Hobiger (2008-12).
+            Copyright (C) 2026 Hodoku Revisited contributors. This program comes with ABSOLUTELY NO WARRANTY. It is free
+            software under the GNU General Public License, version 3 or later; you may redistribute it under those terms.
+            Not affiliated with or endorsed by the original author.
+          </p>
+          <p>
+            <a href="https://www.gnu.org/licenses/gpl-3.0.html">License text</a> ·{' '}
+            <a href="https://github.com/ntropey/hodoku_revisited">Source code</a>
+          </p>
+        </details>
       </footer>
     </main>
   );

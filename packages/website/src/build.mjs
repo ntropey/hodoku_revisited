@@ -51,9 +51,7 @@ ${canonical}
 ${body}
 </main>
 <footer>
-  <p>Hodoku Revisited is free software (GPL-3.0-or-later), based on
-  <a href="https://hodoku.sourceforge.net/">HoDoKu</a> by Bernhard Hobiger. Not affiliated with or endorsed by the original author.
-  <a href="${REPO}">Source code</a> · <a href="${root}privacy.html">Privacy</a> · <a href="${root}about.html">License</a></p>
+  <p>Free software (GPL-3.0-or-later) · <a href="${root}about.html">About and license</a> · <a href="${REPO}">Source code</a> · <a href="${root}privacy.html">Privacy</a></p>
 </footer>
 </body>
 </html>
@@ -154,7 +152,7 @@ add(
 <h2>Accuracy</h2>
 <p>The solver was ported technique by technique. Its output is tested against the original program: hundreds of puzzles are solved with HoDoKu 2.2.0, and the new engine must find exactly the same steps, in the same order, with the same score and difficulty rating.</p>
 <h2>License</h2>
-<p>The code is free software under the GNU General Public License, version 3 or later, as the original. You may use, study, change and share it under those terms. The complete source code is at <a href="${REPO}">${REPO}</a>. Changes to the original code are marked in the file headers.</p>
+<p>Hodoku Revisited comes with ABSOLUTELY NO WARRANTY. The code is free software under the GNU General Public License, version 3 or later, as the original. You may use, study, change and share it under those terms. The complete source code is at <a href="${REPO}">${REPO}</a>. Changes to the original code are marked in the file headers.</p>
 <p>Hodoku Revisited is not affiliated with or endorsed by the original author. The technique guides and the user interface are new texts and designs and are not taken from the HoDoKu manual.</p>
 <p>The puzzle generator follows the approach of HoDoKu; thanks to Michael Fowler's generator ideas credited there.</p>`,
   }),

@@ -93,3 +93,7 @@ footer a { color: var(--accent); }
 .allsteps li button { padding: 3px 8px; font-size: 0.8rem; }
 .allsteps summary { cursor: pointer; padding: 2px 0; }
 @media print { .allsteps { display: none; } }
+
+.about { display: inline; }
+.about summary { display: inline; cursor: pointer; color: var(--accent); }
+.about p { margin: 6px 0 0; }
