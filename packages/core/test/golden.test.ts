@@ -68,6 +68,8 @@ const PORTED = new Set<SolutionType>([
   'TURBOT_FISH',
   'X_CHAIN',
   'XY_CHAIN',
+  'BRUTE_FORCE',
+  'GIVE_UP',
   'DISCONTINUOUS_NICE_LOOP',
   'CONTINUOUS_NICE_LOOP',
   'AIC',
@@ -98,7 +100,7 @@ const PORTED = new Set<SolutionType>([
 ]);
 
 /** Puzzles from HoDoKu's own generator, and from the generator of this port, both solved by the Java jar. */
-const FIXTURES = ['./fixtures/golden.jsonl', './fixtures/golden-ts.jsonl'];
+const FIXTURES = ['./fixtures/golden.jsonl', './fixtures/golden-ts.jsonl', './fixtures/golden-hard.jsonl'];
 const golden: Golden[] = FIXTURES.flatMap((f) =>
   readFileSync(new URL(f, import.meta.url), 'utf8')
     .split('\n')
@@ -134,8 +136,10 @@ describe('golden data from HoDoKu 2.2.0', () => {
       if (!allPorted) continue;
 
       fullyPorted++;
-      expect(solver.step(), `extra step in ${g.puzzle}`).toBeNull();
-      expect(sudoku.isSolved()).toBe(true);
+      if (g.steps[g.steps.length - 1]?.type !== 'GIVE_UP') {
+        expect(solver.step(), `extra step in ${g.puzzle}`).toBeNull();
+        expect(sudoku.isSolved()).toBe(true);
+      }
 
       // a full run must agree on result, score and level
       const full = new Sudoku2();

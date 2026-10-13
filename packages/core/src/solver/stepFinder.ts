@@ -17,6 +17,7 @@ import { AlsSolver } from './alsSolver.js';
 import { ChainSolver } from './chainSolver.js';
 import { ColoringSolver } from './coloringSolver.js';
 import { FishSolver } from './fishSolver.js';
+import { BruteForceSolver, GiveUpSolver, IncompleteSolver } from './lastResortSolvers.js';
 import { MiscellaneousSolver } from './miscellaneousSolver.js';
 import { SimpleSolver } from './simpleSolver.js';
 import { SingleDigitPatternSolver } from './singleDigitPatternSolver.js';
@@ -76,7 +77,7 @@ export class SudokuStepFinder {
       return;
     }
     // same order as in the original: the first solver that finds a step wins
-    this.solvers = [this.simpleSolver, new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this), new TablingSolver(this)];
+    this.solvers = [this.simpleSolver, new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this), new TablingSolver(this), new BruteForceSolver(this), new IncompleteSolver(this), new GiveUpSolver(this)];
   }
 
   getSudoku(): Sudoku2 {
