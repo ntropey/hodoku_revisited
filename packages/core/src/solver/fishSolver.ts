@@ -318,7 +318,7 @@ export class FishSolver extends AbstractSolver {
 
     // search in lines first
     const step = this.getFishes(true);
-    if (fishType === MUTANT || step !== null) return step;
+    if (fishType === MUTANT || (!this.searchAll && !this.siamese && step !== null)) return step;
     // then in columns
     return this.getFishes(false) ?? step;
   }
@@ -381,7 +381,7 @@ export class FishSolver extends AbstractSolver {
       // if baseLevel lies between minSize and maxSize -> check the cover units
       if (this.baseLevel >= this.minSize && this.baseLevel <= this.maxSize) {
         const step = this.searchCoverUnits(bEntry.c0, bEntry.c1, bEntry.c2, bEntry.e0, bEntry.e1, bEntry.e2);
-        if (step !== null) return step;
+        if (!this.searchAll && !this.siamese && step !== null) return step;
       }
       // and on to the next level
       if (this.baseLevel < this.maxSize) {
@@ -531,7 +531,7 @@ export class FishSolver extends AbstractSolver {
                 [cEntry.k0, cEntry.k1, cEntry.k2],
                 [endo0, endo1, endo2],
               );
-              if (step !== null) return step;
+              if (step !== null && !this.searchAll) return step;
             }
           }
         }
@@ -628,7 +628,7 @@ export class FishSolver extends AbstractSolver {
           for (const fin of finSet.values()) step.addChainObject(tabling.getKrakenChain(fin, candidate, endIndex, candidate).clone());
           tabling.adjustChains(step);
           const added = this.addKrakenStep(step);
-          if (added !== null) return added;
+          if (added !== null && !this.searchAll) return added;
         }
       }
     }
@@ -663,7 +663,7 @@ export class FishSolver extends AbstractSolver {
             }
             tabling.adjustChains(step);
             const added = this.addKrakenStep(step);
-            if (added !== null) return added;
+            if (added !== null && !this.searchAll) return added;
           }
         }
       }
@@ -673,8 +673,9 @@ export class FishSolver extends AbstractSolver {
 
   /** Add a Kraken Fish to `steps` unless an equivalent smaller one exists already. */
   private addKrakenStep(step: SolutionStep): SolutionStep | null {
-    // like the original, the key sorts the candidates to delete and removes doubles
-    const del = step.getCandidateKey() + ' ' + step.values[0];
+    // like the original, the key (which includes the step name, so Type 1 and Type 2 are kept apart)
+    // sorts the candidates to delete and removes doubles
+    const del = step.getCandidateKey(true) + ' ' + step.values[0];
     const oldIndex = this.deletesMap.get(del);
     const old = oldIndex !== undefined ? this.steps[oldIndex] : null;
     if (
@@ -687,6 +688,84 @@ export class FishSolver extends AbstractSolver {
       return step;
     }
     return null;
+  }
+
+  /**
+   * If all fish are searched the step is added to `steps` (with `onlyOneFishPerStep`: only the
+   * smallest fish for every set of eliminations) and null is returned; otherwise the step is the result.
+   */
+  private addFishStep(step: SolutionStep): SolutionStep | null {
+    if (!this.searchAll && !this.siamese) return step;
+    if (this.finder.options.onlyOneFishPerStep) {
+      const del = step.getCandidateKey();
+      const oldIndex = this.deletesMap.get(del);
+      const old = oldIndex !== undefined ? this.steps[oldIndex] : null;
+      if (old === null || compareTypes(step.type, old.type) < 0) {
+        if (oldIndex !== undefined) {
+          this.steps[oldIndex] = step;
+        } else {
+          this.steps.push(step);
+          this.deletesMap.set(del, this.steps.length - 1);
+        }
+      }
+    } else {
+      this.steps.push(step);
+    }
+    return null;
+  }
+
+  /**
+   * All fish with `minSize` to `maxSize` base units of the categories up to `type` (0 = basic, 1 = also
+   * Franken, 2 = also Mutant), with at most `maxFins` fins and `maxEndoFins` endo fins, for one
+   * candidate (`forCandidate` 1-9) or all (-1). Sorted.
+   */
+  getAllFishes(minSize: number, maxSize: number, maxFins: number, maxEndoFins: number, forCandidate: number, type: number): SolutionStep[] {
+    return this.searchAllFishes(false, minSize, maxSize, maxFins, maxEndoFins, forCandidate, type);
+  }
+
+  /** All Kraken fish (and the plain fish found on the way), see {@link getAllFishes}. Sorted. */
+  getAllKrakenFishes(minSize: number, maxSize: number, maxFins: number, maxEndoFins: number, forCandidate: number, type: number): SolutionStep[] {
+    return this.searchAllFishes(true, minSize, maxSize, maxFins, maxEndoFins, forCandidate, type);
+  }
+
+  private searchAllFishes(
+    kraken: boolean,
+    minSize: number,
+    maxSize: number,
+    maxFins: number,
+    maxEndoFins: number,
+    forCandidate: number,
+    type: number,
+  ): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    const options = this.finder.options;
+    if (options.allowDualsAndSiamese) throw new Error('allowDualsAndSiamese is not supported yet');
+    const oldMaxFins = options.maxFins;
+    const oldMaxEndoFins = options.maxEndoFins;
+    const oldSteps = this.steps;
+    options.maxFins = maxFins;
+    options.maxEndoFins = maxEndoFins;
+    this.steps = [];
+    this.kraken = kraken;
+    this.searchAll = true;
+    this.fishType = UNDEFINED;
+    try {
+      if (kraken) {
+        this.tablingSolver = this.finder.getTablingSolver();
+        this.tablingSolver.initForKrakenSearch();
+      }
+      for (let cand = 1; cand <= 9; cand++) {
+        if (forCandidate !== -1 && forCandidate !== cand) continue;
+        this.getFishesForCandidate(cand, minSize, maxSize, true, true, false, true, type);
+      }
+      return this.steps.sort((a, b) => a.compareTo(b));
+    } finally {
+      this.steps = oldSteps;
+      options.maxFins = oldMaxFins;
+      options.maxEndoFins = oldMaxEndoFins;
+      this.kraken = false;
+      this.searchAll = false;
+    }
   }
 
   /**
@@ -789,8 +868,8 @@ export class FishSolver extends AbstractSolver {
       this.cachedSteps.push(step.clone());
       return null;
     }
-    void kraken; // Kraken steps are returned like all others (no step list is kept here)
-    return step;
+    // Kraken steps are returned in any case; all others are listed when all fish are searched
+    return kraken ? step : this.addFishStep(step);
   }
 
   /**

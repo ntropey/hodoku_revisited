@@ -368,6 +368,39 @@ export class SudokuStepFinder {
     return this.withSudoku(sudoku, () => this.alsSolver.getAllDeathBlossoms());
   }
 
+  /** All Nice Loops and AICs of `sudoku`. */
+  getAllNiceLoops(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.getTablingSolver().getAllNiceLoops());
+  }
+
+  /** All Grouped Nice Loops and AICs of `sudoku`. */
+  getAllGroupedNiceLoops(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.getTablingSolver().getAllGroupedNiceLoops());
+  }
+
+  /** All Forcing Chains of `sudoku`. */
+  getAllForcingChains(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.getTablingSolver().getAllForcingChains());
+  }
+
+  /** All Forcing Nets of `sudoku`. */
+  getAllForcingNets(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.getTablingSolver().getAllForcingNets());
+  }
+
+  /**
+   * All fish of `sudoku` with `minSize`..`maxSize` base units, up to `maxFins` fins and `maxEndoFins`
+   * endo fins, for one candidate (`forCandidate`) or all (-1); `type`: 0 basic, 1 + Franken, 2 + Mutant.
+   */
+  getAllFishes(sudoku: Sudoku2, minSize: number, maxSize: number, maxFins: number, maxEndoFins: number, forCandidate: number, type: number): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.fishSolver.getAllFishes(minSize, maxSize, maxFins, maxEndoFins, forCandidate, type));
+  }
+
+  /** All Kraken fish of `sudoku` (see {@link getAllFishes} for the parameters). */
+  getAllKrakenFishes(sudoku: Sudoku2, minSize: number, maxSize: number, maxFins: number, maxEndoFins: number, forCandidate: number, type: number): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.fishSolver.getAllKrakenFishes(minSize, maxSize, maxFins, maxEndoFins, forCandidate, type));
+  }
+
   /** All Simple Colors steps of `sudoku`. */
   findAllSimpleColors(sudoku: Sudoku2): SolutionStep[] {
     return this.withSudoku(sudoku, () => this.coloringSolver.findAllSimpleColors());

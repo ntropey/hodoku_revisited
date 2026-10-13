@@ -51,7 +51,7 @@ rating.
 1. **M0** Repo, license files, CI. *(done)*
 2. **M1** Model and simple solver with golden tests. *(done)*
 3. **M2** All solvers of the default configuration. *(done)*
-4. **M3** Generator, last-resort solvers, remaining formats. *(done, except Kraken fish, Template Set/Delete and "find all steps"; see Status)*
+4. **M3** Generator, last-resort solvers, remaining formats, Kraken fish, templates, "find all steps". *(done; see Status)*
 5. **M4** PWA (React + Vite): board, hints, candidates, undo, settings, print, import/export. *(first version done, see below)*
    The solver runs in a Web Worker; a service worker makes it work offline. It installs as an app
    on phones and as a desktop app on Windows (Chrome/Edge) without an installer or code signing.
@@ -94,13 +94,29 @@ solved identically including score and difficulty level; 404 puzzles from the Ja
   and gsf's taxonomy lines. Output via `Sudoku2.getSudoku(mode)`: library, clues only, values only,
   PM grid and the formatted variants. Unlike the original, input with other than 81 cells is rejected.
 
+Update after M3 (all verified against HoDoKu 2.2.0):
+- Template Set/Delete: the 46,656 templates are computed on first use (the original reads them from a
+  data file of unclear origin). Checked with a Java run that had only singles, templates and brute
+  force enabled (`Golden solve TYPE,...`, `golden-templates.jsonl`).
+- Kraken Fish type 1 and 2: 1,079 Kraken steps match (`golden-kraken.jsonl`, run with only singles,
+  Kraken Fish and brute force enabled).
+- "Find all steps": `SudokuStepFinder.findAllFullHouses/NakedSingles/HiddenSingles/NakedXle/HiddenXle/
+  LockedCandidates(1,2)/EmptyRectangles/SkyScrapers/TwoStringKites/SimpleColors/MultiColors`,
+  `getAllUniqueness/Wings/Chains/Alses/DeathBlossoms/SueDeCoqs/NiceLoops/GroupedNiceLoops/ForcingChains/
+  ForcingNets/Templates/Fishes/KrakenFishes` (`golden-all.jsonl.gz`: 56 states of 30 puzzles, every
+  technique; about 66,000 steps in the default run and 36,000 more Kraken steps with `GOLDEN_FULL=1`).
+  Same steps as the original. The order of steps that rank equal can differ for ALS, forcing chains/nets
+  and Kraken fish: the comparators of the original are not consistent orderings (they return 1 for
+  equal index sums in both directions), so such orders depend on the details of Java's sort, and the
+  test compares those lists as sets.
+- The original's Kraken search reads stale array entries (a fish with more cover units than base
+  units, bounds `numberOfCoverUnits - baseLevel + coverLevel`), so its all-steps result depends on what
+  ran before. The port has the same arrays and the same bounds; the test replays the original harness
+  sequence to get identical results.
+
 Known gaps:
-- Not ported: Kraken Fish, Template Set/Delete, Siamese/dual variants (`allowDualsAndSiamese`),
-  ALS nodes in tabling chains (`allowAlsInTablingChains`). Options that need them throw instead
-  of giving wrong answers.
-- "Find all steps" (the Swing search dialog) is only available for Naked and Hidden Singles. The
-  other `getAll*` methods are UI features; they will be added when the app needs them, together
-  with golden data from an extended `Golden.java`.
+- Not ported: Siamese/dual variants (`allowDualsAndSiamese`), ALS nodes in tabling chains
+  (`allowAlsInTablingChains`). Options that need them throw instead of giving wrong answers.
 - Export of a PM grid or library string *with a step* (`PM_GRID_WITH_STEP`, step type in the library
   format) is not ported.
 - The golden corpus has no Death Blossom, Simple Colors Wrap or Franken X-Wing steps

@@ -305,6 +305,54 @@ export class TablingSolver extends AbstractSolver {
     return this.globalStep.chains[0];
   }
 
+  /** All Nice Loops and AICs (without group nodes), sorted. */
+  getAllNiceLoops(): SolutionStep[] {
+    this.initialize();
+    this.sudoku = this.finder.getSudoku();
+    this.checkAlsOption();
+    this.steps = [];
+    this.withGroupNodes = false;
+    this.doGetNiceLoops();
+    return this.steps.sort((a, b) => a.compareTo(b));
+  }
+
+  /** All Grouped Nice Loops and Grouped AICs, sorted. */
+  getAllGroupedNiceLoops(): SolutionStep[] {
+    this.initialize();
+    this.sudoku = this.finder.getSudoku();
+    this.checkAlsOption();
+    this.steps = [];
+    this.withGroupNodes = true;
+    this.onlyGroupedNiceLoops = true;
+    this.doGetNiceLoops();
+    this.onlyGroupedNiceLoops = false;
+    return this.steps.sort((a, b) => a.compareTo(b));
+  }
+
+  /** All Forcing Chains, sorted. */
+  getAllForcingChains(): SolutionStep[] {
+    return this.getAllForcing(true);
+  }
+
+  /** All Forcing Nets, sorted. */
+  getAllForcingNets(): SolutionStep[] {
+    return this.getAllForcing(false);
+  }
+
+  private getAllForcing(chainsOnly: boolean): SolutionStep[] {
+    this.initialize();
+    this.sudoku = this.finder.getSudoku();
+    this.checkAlsOption();
+    const old = this.steps;
+    this.steps = [];
+    this.withGroupNodes = true;
+    this.chainsOnly = chainsOnly;
+    this.doGetForcingChains();
+    const result = this.steps.sort(compareTablingSteps);
+    this.steps = old;
+    return result;
+  }
+
   /** The shortest Nice Loop / AIC in the grid. */
   private getNiceLoops(): SolutionStep | null {
     this.initialize();

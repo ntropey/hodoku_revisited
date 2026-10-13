@@ -46,6 +46,19 @@ export class SudokuSolver {
     this.stepFinder.setSudoku(sudoku);
   }
 
+  /** The step finder of this solver: it has the "find all steps" functions. */
+  getStepFinder(): SudokuStepFinder {
+    return this.stepFinder;
+  }
+
+  /** Execute `step` on `sudoku` (which does not have to be the solver's own sudoku). */
+  doStep(sudoku: Sudoku2, step: SolutionStep): void {
+    const old = this.sudoku;
+    this.stepFinder.setSudoku(sudoku);
+    this.stepFinder.doStep(step);
+    if (old) this.stepFinder.setSudoku(old);
+  }
+
   getSudoku(): Sudoku2 {
     return this.sudoku;
   }
