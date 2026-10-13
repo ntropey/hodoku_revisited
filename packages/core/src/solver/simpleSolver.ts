@@ -115,7 +115,8 @@ export class SimpleSolver extends AbstractSolver {
    * Naked Single, so the Naked Single queue is traversed and the other
    * candidates in the unit are checked.
    */
-  private findFullHouse(): SolutionStep | null {
+  private findFullHouse(all = false): SolutionStep | null {
+    let found: SolutionStep | null = null;
     const free = this.sudoku.free;
     const nsQueue = this.sudoku.nsQueue;
     let queueIndex = nsQueue.getFirstIndex();
@@ -136,13 +137,67 @@ export class SimpleSolver extends AbstractSolver {
             const step = new SolutionStep('FULL_HOUSE');
             step.addValue(value);
             step.addIndex(index);
-            return step;
+            if (!all) return step;
+            this.steps.push(step);
+            found = step;
+            break; // could be a Full House in more than one unit -> record only once
           }
         }
       }
       queueIndex = nsQueue.getNextIndex();
     }
-    return null;
+    return found;
+  }
+
+  /** All Full Houses (sorted), without changing the step list of a running search. */
+  findAllFullHouses(): SolutionStep[] {
+    return this.collectAll(() => {
+      this.findFullHouse(true);
+    });
+  }
+
+  /** All Naked Singles, Naked and Locked Subsets (sorted). */
+  findAllNakedXle(): SolutionStep[] {
+    return this.collectAll(() => {
+      this.steps.push(...this.findAllNakedSingles());
+      for (let i = 2; i <= 4; i++) {
+        this.findNakedXleInEntity(BLOCKS, i, false, false, false);
+        this.findNakedXleInEntity(LINES, i, false, false, false);
+        this.findNakedXleInEntity(COLS, i, false, false, false);
+      }
+    });
+  }
+
+  /** All Hidden Singles and Hidden Subsets (sorted). */
+  findAllHiddenXle(): SolutionStep[] {
+    return this.collectAll(() => {
+      this.steps.push(...this.findAllHiddenSingles());
+      for (let i = 2; i <= 4; i++) {
+        this.findHiddenXleInEntity(2 * UNITS, BLOCKS, i, false);
+        this.findHiddenXleInEntity(0, LINES, i, false);
+        this.findHiddenXleInEntity(UNITS, COLS, i, false);
+      }
+    });
+  }
+
+  /** All Locked Candidates steps, type 1 and 2 (sorted). */
+  findAllLockedCandidates(): SolutionStep[] {
+    return this.collectAll(() => {
+      this.findLockedCandidatesInEntityN(18, BLOCKS, false);
+      this.findLockedCandidatesInEntityN(0, LINES, false);
+      this.findLockedCandidatesInEntityN(9, COLS, false);
+    });
+  }
+
+  /** Run `search` with an empty step list, return the sorted result and restore the old list. */
+  private collectAll(search: () => void): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    const old = this.steps;
+    this.steps = [];
+    search();
+    const result = this.steps.sort((a, b) => a.compareTo(b));
+    this.steps = old;
+    return result;
   }
 
   /** All Naked Singles in the queue (the queue is not changed). */
@@ -462,7 +517,7 @@ export class SimpleSolver extends AbstractSolver {
    * has additional candidates. With `constraintBase == 18` (search in blocks)
    * Type 1 is possible, otherwise Type 2.
    */
-  private findLockedCandidatesInEntityN(constraintBase: number, indices: Units): SolutionStep | null {
+  private findLockedCandidatesInEntityN(constraintBase: number, indices: Units, onlyOne = true): SolutionStep | null {
     const free = this.sudoku.free;
     const sameConstraint = this.sameConstraint;
     const constraint = this.constraint;
@@ -494,16 +549,16 @@ export class SimpleSolver extends AbstractSolver {
           if (sameConstraint[0] && free[constraint[0]][cand] > unitFree) aktConstraint = constraint[0];
           else if (sameConstraint[1] && free[constraint[1]][cand] > unitFree) aktConstraint = constraint[1];
           else continue; // no LC1 possible
-          return this.createLockedCandidatesStep(
-            'LOCKED_CANDIDATES_1',
-            cand,
-            skipConstraint,
-            ALL_UNITS[aktConstraint],
-          );
+          const step = this.createLockedCandidatesStep('LOCKED_CANDIDATES_1', cand, skipConstraint, ALL_UNITS[aktConstraint]);
+          if (onlyOne) return step;
+          this.steps.push(step);
+          continue;
         }
         // searching lines or columns -> Type 2, eliminations in the block only
         if (sameConstraint[2] && free[constraint[2]][cand] > unitFree) {
-          return this.createLockedCandidatesStep('LOCKED_CANDIDATES_2', cand, skipConstraint, ALL_UNITS[constraint[2]]);
+          const step = this.createLockedCandidatesStep('LOCKED_CANDIDATES_2', cand, skipConstraint, ALL_UNITS[constraint[2]]);
+          if (onlyOne) return step;
+          this.steps.push(step);
         }
       }
     }

@@ -60,6 +60,8 @@ export class MiscellaneousSolver extends AbstractSolver {
   private readonly tmpSet = new SudokuSet();
   /** The step that is being assembled. */
   private globalStep = new SolutionStep('SUE_DE_COQ');
+  /** All steps found by a search for all steps */
+  private steps: SolutionStep[] = [];
 
   constructor(finder: SudokuStepFinder) {
     super(finder);
@@ -68,7 +70,7 @@ export class MiscellaneousSolver extends AbstractSolver {
   getStep(type: SolutionType): SolutionStep | null {
     this.sudoku = this.finder.getSudoku();
     if (type === 'SUE_DE_COQ') {
-      return this.getSueDeCoqInt(LINE_TEMPLATES, BLOCK_TEMPLATES) ?? this.getSueDeCoqInt(COL_TEMPLATES, BLOCK_TEMPLATES);
+      return this.getSueDeCoqInt(LINE_TEMPLATES, BLOCK_TEMPLATES, true) ?? this.getSueDeCoqInt(COL_TEMPLATES, BLOCK_TEMPLATES, true);
     }
     return null;
   }
@@ -82,8 +84,20 @@ export class MiscellaneousSolver extends AbstractSolver {
     return false;
   }
 
+  /** All Sue de Coq steps (not sorted, like in the original). */
+  getAllSueDeCoqs(): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    const old = this.steps;
+    this.steps = [];
+    this.getSueDeCoqInt(LINE_TEMPLATES, BLOCK_TEMPLATES, false);
+    this.getSueDeCoqInt(COL_TEMPLATES, BLOCK_TEMPLATES, false);
+    const result = this.steps;
+    this.steps = old;
+    return result;
+  }
+
   /** Builds all possible intersections of `blocks` and `nonBlocks` (all lines or all columns) and checks each. */
-  private getSueDeCoqInt(nonBlocks: readonly SudokuSet[], blocks: readonly SudokuSet[]): SolutionStep | null {
+  private getSueDeCoqInt(nonBlocks: readonly SudokuSet[], blocks: readonly SudokuSet[], onlyOne: boolean): SolutionStep | null {
     const emptyCells = this.finder.getEmptyCells();
     for (const nonBlock of nonBlocks) {
       this.nonBlockSet.setAnd(nonBlock, emptyCells);
@@ -92,8 +106,8 @@ export class MiscellaneousSolver extends AbstractSolver {
         this.intersectionSet.set(this.nonBlockSet);
         this.intersectionSet.and(this.blockSet);
         if (this.intersectionSet.size() < 2) continue;
-        const step = this.checkIntersection();
-        if (step !== null) return step;
+        const step = this.checkIntersection(onlyOne);
+        if (onlyOne && step !== null) return step;
       }
     }
     return null;
@@ -103,7 +117,7 @@ export class MiscellaneousSolver extends AbstractSolver {
    * Checks all combinations of two or three cells in the intersection. If a
    * combination holds at least 2 more candidates than cells, a Sue de Coq is possible.
    */
-  private checkIntersection(): SolutionStep | null {
+  private checkIntersection(onlyOne: boolean): SolutionStep | null {
     const sudoku = this.sudoku;
     const max = this.intersectionSet.size();
     const actSet = this.intersectionActSet;
@@ -119,8 +133,8 @@ export class MiscellaneousSolver extends AbstractSolver {
         // two cells in the intersection
         let nPlus = ANZ_VALUES[cand2] - 2;
         if (nPlus >= 2) {
-          const step = this.checkHousesFirst(nPlus, cand2);
-          if (step !== null) return step;
+          const step = this.checkHousesFirst(nPlus, cand2, onlyOne);
+          if (onlyOne && step !== null) return step;
         }
         // and the third cell
         for (let i3 = i2 + 1; i3 < max; i3++) {
@@ -129,8 +143,8 @@ export class MiscellaneousSolver extends AbstractSolver {
           nPlus = ANZ_VALUES[cand3] - 3;
           if (nPlus >= 2) {
             actSet.add(index3);
-            const step = this.checkHousesFirst(nPlus, cand3);
-            if (step !== null) return step;
+            const step = this.checkHousesFirst(nPlus, cand3, onlyOne);
+            if (onlyOne && step !== null) return step;
             actSet.remove(index3);
           }
         }
@@ -142,11 +156,11 @@ export class MiscellaneousSolver extends AbstractSolver {
   }
 
   /** All cells of the row/column outside the intersection are valid; delegate to the combination search. */
-  private checkHousesFirst(nPlus: number, cand: number): SolutionStep | null {
+  private checkHousesFirst(nPlus: number, cand: number, onlyOne: boolean): SolutionStep | null {
     this.intersectionActCandSet = cand;
     this.nonBlockSourceSet.set(this.nonBlockSet);
     this.nonBlockSourceSet.andNot(this.intersectionActSet);
-    return this.checkHouses(nPlus, this.nonBlockSourceSet, MAX_MASK, false);
+    return this.checkHouses(nPlus, this.nonBlockSourceSet, MAX_MASK, onlyOne, false);
   }
 
   /**
@@ -158,7 +172,13 @@ export class MiscellaneousSolver extends AbstractSolver {
    * the intersection for the block. Then the second run builds sets of cells for the block;
    * for every combination that meets the criteria, eliminations are looked for.
    */
-  private checkHouses(nPlus: number, sourceSet: SudokuSet, allowedCandSet: number, secondCheck: boolean): SolutionStep | null {
+  private checkHouses(
+    nPlus: number,
+    sourceSet: SudokuSet,
+    allowedCandSet: number,
+    onlyOne: boolean,
+    secondCheck: boolean,
+  ): SolutionStep | null {
     if (sourceSet.isEmpty()) return null;
     const sudoku = this.sudoku;
     const stack = secondCheck ? this.stack2 : this.stack1;
@@ -208,9 +228,10 @@ export class MiscellaneousSolver extends AbstractSolver {
               nPlus - (this.nonBlockActSet.size() - anzExtra),
               this.blockSourceSet,
               this.blockAllowedCandSet,
+              onlyOne,
               true,
             );
-            if (step !== null) return step;
+            if (onlyOne && step !== null) return step;
           }
         } else if (anzContained > 0 && stack[level].indices.size() - anzExtra === nPlus) {
           // the number of candidates has to be exactly nPlus: it is a Sue de Coq. Can anything be eliminated?
@@ -246,7 +267,8 @@ export class MiscellaneousSolver extends AbstractSolver {
             step.addAls(this.intersectionActSet, this.intersectionActCandSet);
             step.addAls(this.blockActSet, this.blockActCandSet);
             step.addAls(this.nonBlockActSet, this.nonBlockActCandSet);
-            return step;
+            if (onlyOne) return step;
+            this.steps.push(step);
           }
         }
       }

@@ -69,6 +69,8 @@ const ER_COLS: number[][] = [];
 
 /** Skyscraper, 2-String Kite and Empty Rectangle. */
 export class SingleDigitPatternSolver extends AbstractSolver {
+  /** The list with all newly found steps (used when searching for all steps). */
+  private steps: SolutionStep[] = [];
   private readonly blockCands = new SudokuSet();
   private readonly tmpSet = new SudokuSet();
   /** For all units with exactly two candidates the indices of the two cells. */
@@ -86,10 +88,10 @@ export class SingleDigitPatternSolver extends AbstractSolver {
         return this.findSkyscraper(true, true) ?? this.findSkyscraper(false, true);
       case 'TWO_STRING_KITE':
         this.requireNoDuals();
-        return this.findTwoStringKite();
+        return this.findTwoStringKite(true);
       case 'EMPTY_RECTANGLE':
         this.requireNoDuals();
-        return this.findEmptyRectangles();
+        return this.findEmptyRectangles(true);
       default:
         return null;
     }
@@ -121,12 +123,46 @@ export class SingleDigitPatternSolver extends AbstractSolver {
    * one column (the "ER"), plus a conjugate pair in another line/column that
    * points into the ER. Candidates are searched in ascending order.
    */
-  private findEmptyRectangles(): SolutionStep | null {
+  private findEmptyRectangles(onlyOne = true): SolutionStep | null {
     for (let cand = 1; cand <= 9; cand++) {
-      const step = this.findEmptyRectanglesForCandidate(cand);
-      if (step !== null) return step;
+      const step = this.findEmptyRectanglesForCandidate(cand, onlyOne);
+      if (step !== null && onlyOne) return step;
     }
     return null;
+  }
+
+  /** All Empty Rectangles (sorted). */
+  findAllEmptyRectangles(): SolutionStep[] {
+    return this.collectAll(() => {
+      this.findEmptyRectangles(false);
+    });
+  }
+
+  /** All Skyscrapers (sorted). */
+  findAllSkyscrapers(): SolutionStep[] {
+    return this.collectAll(() => {
+      this.findSkyscraper(true, false);
+      this.findSkyscraper(false, false);
+    });
+  }
+
+  /** All 2-String Kites (sorted). */
+  findAllTwoStringKites(): SolutionStep[] {
+    return this.collectAll(() => {
+      this.findTwoStringKite(false);
+    });
+  }
+
+  /** Run `search` with an empty step list, return the sorted result and restore the old list. */
+  private collectAll(search: () => void): SolutionStep[] {
+    this.requireNoDuals();
+    this.sudoku = this.finder.getSudoku();
+    const old = this.steps;
+    this.steps = [];
+    search();
+    const result = this.steps.sort((a, b) => a.compareTo(b));
+    this.steps = old;
+    return result;
   }
 
   /**
@@ -135,7 +171,7 @@ export class SingleDigitPatternSolver extends AbstractSolver {
    * (without the crossing point) and at least one of them has to hold at least
    * two candidates. Then look for a conjugate pair that eliminates something.
    */
-  private findEmptyRectanglesForCandidate(cand: number): SolutionStep | null {
+  private findEmptyRectanglesForCandidate(cand: number, onlyOne: boolean): SolutionStep | null {
     const free = this.sudoku.free;
     const blockCands = this.blockCands;
     const tmpSet = this.tmpSet;
@@ -166,10 +202,10 @@ export class SingleDigitPatternSolver extends AbstractSolver {
           continue;
         }
         // empty rectangle found: try all cells in the ER line / ER column
-        let step = this.checkEmptyRectangle(cand, i, blockCands, LINES[erLine], LINE_TEMPLATES, COL_TEMPLATES, erCol, false);
-        if (step !== null) return step;
-        step = this.checkEmptyRectangle(cand, i, blockCands, COLS[erCol], COL_TEMPLATES, LINE_TEMPLATES, erLine, true);
-        if (step !== null) return step;
+        let step = this.checkEmptyRectangle(cand, i, blockCands, LINES[erLine], LINE_TEMPLATES, COL_TEMPLATES, erCol, false, onlyOne);
+        if (onlyOne && step !== null) return step;
+        step = this.checkEmptyRectangle(cand, i, blockCands, COLS[erCol], COL_TEMPLATES, LINE_TEMPLATES, erLine, true, onlyOne);
+        if (onlyOne && step !== null) return step;
       }
     }
     return null;
@@ -193,6 +229,7 @@ export class SingleDigitPatternSolver extends AbstractSolver {
     colTemplates: readonly SudokuSet[],
     firstCol: number,
     lineColReversed: boolean,
+    onlyOne: boolean,
   ): SolutionStep | null {
     const tmpSet = this.tmpSet;
     const candidates = this.finder.getCandidates();
@@ -226,7 +263,9 @@ export class SingleDigitPatternSolver extends AbstractSolver {
           step.addIndex(index2);
           for (const k of blockCands) step.addFin(k, cand);
           step.addCandidateToDelete(indexDel, cand);
-          return step;
+          if (onlyOne) return step;
+          this.steps.push(step);
+          break; // only one elimination per conjugate pair
         }
       }
     }
@@ -296,6 +335,7 @@ export class SingleDigitPatternSolver extends AbstractSolver {
           }
           for (const k of this.firstUnit) step.addCandidateToDelete(k, cand);
           if (onlyOne) return step;
+          this.steps.push(step);
         }
       }
     }
@@ -308,7 +348,7 @@ export class SingleDigitPatternSolver extends AbstractSolver {
    * `only2Indices` rows are swapped in place while searching, exactly like in
    * the original (later combinations see the swapped order).
    */
-  private findTwoStringKite(): SolutionStep | null {
+  private findTwoStringKite(onlyOne: boolean): SolutionStep | null {
     const free = this.sudoku.free;
     const only2Indices = this.only2Indices;
     for (let cand = 1; cand <= 9; cand++) {
@@ -360,7 +400,8 @@ export class SingleDigitPatternSolver extends AbstractSolver {
             // the candidates in the connecting block are fins (painted in a different color)
             step.addFin(a[0], cand);
             step.addFin(b[0], cand);
-            return step;
+            if (onlyOne) return step;
+            this.steps.push(step);
           }
         }
       }

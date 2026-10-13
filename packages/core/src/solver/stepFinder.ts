@@ -41,6 +41,15 @@ export class SudokuStepFinder {
   private readonly solvers: AbstractSolver[];
   private readonly simpleSolver: SimpleSolver;
   private tablingSolver: TablingSolver | null = null;
+  private singleDigitPatternSolver!: SingleDigitPatternSolver;
+  private fishSolver!: FishSolver;
+  private uniquenessSolver!: UniquenessSolver;
+  private wingSolver!: WingSolver;
+  private coloringSolver!: ColoringSolver;
+  private chainSolver!: ChainSolver;
+  private alsSolver!: AlsSolver;
+  private miscellaneousSolver!: MiscellaneousSolver;
+  private templateSolver!: TemplateSolver;
 
   // Data used by more than one solver; computed lazily, recomputed after every change.
   private readonly candidates = Array.from({ length: 10 }, () => new SudokuSet());
@@ -87,7 +96,32 @@ export class SudokuStepFinder {
       return;
     }
     // same order as in the original: the first solver that finds a step wins
-    this.solvers = [this.simpleSolver, new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this), (this.tablingSolver = new TablingSolver(this)), new TemplateSolver(this), new BruteForceSolver(this), new IncompleteSolver(this), new GiveUpSolver(this)];
+    this.fishSolver = new FishSolver(this);
+    this.singleDigitPatternSolver = new SingleDigitPatternSolver(this);
+    this.uniquenessSolver = new UniquenessSolver(this);
+    this.wingSolver = new WingSolver(this);
+    this.coloringSolver = new ColoringSolver(this);
+    this.chainSolver = new ChainSolver(this);
+    this.alsSolver = new AlsSolver(this);
+    this.miscellaneousSolver = new MiscellaneousSolver(this);
+    this.tablingSolver = new TablingSolver(this);
+    this.templateSolver = new TemplateSolver(this);
+    this.solvers = [
+      this.simpleSolver,
+      this.fishSolver,
+      this.singleDigitPatternSolver,
+      this.uniquenessSolver,
+      this.wingSolver,
+      this.coloringSolver,
+      this.chainSolver,
+      this.alsSolver,
+      this.miscellaneousSolver,
+      this.tablingSolver,
+      this.templateSolver,
+      new BruteForceSolver(this),
+      new IncompleteSolver(this),
+      new GiveUpSolver(this),
+    ];
   }
 
   getSudoku(): Sudoku2 {
@@ -245,16 +279,98 @@ export class SudokuStepFinder {
     this.candidatesAllowedDirty = false;
   }
 
+  /** Run `fn` with `sudoku` as the finder's sudoku and restore the old one afterwards. */
+  private withSudoku<T>(sudoku: Sudoku2, fn: () => T): T {
+    const old = this.sudoku as Sudoku2 | undefined;
+    this.setSudoku(sudoku);
+    try {
+      return fn();
+    } finally {
+      if (old !== undefined) this.setSudoku(old);
+    }
+  }
+
+  /** All Full Houses of `sudoku` (without changing it). */
+  findAllFullHouses(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.simpleSolver.findAllFullHouses());
+  }
+
   /** All Naked Singles of `sudoku` (without changing it). */
   findAllNakedSingles(sudoku: Sudoku2): SolutionStep[] {
-    this.setSudoku(sudoku);
-    return this.simpleSolver.findAllNakedSingles();
+    return this.withSudoku(sudoku, () => this.simpleSolver.findAllNakedSingles());
   }
 
   /** All Hidden Singles of `sudoku` (without changing it). */
   findAllHiddenSingles(sudoku: Sudoku2): SolutionStep[] {
-    this.setSudoku(sudoku);
-    return this.simpleSolver.findAllHiddenSingles();
+    return this.withSudoku(sudoku, () => this.simpleSolver.findAllHiddenSingles());
+  }
+
+  /** All Naked and Locked Subsets (and Naked Singles) of `sudoku`. */
+  findAllNakedXle(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.simpleSolver.findAllNakedXle());
+  }
+
+  /** All Hidden Subsets (and Hidden Singles) of `sudoku`. */
+  findAllHiddenXle(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.simpleSolver.findAllHiddenXle());
+  }
+
+  /** All Locked Candidates of `sudoku`, both types. */
+  findAllLockedCandidates(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.simpleSolver.findAllLockedCandidates());
+  }
+
+  findAllLockedCandidates1(sudoku: Sudoku2): SolutionStep[] {
+    return this.findAllLockedCandidates(sudoku).filter((s) => s.type === 'LOCKED_CANDIDATES_1');
+  }
+
+  findAllLockedCandidates2(sudoku: Sudoku2): SolutionStep[] {
+    return this.findAllLockedCandidates(sudoku).filter((s) => s.type === 'LOCKED_CANDIDATES_2');
+  }
+
+  /** All Empty Rectangles of `sudoku`. */
+  findAllEmptyRectangles(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.singleDigitPatternSolver.findAllEmptyRectangles());
+  }
+
+  /** All Skyscrapers of `sudoku`. */
+  findAllSkyScrapers(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.singleDigitPatternSolver.findAllSkyscrapers());
+  }
+
+  /** All 2-String Kites of `sudoku`. */
+  findAllTwoStringKites(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.singleDigitPatternSolver.findAllTwoStringKites());
+  }
+
+  /** All Unique/Hidden/Avoidable Rectangles of `sudoku` (BUG+1 is not included). */
+  getAllUniqueness(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.uniquenessSolver.getAllUniqueness());
+  }
+
+  /** All XY-, XYZ- and W-Wings of `sudoku`. */
+  getAllWings(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.wingSolver.getAllWings());
+  }
+
+  /** All Simple Colors steps of `sudoku`. */
+  findAllSimpleColors(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.coloringSolver.findAllSimpleColors());
+  }
+
+  /** All Multi Colors steps of `sudoku`. */
+  findAllMultiColors(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.coloringSolver.findAllMultiColors());
+  }
+
+  /** All Sue de Coq steps of `sudoku`. */
+  getAllSueDeCoqs(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.miscellaneousSolver.getAllSueDeCoqs());
+  }
+
+  /** All Template Set and Template Delete steps of `sudoku`. */
+  getAllTemplates(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.templateSolver.getAllTemplates());
   }
 
   /** The next step of the given type, or null. */

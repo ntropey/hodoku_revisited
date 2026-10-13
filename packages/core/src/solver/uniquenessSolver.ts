@@ -53,6 +53,8 @@ export class UniquenessSolver extends AbstractSolver {
   private cand1 = 0;
   private cand2 = 0;
   private cachedSteps: SolutionStep[] = [];
+  /** all steps found by a search for all steps */
+  private steps: SolutionStep[] = [];
   /** finder.stepNumber under which the cached steps were found */
   private stepNumber = -1;
   /** cells of the UR that hold only cand1 and/or cand2 */
@@ -149,7 +151,7 @@ export class UniquenessSolver extends AbstractSolver {
   }
 
   /** The first Avoidable Rectangle found, starting from solved cells that are not givens. */
-  private getAllAvoidableRectangles(type: SolutionType): SolutionStep | null {
+  private getAllAvoidableRectangles(type: SolutionType | null): SolutionStep | null {
     for (let i = 0; i < LENGTH; i++) {
       if (this.sudoku.getValue(i) === 0 || this.sudoku.isFixed(i)) continue; // not solved, or a given
       this.cand1 = this.sudoku.getValue(i);
@@ -164,7 +166,7 @@ export class UniquenessSolver extends AbstractSolver {
   }
 
   /** All bivalue cells are starting points for a search. */
-  private getAllUniquenessInternal(type: SolutionType): SolutionStep | null {
+  private getAllUniquenessInternal(type: SolutionType | null): SolutionStep | null {
     for (let i = 0; i < LENGTH; i++) {
       if (this.sudoku.getAnzCandidates(i) === 2) {
         const cands = this.sudoku.getAllCandidates(i);
@@ -233,7 +235,7 @@ export class UniquenessSolver extends AbstractSolver {
    * (not givens) that designate the candidates; the opposite side needs at
    * least one unsolved cell.
    */
-  private findUniquenessForStartCell(index11: number, avoidable: boolean, type: SolutionType): SolutionStep | null {
+  private findUniquenessForStartCell(index11: number, avoidable: boolean, type: SolutionType | null): SolutionStep | null {
     const sudoku = this.sudoku;
     const allowMissing = this.finder.options.allowUniquenessMissingCandidates;
     const line11 = getLine(index11);
@@ -312,17 +314,39 @@ export class UniquenessSolver extends AbstractSolver {
   }
 
   /** Use `step` as result if it is of the searched type, otherwise remember it for later. */
-  private offer(step: SolutionStep, searchType: SolutionType): SolutionStep | null {
+  private offer(step: SolutionStep, searchType: SolutionType | null): SolutionStep | null {
+    if (searchType === null) {
+      // search for all steps
+      this.steps.push(step);
+      return null;
+    }
     if (searchType === step.type) return step;
     this.cachedSteps.push(step);
     return null;
+  }
+
+  /** All Uniqueness steps except BUG+1: Unique and Hidden Rectangles, Avoidable Rectangles. */
+  getAllUniqueness(): SolutionStep[] {
+    this.stepNumber = -1;
+    this.cachedSteps = [];
+    this.rectangles.length = 0;
+    this.lastSearchWasAR = false;
+    this.lastSearchWasUR = false;
+    this.sudoku = this.finder.getSudoku();
+    const old = this.steps;
+    this.steps = [];
+    this.getAllUniquenessInternal(null);
+    this.getAllAvoidableRectangles(null);
+    const result = this.steps;
+    this.steps = old;
+    return result;
   }
 
   /**
    * Check the UR in `indexe` for all UR types at once. A step of the searched
    * type is returned immediately; steps of other types are cached.
    */
-  private checkURForStep(searchType: SolutionType): SolutionStep | null {
+  private checkURForStep(searchType: SolutionType | null): SolutionStep | null {
     const sudoku = this.sudoku;
     const { cand1, cand2 } = this;
     const twoCandidates = this.twoCandidates;
@@ -491,7 +515,7 @@ export class UniquenessSolver extends AbstractSolver {
    * cell22 must contain cand1 and both need the same additional candidate;
    * that candidate can be deleted from all cells that see both.
    */
-  private checkAvoidableRectangle(index21: number, index22: number, type: SolutionType): SolutionStep | null {
+  private checkAvoidableRectangle(index21: number, index22: number, type: SolutionType | null): SolutionStep | null {
     const sudoku = this.sudoku;
     const { cand1, cand2 } = this;
     if (sudoku.getValue(index21) !== 0 || sudoku.getValue(index22) !== 0) {
@@ -503,8 +527,8 @@ export class UniquenessSolver extends AbstractSolver {
         step.addCandidateToDelete(index21, cand2);
       }
       if (step.candidatesToDelete.length > 0) {
-        if (type === 'AVOIDABLE_RECTANGLE_1') return step;
-        this.cachedSteps.push(step);
+        const result = this.offer(step, type);
+        if (result !== null) return result;
       }
     } else {
       // the additional candidate in index21 and index22 has to be the same
@@ -521,13 +545,13 @@ export class UniquenessSolver extends AbstractSolver {
       for (const c of tmpSet) step.addCandidateToDelete(c, additionalCand);
       step.addEndoFin(index21, additionalCand);
       step.addEndoFin(index22, additionalCand);
-      if (type === 'AVOIDABLE_RECTANGLE_2') return step;
-      this.cachedSteps.push(step);
+      const result = this.offer(step, type);
+      if (result !== null) return result;
     }
     return null;
   }
 
-  private checkHiddenRectangle(cornerIndex: number, type: SolutionType): SolutionStep | null {
+  private checkHiddenRectangle(cornerIndex: number, type: SolutionType | null): SolutionStep | null {
     // whether there are one or two cells with two candidates, checking two additional
     // cells is enough to get the line and column that have to be checked
     const lineC = getLine(cornerIndex);
@@ -554,7 +578,7 @@ export class UniquenessSolver extends AbstractSolver {
     col: number,
     cand1: number,
     cand2: number,
-    type: SolutionType,
+    type: SolutionType | null,
   ): SolutionStep | null {
     const { tmpSet, tmpSet1 } = this;
     tmpSet1.setOr(this.twoCandidates, this.additionalCandidates);
@@ -580,7 +604,7 @@ export class UniquenessSolver extends AbstractSolver {
     unit: Units,
     u3Cands: number,
     urMask: number,
-    searchType: SolutionType,
+    searchType: SolutionType | null,
   ): SolutionStep | null {
     const u3Indices = new SudokuSet();
     const tmpSet = this.tmpSet;
@@ -613,7 +637,7 @@ export class UniquenessSolver extends AbstractSolver {
     candsIncluded: number,
     indicesIncluded: SudokuSet,
     startIndex: number,
-    searchType: SolutionType,
+    searchType: SolutionType | null,
   ): SolutionStep | null {
     const sudoku = this.sudoku;
     for (let i = startIndex; i < u3Indices.size(); i++) {

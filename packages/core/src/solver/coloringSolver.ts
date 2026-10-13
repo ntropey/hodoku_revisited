@@ -27,6 +27,8 @@ export class ColoringSolver extends AbstractSolver {
   private readonly tmpSet1 = new SudokuSet();
   /** cells where a candidate can be eliminated */
   private readonly deleteSet = new SudokuSet();
+  /** All steps found by a search for all steps */
+  private steps: SolutionStep[] = [];
 
   constructor(finder: SudokuStepFinder) {
     super(finder);
@@ -38,11 +40,11 @@ export class ColoringSolver extends AbstractSolver {
       case 'SIMPLE_COLORS':
       case 'SIMPLE_COLORS_TRAP':
       case 'SIMPLE_COLORS_WRAP':
-        return this.findSimpleColorSteps();
+        return this.findSimpleColorSteps(true);
       case 'MULTI_COLORS':
       case 'MULTI_COLORS_1':
       case 'MULTI_COLORS_2':
-        return this.findMultiColorSteps();
+        return this.findMultiColorSteps(true);
       default:
         return null;
     }
@@ -64,15 +66,35 @@ export class ColoringSolver extends AbstractSolver {
     }
   }
 
-  private findSimpleColorSteps(): SolutionStep | null {
+  /** All Simple Colors steps (Wrap and Trap), sorted. */
+  findAllSimpleColors(): SolutionStep[] {
+    return this.collectAll(() => this.findSimpleColorSteps(false));
+  }
+
+  /** All Multi Colors steps, sorted. */
+  findAllMultiColors(): SolutionStep[] {
+    return this.collectAll(() => this.findMultiColorSteps(false));
+  }
+
+  private collectAll(search: () => void): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    const old = this.steps;
+    this.steps = [];
+    search();
+    const result = this.steps.sort((a, b) => a.compareTo(b));
+    this.steps = old;
+    return result;
+  }
+
+  private findSimpleColorSteps(onlyOne: boolean): SolutionStep | null {
     for (let i = 1; i <= 9; i++) {
-      const step = this.findSimpleColorStepsForCandidate(i);
-      if (step !== null) return step;
+      const step = this.findSimpleColorStepsForCandidate(i, onlyOne);
+      if (onlyOne && step !== null) return step;
     }
     return null;
   }
 
-  private findSimpleColorStepsForCandidate(cand: number): SolutionStep | null {
+  private findSimpleColorStepsForCandidate(cand: number, onlyOne: boolean): SolutionStep | null {
     const anzColors = this.doColoring(cand);
     for (let i = 0; i < anzColors; i++) {
       const set1 = this.sets[cand][i][C1];
@@ -87,7 +109,8 @@ export class ColoringSolver extends AbstractSolver {
         step.addValue(cand);
         step.addColorCandidates(set1, 0);
         step.addColorCandidates(set2, 1);
-        return step;
+        if (onlyOne) return step;
+        this.steps.push(step);
       }
 
       // second: color trap - any candidate that sees two cells with opposite colors can be removed
@@ -97,7 +120,8 @@ export class ColoringSolver extends AbstractSolver {
         step.addValue(cand);
         step.addColorCandidates(set1, 0);
         step.addColorCandidates(set2, 1);
-        return step;
+        if (onlyOne) return step;
+        this.steps.push(step);
       }
     }
     return null;
@@ -131,15 +155,15 @@ export class ColoringSolver extends AbstractSolver {
     for (const c of deleteSet) step.addCandidateToDelete(c, cand);
   }
 
-  private findMultiColorSteps(): SolutionStep | null {
+  private findMultiColorSteps(onlyOne: boolean): SolutionStep | null {
     for (let i = 1; i <= 9; i++) {
-      const step = this.findMultiColorStepsForCandidate(i);
-      if (step !== null) return step;
+      const step = this.findMultiColorStepsForCandidate(i, onlyOne);
+      if (onlyOne && step !== null) return step;
     }
     return null;
   }
 
-  private findMultiColorStepsForCandidate(cand: number): SolutionStep | null {
+  private findMultiColorStepsForCandidate(cand: number, onlyOne: boolean): SolutionStep | null {
     const anzColors = this.doColoring(cand);
     // NOTE: a->b is not equal b->a, so ALL combinations have to be checked
     for (let i = 0; i < anzColors; i++) {
@@ -156,7 +180,8 @@ export class ColoringSolver extends AbstractSolver {
         if (this.checkMultiColor1(set12, set21, set22)) for (const c of set12) step.addCandidateToDelete(c, cand);
         if (step.candidatesToDelete.length > 0) {
           this.finishMultiStep(step, cand, set11, set12, set21, set22);
-          return step;
+          if (onlyOne) return step;
+          this.steps.push(step);
         }
 
         // two cells of different color pairs see each other: all candidates that see cells
@@ -168,7 +193,8 @@ export class ColoringSolver extends AbstractSolver {
         if (this.checkMultiColor2(set12, set22)) this.checkCandidateToDelete(step, set11, set21, cand);
         if (step.candidatesToDelete.length > 0) {
           this.finishMultiStep(step, cand, set11, set12, set21, set22);
-          return step;
+          if (onlyOne) return step;
+          this.steps.push(step);
         }
       }
     }

@@ -23,6 +23,8 @@ export class WingSolver extends AbstractSolver {
   /** The two cells of the strong link of a W-Wing */
   private wIndex1 = -1;
   private wIndex2 = -1;
+  /** All steps found by a search for all steps */
+  private steps: SolutionStep[] = [];
 
   constructor(finder: SudokuStepFinder) {
     super(finder);
@@ -55,6 +57,19 @@ export class WingSolver extends AbstractSolver {
     }
   }
 
+  /** All XY-, XYZ- and W-Wings (not sorted, like in the original). */
+  getAllWings(): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    const old = this.steps;
+    this.steps = [];
+    this.getWing(true, false);
+    this.getWing(false, false);
+    this.getWWing(false);
+    const result = this.steps;
+    this.steps = old;
+    return result;
+  }
+
   /**
    * Try all combinations of three bivalue cells (for XYZ: one trivalue and two
    * bivalue cells). The three cells must have exactly three candidates
@@ -62,7 +77,7 @@ export class WingSolver extends AbstractSolver {
    * pincers must share exactly one candidate z. z can be eliminated from all
    * cells that see both pincers (for XYZ also the pivot).
    */
-  private getWing(xyz: boolean): SolutionStep | null {
+  private getWing(xyz: boolean, onlyOne = true): SolutionStep | null {
     const sudoku = this.sudoku;
     const biCells = this.biCells;
     const triCells = this.triCells;
@@ -131,7 +146,8 @@ export class WingSolver extends AbstractSolver {
             step.addFin(index2, candZ);
             step.addFin(index3, candZ);
             for (const l of this.elimSet) step.addCandidateToDelete(l, candZ);
-            return step;
+            if (onlyOne) return step;
+            this.steps.push(step);
           }
         }
       }
@@ -143,7 +159,7 @@ export class WingSolver extends AbstractSolver {
    * W-Wing: two bivalue cells with the same candidates; if they could
    * eliminate something, a connecting strong link is searched for.
    */
-  private getWWing(): SolutionStep | null {
+  private getWWing(onlyOne = true): SolutionStep | null {
     const sudoku = this.sudoku;
     const candidates = this.finder.getCandidates();
     for (let i = 0; i < LENGTH; i++) {
@@ -161,13 +177,13 @@ export class WingSolver extends AbstractSolver {
         // we have a pair; can anything be eliminated?
         this.elimSet.setAnd(this.preCalcSet1, BUDDIES[j]);
         if (!this.elimSet.isEmpty()) {
-          const step = this.checkLink(cand1, cand2, i, j);
-          if (step !== null) return step;
+          const step = this.checkLink(cand1, cand2, i, j, onlyOne);
+          if (onlyOne && step !== null) return step;
         }
         this.elimSet.setAnd(this.preCalcSet2, BUDDIES[j]);
         if (!this.elimSet.isEmpty()) {
-          const step = this.checkLink(cand2, cand1, i, j);
-          if (step !== null) return step;
+          const step = this.checkLink(cand2, cand1, i, j, onlyOne);
+          if (onlyOne && step !== null) return step;
         }
       }
     }
@@ -178,7 +194,7 @@ export class WingSolver extends AbstractSolver {
    * Search for a strong link for candidate `cand2` that connects `index1` and
    * `index2` (each end is seen by one of the bivalue cells).
    */
-  private checkLink(cand1: number, cand2: number, index1: number, index2: number): SolutionStep | null {
+  private checkLink(cand1: number, cand2: number, index1: number, index2: number, onlyOne: boolean): SolutionStep | null {
     const sudoku = this.sudoku;
     const free = sudoku.free;
     for (let constr = 0; constr < free.length; constr++) {
@@ -211,7 +227,8 @@ export class WingSolver extends AbstractSolver {
         step.addFin(this.wIndex1, cand2);
         step.addFin(this.wIndex2, cand2);
         for (const e of this.elimSet) step.addCandidateToDelete(e, cand1);
-        return step;
+        if (onlyOne) return step;
+        this.steps.push(step);
       }
     }
     return null;
