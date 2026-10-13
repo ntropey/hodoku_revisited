@@ -145,6 +145,13 @@ export class Sudoku2 {
     return s;
   }
 
+  /** Only the givens as 81-character string, '.' for every other cell. */
+  getCluesString(): string {
+    let s = '';
+    for (let i = 0; i < LENGTH; i++) s += this.fixed[i] && this.values[i] !== 0 ? String(this.values[i]) : '.';
+    return s;
+  }
+
   toString(): string {
     return this.getValuesString();
   }
@@ -326,6 +333,29 @@ export class Sudoku2 {
       this.rebuildInternalData();
     }
     return valid;
+  }
+
+  /**
+   * A simplified {@link set} for the backtracking solver of the generator: copies only candidates,
+   * values, free counts and the number of unsolved cells, and clears the singles queues.
+   */
+  setBS(src: Sudoku2): void {
+    this.cells.set(src.cells);
+    this.values.set(src.values);
+    for (let i = 0; i < this.free.length; i++) this.free[i].set(src.free[i]);
+    this.unsolvedCellsAnz = src.unsolvedCellsAnz;
+    this.nsQueue.clear();
+    this.hsQueue.clear();
+  }
+
+  /**
+   * Set a cell without maintaining `free`, the queues and the unsolved counter; call
+   * {@link rebuildInternalData} afterwards. Only for building a sudoku from raw values.
+   */
+  setCellBS(index: number, value: number): void {
+    this.values[index] = value;
+    this.cells[index] = 0;
+    for (const b of BUDDIES[index].values()) this.cells[b] &= ~MASKS[value];
   }
 
   /** A value is invalid for a cell if one of its buddies already has that value. */

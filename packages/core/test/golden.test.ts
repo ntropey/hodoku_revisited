@@ -97,14 +97,18 @@ const PORTED = new Set<SolutionType>([
   'FINNED_FRANKEN_SWORDFISH',
 ]);
 
-const golden: Golden[] = readFileSync(new URL('./fixtures/golden.jsonl', import.meta.url), 'utf8')
-  .split('\n')
-  .filter((l) => l.trim())
-  .map((l) => JSON.parse(l) as Golden);
+/** Puzzles from HoDoKu's own generator, and from the generator of this port, both solved by the Java jar. */
+const FIXTURES = ['./fixtures/golden.jsonl', './fixtures/golden-ts.jsonl'];
+const golden: Golden[] = FIXTURES.flatMap((f) =>
+  readFileSync(new URL(f, import.meta.url), 'utf8')
+    .split('\n')
+    .filter((l) => l.trim())
+    .map((l) => JSON.parse(l) as Golden),
+);
 
 describe('golden data from HoDoKu 2.2.0', () => {
   it('has the expected fixtures', () => {
-    expect(golden.length).toBeGreaterThan(300);
+    expect(golden.length).toBeGreaterThan(500);
   });
 
   it('finds the same steps as the Java solver (lockstep)', () => {

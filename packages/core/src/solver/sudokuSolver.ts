@@ -15,6 +15,11 @@ const EXTREME = 5;
 export interface SolveOptions {
   /** Abort if the puzzle is harder than this level. Default: EXTREME (no limit). */
   maxLevel?: DifficultyLevel;
+  /**
+   * Also reject the puzzle if its score is lower than the maximum score of the next lower level
+   * (used when generating puzzles: it keeps puzzles at the lower edge of a level out).
+   */
+  rejectTooLowScore?: boolean;
   /** Only use Full House, Naked Single and Hidden Single. */
   singlesOnly?: boolean;
   /** The techniques to use, in search order. Default: the HoDoKu defaults. */
@@ -87,6 +92,10 @@ export class SudokuSolver {
     // the puzzle is rated higher if the score exceeds the max score of the level
     while (this.score > this.level.maxScore) this.level = getDifficultyLevel(this.level.ordinal + 1);
     if (this.level.ordinal > maxLevel.ordinal) return false; // too hard
+    // the puzzle fits the level, but the score is lower than the max score of the level below
+    if (options.rejectTooLowScore && this.level.ordinal > 1) {
+      if (this.score < getDifficultyLevel(this.level.ordinal - 1).maxScore) return false;
+    }
 
     sudoku.score = this.score;
     if (sudoku.isSolved()) {
