@@ -1,0 +1,13 @@
+{
+  "name": "@hodoku/website",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hodoku Revisited website: static pages, technique guides, and the app under /play/",
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "build": "node src/build.mjs",
+    "typecheck": "node --check src/build.mjs && node --check src/techniques.mjs",
+    "test": "node --test test/build.test.mjs"
+  }
+}

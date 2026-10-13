@@ -20,3 +20,5 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm --filter @hodoku/app build
+      - run: pnpm --filter @hodoku/website build
+      - run: pnpm --filter @hodoku/website test

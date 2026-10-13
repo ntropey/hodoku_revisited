@@ -55,7 +55,7 @@ rating.
 5. **M4** PWA (React + Vite): board, hints, candidates, undo, settings, print, import/export. *(first version done, see below)*
    The solver runs in a Web Worker; a service worker makes it work offline. It installs as an app
    on phones and as a desktop app on Windows (Chrome/Edge) without an installer or code signing.
-6. **M5** Website with technique guides (also the basis for search traffic and ads), then ads,
+6. **M5** *(first version done, see below)* Website with technique guides (also the basis for search traffic and ads), then ads,
    then an optional paid tier (no ads, cloud sync, puzzle packs, themes). Electron/Tauri or a
    Capacitor wrapper stay possible later but are not planned.
 
@@ -123,6 +123,19 @@ any format `@hodoku/core` reads, copy, dark mode, autosave in localStorage. Game
 Not yet: step-by-step explanations of chains, a "Show solution path" trainer, settings for which
 techniques the hints may use, print, German translation, PNG icons for older browsers, a precomputed
 puzzle bank (Unfair puzzles can take a while to generate), and Extreme puzzles.
+
+## Status (M5, first version)
+
+`packages/website` is a dependency-free static site generator (`src/build.mjs`): start page,
+19 technique guides (`src/techniques.mjs`, original text, grouped by difficulty), about/license,
+privacy and 404 pages, and the app copied to `/play/`. With `SITE_URL` set it also writes
+`sitemap.xml` and `robots.txt`. `.github/workflows/pages.yml` deploys it to GitHub Pages (manual run).
+Tests check that every guide exists and that internal links resolve.
+
+Not yet: worked examples with board diagrams in the guides (needs hand-checked example puzzles),
+a German version, a custom domain, ads. Ads need a consent banner (EU/UK) and a privacy page
+update first; the privacy page currently promises no tracking, so change it in the same commit
+that adds ads.
 
 ## Business notes (GPL)
 
