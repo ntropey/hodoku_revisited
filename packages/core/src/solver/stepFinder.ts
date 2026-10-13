@@ -11,6 +11,9 @@ import type { AbstractSolver } from './abstractSolver.js';
 import { DEFAULT_SOLVER_OPTIONS, type SolverOptions } from '../solverOptions.js';
 import { BUDDIES, LENGTH, POSSIBLE_VALUES } from '../tables.js';
 import { SudokuSet } from '../sudokuSet.js';
+import { ChainSolver } from './chainSolver.js';
+import { ColoringSolver } from './coloringSolver.js';
+import { MiscellaneousSolver } from './miscellaneousSolver.js';
 import { SimpleSolver } from './simpleSolver.js';
 import { SingleDigitPatternSolver } from './singleDigitPatternSolver.js';
 import { UniquenessSolver } from './uniquenessSolver.js';
@@ -40,7 +43,7 @@ export class SudokuStepFinder {
 
   constructor(readonly options: SolverOptions = { ...DEFAULT_SOLVER_OPTIONS }) {
     // same order as in the original: the first solver that finds a step wins
-    this.solvers = [new SimpleSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this)];
+    this.solvers = [new SimpleSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new MiscellaneousSolver(this)];
   }
 
   getSudoku(): Sudoku2 {

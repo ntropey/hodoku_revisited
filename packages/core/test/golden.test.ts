@@ -59,6 +59,15 @@ const PORTED = new Set<SolutionType>([
   'AVOIDABLE_RECTANGLE_1',
   'AVOIDABLE_RECTANGLE_2',
   'BUG_PLUS_1',
+  'SIMPLE_COLORS_TRAP',
+  'SIMPLE_COLORS_WRAP',
+  'MULTI_COLORS_1',
+  'MULTI_COLORS_2',
+  'SUE_DE_COQ',
+  'REMOTE_PAIR',
+  'TURBOT_FISH',
+  'X_CHAIN',
+  'XY_CHAIN',
 ]);
 
 const golden: Golden[] = readFileSync(new URL('./fixtures/golden.jsonl', import.meta.url), 'utf8')
