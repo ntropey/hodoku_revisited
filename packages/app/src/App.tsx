@@ -15,7 +15,7 @@ import {
   wrongCells,
   type GameState,
 } from './game';
-import { LEVEL_NAMES, type HintResult } from './protocol';
+import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintLevel, type HintResult } from './protocol';
 import { SolverClient } from './solverClient';
 
 const SAVE_KEY = 'hodoku-revisited:game';
@@ -41,6 +41,7 @@ interface Settings {
   showCands: boolean;
   checkMistakes: boolean;
   level: number;
+  hintLevel: HintLevel;
   /** bank indices already played, per level */
   seen?: Record<number, number[]>;
 }
@@ -48,7 +49,7 @@ interface Settings {
 export function App() {
   const [game, setGame] = useState<GameState | null>(() => load<GameState>(SAVE_KEY));
   const [settings, setSettings] = useState<Settings>(
-    () => load<Settings>(SETTINGS_KEY) ?? { showCands: false, checkMistakes: false, level: 1 },
+    () => load<Settings>(SETTINGS_KEY) ?? { showCands: false, checkMistakes: false, level: 1, hintLevel: 5 },
   );
   const [selected, setSelected] = useState<number | null>(null);
   const [noteMode, setNoteMode] = useState(false);
@@ -143,9 +144,15 @@ export function App() {
     if (!game) return;
     setBusy('Looking for a hint...');
     try {
-      const h = await solver.current.hint(game.values, game.cands);
+      const h = await solver.current.hint(game.values, game.cands, settings.hintLevel ?? 5);
       setHint(h);
-      setMessage(h ? null : 'No logical hint found.');
+      setMessage(
+        h
+          ? null
+          : (settings.hintLevel ?? 5) < 5
+            ? 'No hint at this hint level. Raise it in the settings below.'
+            : 'No logical hint found.',
+      );
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
@@ -157,8 +164,8 @@ export function App() {
     if (!hint) return;
     update((g) => {
       let next = g;
-      for (const p of hint.placements) next = setValue(next, p.cell, p.digit);
-      if (hint.eliminations.length > 0) next = removeCands(next, hint.eliminations);
+      for (const p of hint.marks.place) next = setValue(next, p.cell, p.digit);
+      if (hint.marks.elim.length > 0) next = removeCands(next, hint.marks.elim);
       return next;
     });
   };
@@ -213,6 +220,19 @@ export function App() {
 
       <div className="status" aria-live="polite">
         {busy ?? (solved ? '🎉 Solved!' : (hint?.text ?? message ?? ''))}
+        {hint && !busy && (
+          <div className="why">
+            {hint.summary && <p>{hint.summary}</p>}
+            {hint.notation.map((n, i) => (
+              <code key={i}>{n}</code>
+            ))}
+            {hint.slug && (
+              <a href={`../techniques/${hint.slug}.html`} target="_blank" rel="noreferrer">
+                Read the guide for {hint.name}
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="pad">
@@ -261,6 +281,20 @@ export function App() {
           Show candidates
         </label>
         <label>
+          Hints use
+          <select
+            value={settings.hintLevel ?? 5}
+            onChange={(e) => setSettings({ ...settings, hintLevel: Number(e.target.value) as HintLevel })}
+            aria-label="Hint level"
+          >
+            {HINT_LEVEL_NAMES.map((n, i) => (
+              <option key={n} value={i}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           <input
             type="checkbox"
             checked={settings.checkMistakes}
@@ -291,6 +325,9 @@ export function App() {
         <button onClick={() => setImporting(true)}>Import</button>
         <button onClick={copyPuzzle} disabled={!game}>
           Copy
+        </button>
+        <button onClick={() => window.print()} disabled={!game}>
+          Print
         </button>
       </div>
 

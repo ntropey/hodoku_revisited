@@ -4,14 +4,19 @@
  */
 import {
   SOLUTION_TYPE_INFO,
+  chainNotation,
+  defaultSolverSteps,
+  describeStep,
   Sudoku2,
   SudokuGenerator,
   SudokuSolver,
   generatePuzzle,
+  cellName,
   tables,
 } from '@hodoku/core';
 import { bankPuzzle, isomorph, pickBankIndex, type Rng } from './bank/bank';
-import { cellName, type HintResult, type PuzzleInfo } from './protocol';
+import type { HintLevel, HintResult, PuzzleInfo } from './protocol';
+import { techniqueInfo } from './techniqueInfo';
 
 /** Rate a puzzle and find its solution. Throws if it is invalid or has no unique solution. */
 export function analyze(puzzle: string): PuzzleInfo {
@@ -51,7 +56,7 @@ export function fromBank(level: number, seen: readonly number[], rng: Rng = Math
 }
 
 /** The next logical step for the given board (values and candidate bitmasks, bit d = digit d). */
-export function hint(values: number[], cands: number[]): HintResult | null {
+export function hint(values: number[], cands: number[], level: HintLevel = 5): HintResult | null {
   const s = new Sudoku2();
   s.setSudoku(values.map((v) => (v === 0 ? '.' : String(v))).join(''));
   for (let i = 0; i < 81; i++) {
@@ -60,24 +65,32 @@ export function hint(values: number[], cands: number[]): HintResult | null {
       if (s.isCandidate(i, d) && (cands[i] & (1 << d)) === 0) s.setCandidate(i, d, false);
     }
   }
-  const step = new SudokuSolver().getHint(s, false);
+  const before = s.clone();
+  const solver = new SudokuSolver();
+  solver.setSudoku(s);
+  const configs = defaultSolverSteps().map((c) => ({ ...c, enabled: c.enabled && c.level <= level }));
+  const step = solver.getHint(level === 0, configs);
   if (step === null || step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') return null;
   const name = SOLUTION_TYPE_INFO[step.type].stepName;
-  const placements: HintResult['placements'] = [];
-  if (step.values.length > 0 && step.candidatesToDelete.length === 0) {
-    step.indices.forEach((cell, k) => placements.push({ cell, digit: step.values[k] ?? step.values[0] }));
-  }
-  const eliminations = step.candidatesToDelete.map((c) => ({ cell: c.index, digit: c.value }));
-  const cells = [...new Set(step.indices)];
+  const marks = describeStep(step, before);
   const where = (list: { cell: number }[]) => [...new Set(list.map((x) => cellName(x.cell)))].join(', ');
-  let text = name + ': ';
-  if (placements.length > 0) {
-    text += placements.map((p) => `${p.digit} goes in ${cellName(p.cell)}`).join('; ');
+  let text: string;
+  if (marks.place.length > 0 && marks.elim.length === 0) {
+    text = marks.place.map((p) => `${p.digit} goes in ${cellName(p.cell)}`).join('; ');
   } else {
-    const digits = [...new Set(eliminations.map((e) => e.digit))].sort().join(', ');
-    text += `remove ${digits} from ${where(eliminations)}`;
+    const digits = [...new Set(marks.elim.map((e) => e.digit))].sort().join(', ');
+    text = `remove ${digits} from ${where(marks.elim)}`;
   }
-  return { name, cells, placements, eliminations, text };
+  const info = techniqueInfo(step.type);
+  return {
+    name,
+    type: step.type,
+    text: `${name}: ${text}`,
+    summary: info?.summary ?? (step.type === 'BRUTE_FORCE' ? 'No logical technique applies here, so this digit comes from trial and error.' : ''),
+    slug: info?.slug ?? null,
+    marks,
+    notation: marks.chains.map((c) => chainNotation(c)),
+  };
 }
 
 export const PEERS: readonly (readonly number[])[] = tables.BUDDIES.map((b) => [...b.values()]);

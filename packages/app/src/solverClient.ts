@@ -1,4 +1,4 @@
-import type { HintResult, PuzzleInfo, WorkerRequest, WorkerResponse } from './protocol';
+import type { HintLevel, HintResult, PuzzleInfo, WorkerRequest, WorkerResponse } from './protocol';
 
 type Distribute<T> = T extends unknown ? Omit<T, 'id'> : never;
 
@@ -57,8 +57,8 @@ export class SolverClient {
     return this.puzzle({ kind: 'analyze', puzzle });
   }
 
-  async hint(values: number[], cands: number[]): Promise<HintResult | null> {
-    const r = await this.call({ kind: 'hint', values, cands });
+  async hint(values: number[], cands: number[], level: HintLevel): Promise<HintResult | null> {
+    const r = await this.call({ kind: 'hint', values, cands, level });
     if (r.kind === 'error') throw new Error(r.message);
     if (r.kind !== 'hint') throw new Error('unexpected response');
     return r.hint;

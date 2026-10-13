@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { erase, fillCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells } from '../src/game';
+import { erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells } from '../src/game';
 import { analyze, hint } from '../src/solverApi';
 
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -73,8 +73,8 @@ describe('hint', () => {
     const g = newGame(info());
     const h = hint(g.values, g.cands)!;
     expect(h).not.toBeNull();
-    for (const p of h.placements) expect(p.digit).toBe(g.solution[p.cell]);
-    for (const e of h.eliminations) expect(e.digit).not.toBe(g.solution[e.cell]);
+    for (const p of h.marks.place) expect(p.digit).toBe(g.solution[p.cell]);
+    for (const e of h.marks.elim) expect(e.digit).not.toBe(g.solution[e.cell]);
     expect(h.text.length).toBeGreaterThan(5);
   });
 });
@@ -102,4 +102,36 @@ describe('puzzle bank', () => {
       for (let i = 0; i < data[l].length; i += 25) expect(analyze(data[l][i]).level).toBe(Number(l));
     }
   });
+});
+
+describe('hint level', () => {
+  it('singles only never returns a harder technique', () => {
+    const g = newGame(analyze('1....7.9..3..2...8..96..5....53..9...1..8...26....4...3......1..4......7..7...3..'));
+    for (let k = 0; k < 40; k++) {
+      const h = hint(g.values, g.cands, 0);
+      if (h === null) break;
+      expect(['FULL_HOUSE', 'NAKED_SINGLE', 'HIDDEN_SINGLE']).toContain(h.type);
+      break;
+    }
+  });
+  it('a chain hint has notation', async () => {
+    const data = (await import('../src/bank/bank.json')).default as Record<string, string[]>;
+    for (const puzzle of data['4'].slice(0, 30)) {
+      let g = newGame(analyze(puzzle));
+      for (let k = 0; k < 150; k++) {
+        const h = hint(g.values, g.cands, 5);
+        if (h === null) break;
+        if (h.marks.chains.length > 0) {
+          expect(h.notation[0]).toMatch(/^\d+r\dc\d/);
+          expect(h.marks.chains[0].length).toBeGreaterThan(1);
+          return;
+        }
+        const before = g;
+        if (h.marks.place.length > 0 && h.marks.elim.length === 0) g = h.marks.place.reduce((acc, p) => setValue(acc, p.cell, p.digit), g);
+        else g = removeCands(g, h.marks.elim);
+        if (g === before) break;
+      }
+    }
+    throw new Error('no chain hint found');
+  }, 120000);
 });

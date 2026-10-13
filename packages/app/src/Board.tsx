@@ -1,5 +1,5 @@
-import type { HintResult } from './protocol';
 import { isGiven, type GameState } from './game';
+import type { HintResult } from './protocol';
 import { PEERS } from './solverApi';
 
 interface Props {
@@ -11,54 +11,100 @@ interface Props {
   onSelect: (i: number) => void;
 }
 
+const key = (cell: number, digit: number) => cell * 10 + digit;
+
+/** center of a candidate inside the 9x9 unit square of the overlay */
+function candPos(cell: number, digit: number): [number, number] {
+  return [(cell % 9) + (1 + 2 * ((digit - 1) % 3)) / 6, Math.floor(cell / 9) + (1 + 2 * Math.floor((digit - 1) / 3)) / 6];
+}
+
 export function Board({ game, selected, showCands, hint, wrong, onSelect }: Props) {
   const selValue = selected !== null ? game.values[selected] : 0;
   const peers = selected !== null ? new Set(PEERS[selected]) : new Set<number>();
-  const hintCells = new Set(hint?.cells ?? []);
-  const elim = new Map<number, number>();
-  hint?.eliminations.forEach((e) => elim.set(e.cell, (elim.get(e.cell) ?? 0) | (1 << e.digit)));
-  const place = new Map(hint?.placements.map((p) => [p.cell, p.digit]));
+  const m = hint?.marks;
+  const keySet = new Set(m?.key.map((x) => key(x.cell, x.digit)));
+  const finSet = new Set(m?.fins.map((x) => key(x.cell, x.digit)));
+  const elimSet = new Set(m?.elim.map((x) => key(x.cell, x.digit)));
+  const placeMap = new Map(m?.place.map((p) => [p.cell, p.digit]));
+  const colorMap = new Map(m?.colors.map((c) => [key(c.cell, c.digit), c.color]));
+  const tinted = new Map<number, 'a' | 'b'>();
+  m?.tint.forEach((t) => t.cells.forEach((c) => tinted.set(c, t.tone)));
+  // cells that show candidates even if "show candidates" is off, so the hint can be followed
+  const involved = new Set<number>();
+  m?.key.forEach((x) => involved.add(x.cell));
+  m?.fins.forEach((x) => involved.add(x.cell));
+  m?.elim.forEach((x) => involved.add(x.cell));
+  m?.colors.forEach((x) => involved.add(x.cell));
+  placeMap.forEach((_, c) => involved.add(c));
 
   return (
-    <div className="board" role="grid" aria-label="Sudoku board">
-      {game.values.map((v, i) => {
-        const cls = ['cell'];
-        if (i === selected) cls.push('selected');
-        else if (peers.has(i)) cls.push('peer');
-        if (selValue !== 0 && v === selValue) cls.push('same');
-        if (isGiven(game, i)) cls.push('given');
-        if (wrong.has(i)) cls.push('wrong');
-        if (hintCells.has(i)) cls.push('hint');
-        if (place.has(i)) cls.push('hint-place');
-        if (i % 9 === 2 || i % 9 === 5) cls.push('rb');
-        if (Math.floor(i / 9) === 2 || Math.floor(i / 9) === 5) cls.push('bb');
-        return (
-          <button
-            key={i}
-            className={cls.join(' ')}
-            role="gridcell"
-            aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${v}` : ''}`}
-            onClick={() => onSelect(i)}
-          >
-            {v !== 0 ? (
-              v
-            ) : showCands || place.has(i) ? (
-              <span className="cands">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => {
-                  const on = (game.cands[i] & (1 << d)) !== 0;
-                  const del = ((elim.get(i) ?? 0) & (1 << d)) !== 0;
-                  const keep = place.get(i) === d;
-                  return (
-                    <span key={d} className={del ? 'del' : keep ? 'keep' : ''}>
-                      {on && (showCands || keep) ? d : ''}
-                    </span>
-                  );
-                })}
-              </span>
-            ) : null}
-          </button>
-        );
-      })}
+    <div className="boardWrap">
+      <div className="board" role="grid" aria-label="Sudoku board">
+        {game.values.map((v, i) => {
+          const cls = ['cell'];
+          if (i === selected) cls.push('selected');
+          else if (peers.has(i)) cls.push('peer');
+          if (selValue !== 0 && v === selValue) cls.push('same');
+          if (isGiven(game, i)) cls.push('given');
+          if (wrong.has(i)) cls.push('wrong');
+          if (tinted.has(i)) cls.push(`tint-${tinted.get(i)}`);
+          if (placeMap.has(i)) cls.push('hint-place');
+          if (i % 9 === 2 || i % 9 === 5) cls.push('rb');
+          if (Math.floor(i / 9) === 2 || Math.floor(i / 9) === 5) cls.push('bb');
+          const showHere = showCands || involved.has(i);
+          return (
+            <button
+              key={i}
+              className={cls.join(' ')}
+              role="gridcell"
+              aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${v}` : ''}`}
+              onClick={() => onSelect(i)}
+            >
+              {v !== 0 ? (
+                v
+              ) : showHere ? (
+                <span className="cands">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => {
+                    const on = (game.cands[i] & (1 << d)) !== 0;
+                    const k = key(i, d);
+                    const c: string[] = [];
+                    if (elimSet.has(k)) c.push('del');
+                    else if (finSet.has(k)) c.push('fin');
+                    else if (placeMap.get(i) === d) c.push('keep');
+                    else if (keySet.has(k) || colorMap.has(k)) c.push('keyc');
+                    if (colorMap.has(k)) c.push(`col-${colorMap.get(k)! % 2}`);
+                    return (
+                      <span key={d} className={c.join(' ')}>
+                        {on ? d : ''}
+                      </span>
+                    );
+                  })}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+      {m && m.chains.length > 0 && (
+        <svg className="overlay" viewBox="0 0 9 9" aria-hidden="true">
+          {m.chains.map((chain, ci) =>
+            chain.slice(0, -1).map((node, i) => {
+              const [x1, y1] = candPos(node.cell, node.digit);
+              const [x2, y2] = candPos(chain[i + 1].cell, chain[i + 1].digit);
+              return (
+                <line
+                  key={`${ci}-${i}`}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  className={chain[i + 1].strong ? 'strong' : 'weak'}
+                />
+              );
+            }),
+          )}
+        </svg>
+      )}
     </div>
   );
 }

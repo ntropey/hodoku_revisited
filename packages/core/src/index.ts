@@ -9,6 +9,7 @@ export { Sudoku2 } from './sudoku2.js';
 export { formatSudoku, parseSudoku, type ClipboardMode } from './formats.js';
 export { SinglesQueue } from './singlesQueue.js';
 export { SolutionStep, Candidate } from './solutionStep.js';
+export { describeStep, chainNotation, cellName, type StepMark, type StepMarks } from './stepMarks.js';
 export { SOLUTION_TYPE_INFO, SOLUTION_TYPE_NAMES, isSingle, isHiddenSubset } from './solutionType.js';
 export type { SolutionType } from './solutionType.js';
 export {

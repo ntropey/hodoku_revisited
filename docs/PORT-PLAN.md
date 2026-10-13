@@ -125,7 +125,12 @@ generator (`packages/app/scripts/gen-bank.ts`, merged by `merge-bank.mjs`). Each
 isomorphism (digit relabeling, row/column permutations, transpose) and re-rated, and the app avoids repeats until a
 level is exhausted. Starting a game is instant; the generator is the fallback.
 
-Not yet: step-by-step explanations of chains, a "Show solution path" trainer, settings for which
+Trainer update: hints can be limited to a technique level (singles only ... everything), show the pattern
+(fish base/cover units, ALS, colors, fins, chains with strong/weak links drawn on the board), print the chain in
+AIC notation, give a one-sentence reason and link to the guide page; Print button (givens only). `describeStep`
+in core turns any step into drawable data and is shared with the website diagrams.
+
+Not yet: a "Show solution path" trainer, settings for which
 techniques the hints may use, print, German translation, PNG icons for older browsers.
 
 ## Status (M5, first version)

@@ -13,7 +13,7 @@ ctx.onmessage = (event: MessageEvent<WorkerRequest>) => {
       const info = fromBank(req.level, req.seen) ?? generate(req.level);
       res = { id: req.id, kind: 'puzzle', info };
     } else if (req.kind === 'analyze') res = { id: req.id, kind: 'puzzle', info: analyze(req.puzzle) };
-    else res = { id: req.id, kind: 'hint', hint: hint(req.values, req.cands) };
+    else res = { id: req.id, kind: 'hint', hint: hint(req.values, req.cands, req.level) };
   } catch (e) {
     res = { id: req.id, kind: 'error', message: e instanceof Error ? e.message : String(e) };
   }
