@@ -12,7 +12,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { Sudoku2, SudokuSolver, type SolutionStep, type SolutionType } from '../src/index.js';
+import { Sudoku2, SudokuSolver, defaultSolverSteps, type SolutionStep, type SolutionType, type StepConfig } from '../src/index.js';
 
 interface GoldenStep {
   type: SolutionType;
@@ -22,6 +22,8 @@ interface GoldenStep {
 }
 interface Golden {
   puzzle: string;
+  /** if set: only these techniques were enabled in the Java run (comma separated) */
+  only?: string;
   solved: boolean;
   score: number;
   level: number;
@@ -97,16 +99,27 @@ const PORTED = new Set<SolutionType>([
   'FRANKEN_SWORDFISH',
   'FINNED_FRANKEN_X_WING',
   'FINNED_FRANKEN_SWORDFISH',
+  'TEMPLATE_SET',
+  'TEMPLATE_DEL',
 ]);
 
 /** Puzzles from HoDoKu's own generator, and from the generator of this port, both solved by the Java jar. */
-const FIXTURES = ['./fixtures/golden.jsonl', './fixtures/golden-ts.jsonl', './fixtures/golden-hard.jsonl'];
+const FIXTURES = ['./fixtures/golden.jsonl', './fixtures/golden-ts.jsonl', './fixtures/golden-hard.jsonl', './fixtures/golden-templates.jsonl'];
 const golden: Golden[] = FIXTURES.flatMap((f) =>
   readFileSync(new URL(f, import.meta.url), 'utf8')
     .split('\n')
     .filter((l) => l.trim())
     .map((l) => JSON.parse(l) as Golden),
 );
+
+/** The solver steps of a Java run that had only some techniques enabled (see tools/golden/Golden.java). */
+function configsFor(g: Golden): StepConfig[] | undefined {
+  if (!g.only) return undefined;
+  const enabled = new Set(g.only.split(','));
+  return defaultSolverSteps().map((c) =>
+    c.type === 'INCOMPLETE' || c.type === 'GIVE_UP' ? c : { ...c, enabled: enabled.has(c.type) },
+  );
+}
 
 describe('golden data from HoDoKu 2.2.0', () => {
   it('has the expected fixtures', () => {
@@ -121,6 +134,7 @@ describe('golden data from HoDoKu 2.2.0', () => {
       sudoku.setSudoku(g.puzzle);
       const solver = new SudokuSolver();
       solver.setSudoku(sudoku);
+      const stepConfigs = configsFor(g);
 
       let allPorted = true;
       for (let i = 0; i < g.steps.length; i++) {
@@ -129,7 +143,7 @@ describe('golden data from HoDoKu 2.2.0', () => {
           allPorted = false;
           break;
         }
-        const step = solver.step();
+        const step = solver.step({ stepConfigs });
         expect(step === null ? null : summarize(step), `puzzle ${g.puzzle}, step ${i}`).toEqual(expected);
         stepsCompared++;
       }
@@ -137,7 +151,7 @@ describe('golden data from HoDoKu 2.2.0', () => {
 
       fullyPorted++;
       if (g.steps[g.steps.length - 1]?.type !== 'GIVE_UP') {
-        expect(solver.step(), `extra step in ${g.puzzle}`).toBeNull();
+        expect(solver.step({ stepConfigs }), `extra step in ${g.puzzle}`).toBeNull();
         expect(sudoku.isSolved()).toBe(true);
       }
 
@@ -146,7 +160,7 @@ describe('golden data from HoDoKu 2.2.0', () => {
       full.setSudoku(g.puzzle);
       const fullSolver = new SudokuSolver();
       fullSolver.setSudoku(full);
-      expect(fullSolver.solve(), `solved ${g.puzzle}`).toBe(g.solved);
+      expect(fullSolver.solve({ stepConfigs }), `solved ${g.puzzle}`).toBe(g.solved);
       expect(fullSolver.getScore(), `score ${g.puzzle}`).toBe(g.score);
       expect(fullSolver.getLevel().ordinal, `level ${g.puzzle}`).toBe(g.level);
     }

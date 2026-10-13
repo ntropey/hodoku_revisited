@@ -13,6 +13,7 @@ import { Als } from '../als.js';
 import { RestrictedCommon } from '../restrictedCommon.js';
 import { ALL_UNITS, ANZ_VALUES, BUDDIES, LENGTH, POSSIBLE_VALUES } from '../tables.js';
 import { SudokuSet } from '../sudokuSet.js';
+import { getTemplates } from '../templates.js';
 import { AlsSolver } from './alsSolver.js';
 import { ChainSolver } from './chainSolver.js';
 import { ColoringSolver } from './coloringSolver.js';
@@ -22,6 +23,7 @@ import { MiscellaneousSolver } from './miscellaneousSolver.js';
 import { SimpleSolver } from './simpleSolver.js';
 import { SingleDigitPatternSolver } from './singleDigitPatternSolver.js';
 import { TablingSolver } from './tablingSolver.js';
+import { TemplateSolver } from './templateSolver.js';
 import { UniquenessSolver } from './uniquenessSolver.js';
 import { WingSolver } from './wingSolver.js';
 
@@ -47,6 +49,13 @@ export class SudokuStepFinder {
   private readonly candidatesAllowed = Array.from({ length: 10 }, () => new SudokuSet());
   private readonly emptyCells = new SudokuSet();
   private candidatesAllowedDirty = true;
+
+  // Templates: per digit the cells that can be set / that keep the digit, and the list of valid templates
+  private readonly setValueTemplates = Array.from({ length: 10 }, () => new SudokuSet());
+  private readonly delCandTemplates = Array.from({ length: 10 }, () => new SudokuSet());
+  private readonly candTemplates: SudokuSet[][] = Array.from({ length: 10 }, () => []);
+  private templatesDirty = true;
+  private templatesListDirty = true;
 
   // ALS and restricted commons cache (valid for one step number)
   private alsesOnlyLargerThanOne: Als[] | null = null;
@@ -77,7 +86,7 @@ export class SudokuStepFinder {
       return;
     }
     // same order as in the original: the first solver that finds a step wins
-    this.solvers = [this.simpleSolver, new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this), new TablingSolver(this), new BruteForceSolver(this), new IncompleteSolver(this), new GiveUpSolver(this)];
+    this.solvers = [this.simpleSolver, new FishSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this), new ColoringSolver(this), new ChainSolver(this), new AlsSolver(this), new MiscellaneousSolver(this), new TablingSolver(this), new TemplateSolver(this), new BruteForceSolver(this), new IncompleteSolver(this), new GiveUpSolver(this)];
   }
 
   getSudoku(): Sudoku2 {
@@ -99,6 +108,8 @@ export class SudokuStepFinder {
     this.candidatesDirty = true;
     this.candidatesAllowedDirty = true;
     this.positionsDirty = true;
+    this.templatesDirty = true;
+    this.templatesListDirty = true;
     this.stepNumber++;
   }
 
@@ -125,6 +136,80 @@ export class SudokuStepFinder {
       this.positionsDirty = false;
     }
     return this.positions;
+  }
+
+  /** Per digit: the cells from which the digit can be eliminated (every template misses them). */
+  getDelCandTemplates(initLists: boolean): readonly SudokuSet[] {
+    if ((initLists && this.templatesListDirty) || (!initLists && this.templatesDirty)) this.initCandTemplates(initLists);
+    return this.delCandTemplates;
+  }
+
+  /** Per digit: the cells in which the digit can be set (every template contains them). */
+  getSetValueTemplates(initLists: boolean): readonly SudokuSet[] {
+    if ((initLists && this.templatesListDirty) || (!initLists && this.templatesDirty)) this.initCandTemplates(initLists);
+    return this.setValueTemplates;
+  }
+
+  /**
+   * Collect the templates that are still possible: they must contain all cells where the digit is
+   * set and none of the cells where it is excluded. AND of all remaining templates = cells to set;
+   * OR = cells that keep the digit. With `initLists` the templates are also refined: a template that
+   * overlaps a cell that must hold another digit is dropped, until nothing changes.
+   */
+  private initCandTemplates(initLists: boolean): void {
+    if (!((initLists && this.templatesListDirty) || (!initLists && this.templatesDirty))) return;
+    const allowed = this.getCandidates();
+    const set = this.getPositions();
+    const templates = getTemplates();
+    const forbidden: SudokuSet[] = [];
+    for (let i = 1; i <= 9; i++) {
+      this.setValueTemplates[i].setAll();
+      this.delCandTemplates[i].clear();
+      this.candTemplates[i] = [];
+      const f = new SudokuSet(set[i]);
+      f.or(allowed[i]);
+      f.not();
+      forbidden[i] = f;
+    }
+    for (const template of templates) {
+      for (let j = 1; j <= 9; j++) {
+        if (!template.containsSet(set[j])) continue; // misses a cell where the digit is already set
+        if (forbidden[j].intersects(template)) continue; // uses a cell where the digit is not allowed
+        this.setValueTemplates[j].and(template);
+        this.delCandTemplates[j].or(template);
+        if (initLists) this.candTemplates[j].push(template);
+      }
+    }
+    if (initLists) {
+      let removals: number;
+      do {
+        removals = 0;
+        for (let j = 1; j <= 9; j++) {
+          this.setValueTemplates[j].setAll();
+          this.delCandTemplates[j].clear();
+          const kept: SudokuSet[] = [];
+          for (const template of this.candTemplates[j]) {
+            let removed = false;
+            for (let k = 1; k <= 9; k++) {
+              if (k !== j && template.intersects(this.setValueTemplates[k])) {
+                removed = true;
+                removals++;
+                break;
+              }
+            }
+            if (!removed) {
+              kept.push(template);
+              this.setValueTemplates[j].and(template);
+              this.delCandTemplates[j].or(template);
+            }
+          }
+          this.candTemplates[j] = kept;
+        }
+      } while (removals > 0);
+    }
+    for (let i = 1; i <= 9; i++) this.delCandTemplates[i].not();
+    this.templatesDirty = false;
+    if (initLists) this.templatesListDirty = false;
   }
 
   /** For each digit 1-9 the set of empty cells in which it is not excluded by a set value (index 0 unused). */

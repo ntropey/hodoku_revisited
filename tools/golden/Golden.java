@@ -8,6 +8,8 @@
  * Usage (classpath = compiled HoDoKu 2.2.0 classes):
  *   java Golden gen <count> <seed-ignored>     generate puzzles with HoDoKu's generator
  *   java Golden solve < puzzles.txt            solve every 81-char puzzle on stdin
+ *   java Golden solve TYPE,TYPE,... < puzzles  same, but only these techniques are enabled (plus the
+ *                                              INCOMPLETE and GIVE_UP defaults); used for rarely needed techniques
  *
  * Copyright (C) 2026 Hodoku Revisited contributors
  * This program is free software under GPLv3-or-later (see LICENSE).
@@ -36,6 +38,16 @@ public class Golden {
             }
             System.exit(0);
         }
+        String only = null;
+        if (args.length > 1) {
+            only = args[1];
+            java.util.Set<String> enabled = new java.util.HashSet<String>(java.util.Arrays.asList(only.split(",")));
+            for (sudoku.StepConfig cfg : sudoku.Options.getInstance().solverSteps) {
+                String name = cfg.getType().name();
+                if (name.equals("INCOMPLETE") || name.equals("GIVE_UP")) continue;
+                cfg.setEnabled(enabled.contains(name));
+            }
+        }
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         SudokuSolver solver = SudokuSolverFactory.getDefaultSolverInstance();
         String line;
@@ -47,7 +59,9 @@ public class Golden {
             solver.setSudoku(s);
             boolean solved = solver.solve();
             StringBuilder sb = new StringBuilder();
-            sb.append("{\"puzzle\":\"").append(line).append("\",\"solved\":").append(solved);
+            sb.append("{\"puzzle\":\"").append(line).append("\",");
+            if (only != null) sb.append("\"only\":\"").append(only).append("\",");
+            sb.append("\"solved\":").append(solved);
             sb.append(",\"score\":").append(solver.getScore());
             sb.append(",\"level\":").append(solver.getLevel().getOrdinal());
             sb.append(",\"steps\":[");
