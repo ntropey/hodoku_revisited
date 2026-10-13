@@ -51,7 +51,7 @@ rating.
 1. **M0** Repo, license files, CI. *(done)*
 2. **M1** Model and simple solver with golden tests. *(done)*
 3. **M2** All solvers of the default configuration. *(done)*
-4. **M3** Generator, last-resort solvers (templates, brute force, Kraken), remaining formats, "find all steps".
+4. **M3** Generator, last-resort solvers, remaining formats. *(done, except Kraken fish, Template Set/Delete and "find all steps"; see Status)*
 5. **M4** PWA (React + Vite): board, hints, candidates, undo, settings, print, import/export.
    The solver runs in a Web Worker; a service worker makes it work offline. It installs as an app
    on phones and as a desktop app on Windows (Chrome/Edge) without an installer or code signing.
@@ -65,11 +65,12 @@ rating.
 downloads the original source from SourceForge's web file browser. The reference
 source is not committed to this repo.
 
-## Status (M2)
+## Status (M3)
 
-Ported and verified against 404 puzzles solved by the original 2.2.0 jar
-(`packages/core/test/golden.test.ts`, run in lockstep: 23,658 steps compared, all 404 puzzles
-solved identically including score and difficulty level):
+Ported and verified against 587 puzzles solved by the original 2.2.0 jar
+(`packages/core/test/golden.test.ts`, run in lockstep: 34,672 steps compared, every puzzle
+solved identically including score and difficulty level; 404 puzzles from the Java generator,
+173 from the TypeScript generator, 10 hard ones such as AI Escargot and Easter Monster):
 
 - model: `SudokuSet`, `Sudoku2`, singles queues, `Chain`, `SolutionStep` with the original's ordering
 - `SimpleSolver`: singles, locked candidates, locked/naked/hidden subsets
@@ -82,14 +83,26 @@ solved identically including score and difficulty level):
 - `AlsSolver`: ALS-XZ, ALS-XY-Wing, ALS-Chain, Death Blossom
 - `MiscellaneousSolver`: Sue de Coq
 - `TablingSolver`: Nice Loops, AICs (also grouped), Forcing Chains and Forcing Nets
+- Brute Force, Incomplete and Give Up
 - solve loop with scoring and difficulty level
+- generator: `SudokuGenerator` (random solved grids, clue removal with optional symmetry and
+  pattern) and `generatePuzzle(level)`, which mirrors HoDoKu's background generator. Puzzles are
+  re-rated by the Java solver in the test corpus. Seeded RNG for reproducible puzzles.
+  Level 2 takes about 2.7 s per puzzle, so the app will use a Web Worker and a precomputed bank.
+- puzzle input (`formats.ts`): 81 characters (with `#` comments), grids with borders, PM grids,
+  SimpleSudoku exports, the HoDoKu library format (`+` for solved non-givens, eliminated candidates)
+  and gsf's taxonomy lines. Output via `Sudoku2.getSudoku(mode)`: library, clues only, values only,
+  PM grid and the formatted variants. Unlike the original, input with other than 81 cells is rejected.
 
 Known gaps:
-- Not ported: Kraken Fish, Template Set/Delete, Brute Force and Give Up (these are last-resort
-  steps; the generator-produced test puzzles never need them), Siamese/dual variants
-  (`allowDualsAndSiamese`), ALS nodes in tabling chains (`allowAlsInTablingChains`),
-  and the "find all steps" API. Options that need them throw instead of giving wrong answers.
-- `setSudoku` reads 81-character and 9-line puzzles only; PM-grid and library formats are TODO.
+- Not ported: Kraken Fish, Template Set/Delete, Siamese/dual variants (`allowDualsAndSiamese`),
+  ALS nodes in tabling chains (`allowAlsInTablingChains`). Options that need them throw instead
+  of giving wrong answers.
+- "Find all steps" (the Swing search dialog) is only available for Naked and Hidden Singles. The
+  other `getAll*` methods are UI features; they will be added when the app needs them, together
+  with golden data from an extended `Golden.java`.
+- Export of a PM grid or library string *with a step* (`PM_GRID_WITH_STEP`, step type in the library
+  format) is not ported.
 - The golden corpus has no Death Blossom, Simple Colors Wrap or Franken X-Wing steps
   (HoDoKu's generator rarely produces them), and the Naked/Locked subset step cache is not exercised.
 - The template check that prunes large fish searches is not ported (it cannot change results).
