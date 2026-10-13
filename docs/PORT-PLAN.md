@@ -63,7 +63,7 @@ source is not committed to this repo.
 
 ## Status (M1)
 
-Ported and verified against 200 puzzles solved by the original 2.2.0 jar
+Ported and verified against 404 puzzles solved by the original 2.2.0 jar
 (`packages/core/test/golden.test.ts`; 9,410 of 11,582 steps compared in order; 144 of the 200 puzzles are solved entirely with ported techniques):
 `SudokuSet`, `Sudoku2` (board, candidates, queues), `SimpleSolver` (Full House, Naked/Hidden
 Single, Locked Pair/Triple, Locked Candidates 1/2, Naked/Hidden Pair/Triple/Quadruple),

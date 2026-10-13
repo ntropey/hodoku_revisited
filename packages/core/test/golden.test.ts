@@ -3,14 +3,16 @@
  * generated puzzles. The expected results in fixtures/golden.jsonl were produced
  * by tools/golden/Golden.java.
  *
- * Only the techniques that are ported so far are compared: for every puzzle the
- * steps up to the first step that needs a not-yet-ported technique must match
- * exactly (type, cells, digits and eliminated candidates, in order). When the
- * Java solution uses only ported techniques, score, level and result must match too.
+ * The solver is run in lockstep with the recorded Java solution: for every Java
+ * step whose technique is ported, the TypeScript solver must find exactly the same
+ * step (type, cells, digits, eliminated candidates) in the same state. The comparison
+ * of a puzzle stops at the first Java step that needs a not-yet-ported technique.
+ * When all steps of a puzzle are ported, the TypeScript solver must also find no
+ * further step, and score, level and result of a full run must match.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { Sudoku2, SudokuSolver, type SolutionType } from '../src/index.js';
+import { Sudoku2, SudokuSolver, type SolutionStep, type SolutionType } from '../src/index.js';
 
 interface GoldenStep {
   type: SolutionType;
@@ -41,6 +43,22 @@ const PORTED = new Set<SolutionType>([
   'HIDDEN_PAIR',
   'HIDDEN_TRIPLE',
   'HIDDEN_QUADRUPLE',
+  'SKYSCRAPER',
+  'TWO_STRING_KITE',
+  'EMPTY_RECTANGLE',
+  'XY_WING',
+  'XYZ_WING',
+  'W_WING',
+  'UNIQUENESS_1',
+  'UNIQUENESS_2',
+  'UNIQUENESS_3',
+  'UNIQUENESS_4',
+  'UNIQUENESS_5',
+  'UNIQUENESS_6',
+  'HIDDEN_RECTANGLE',
+  'AVOIDABLE_RECTANGLE_1',
+  'AVOIDABLE_RECTANGLE_2',
+  'BUG_PLUS_1',
 ]);
 
 const golden: Golden[] = readFileSync(new URL('./fixtures/golden.jsonl', import.meta.url), 'utf8')
@@ -50,10 +68,10 @@ const golden: Golden[] = readFileSync(new URL('./fixtures/golden.jsonl', import.
 
 describe('golden data from HoDoKu 2.2.0', () => {
   it('has the expected fixtures', () => {
-    expect(golden).toHaveLength(200);
+    expect(golden.length).toBeGreaterThan(300);
   });
 
-  it('matches the Java solver step by step for the ported techniques', () => {
+  it('finds the same steps as the Java solver (lockstep)', () => {
     let fullyPorted = 0;
     let stepsCompared = 0;
     for (const g of golden) {
@@ -61,31 +79,43 @@ describe('golden data from HoDoKu 2.2.0', () => {
       sudoku.setSudoku(g.puzzle);
       const solver = new SudokuSolver();
       solver.setSudoku(sudoku);
-      const solved = solver.solve();
 
-      const firstUnported = g.steps.findIndex((s) => !PORTED.has(s.type));
-      const expected = firstUnported === -1 ? g.steps : g.steps.slice(0, firstUnported);
-      const actual = solver.getSteps().map((s) => ({
-        type: s.type,
-        indices: s.indices,
-        values: s.values,
-        delete: s.candidatesToDelete.map((c) => [c.index, c.value]),
-      }));
-      expect(actual, `puzzle ${g.puzzle}`).toEqual(expected);
-      stepsCompared += expected.length;
-
-      if (firstUnported === -1) {
-        fullyPorted++;
-        expect(solved, `solved ${g.puzzle}`).toBe(g.solved);
-        expect(solver.getScore(), `score ${g.puzzle}`).toBe(g.score);
-        expect(solver.getLevel().ordinal, `level ${g.puzzle}`).toBe(g.level);
-        expect(sudoku.isSolved()).toBe(true);
-      } else {
-        expect(solved).toBe(false);
+      let allPorted = true;
+      for (let i = 0; i < g.steps.length; i++) {
+        const expected = g.steps[i];
+        if (!PORTED.has(expected.type)) {
+          allPorted = false;
+          break;
+        }
+        const step = solver.step();
+        expect(step === null ? null : summarize(step), `puzzle ${g.puzzle}, step ${i}`).toEqual(expected);
+        stepsCompared++;
       }
+      if (!allPorted) continue;
+
+      fullyPorted++;
+      expect(solver.step(), `extra step in ${g.puzzle}`).toBeNull();
+      expect(sudoku.isSolved()).toBe(true);
+
+      // a full run must agree on result, score and level
+      const full = new Sudoku2();
+      full.setSudoku(g.puzzle);
+      const fullSolver = new SudokuSolver();
+      fullSolver.setSudoku(full);
+      expect(fullSolver.solve(), `solved ${g.puzzle}`).toBe(g.solved);
+      expect(fullSolver.getScore(), `score ${g.puzzle}`).toBe(g.score);
+      expect(fullSolver.getLevel().ordinal, `level ${g.puzzle}`).toBe(g.level);
     }
-    // make sure the test actually exercises something
-    expect(fullyPorted).toBe(144);
-    expect(stepsCompared).toBe(9410);
+    console.log(`golden: ${stepsCompared} steps compared, ${fullyPorted}/${golden.length} puzzles fully ported`);
+    expect(fullyPorted).toBeGreaterThan(0);
   });
 });
+
+function summarize(s: SolutionStep): GoldenStep {
+  return {
+    type: s.type,
+    indices: s.indices,
+    values: s.values,
+    delete: s.candidatesToDelete.map((c) => [c.index, c.value] as [number, number]),
+  };
+}

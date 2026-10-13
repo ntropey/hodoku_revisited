@@ -36,6 +36,10 @@ export class SolutionStep {
   /** Cells that are set (singles) or that form the subset/pattern. */
   indices: number[] = [];
   candidatesToDelete: Candidate[] = [];
+  /** Fins (finned fish) or, for patterns like Empty Rectangle and 2-String Kite, the cells of the connecting block. */
+  fins: Candidate[] = [];
+  /** Endo fins (finned fish) or, for Avoidable Rectangles Type 2, the cells with the additional candidate. */
+  endoFins: Candidate[] = [];
   /** Unit type (see BLOCK/LINE/COL in tables) for steps that have one, e.g. Locked Candidates. */
   entity = 0;
   /** 1-based number of that unit. */
@@ -57,6 +61,14 @@ export class SolutionStep {
     this.candidatesToDelete.push(new Candidate(index, candidate));
   }
 
+  addEndoFin(index: number, candidate: number): void {
+    this.endoFins.push(new Candidate(index, candidate));
+  }
+
+  addFin(index: number, candidate: number): void {
+    this.fins.push(new Candidate(index, candidate));
+  }
+
   getAnzCandidatesToDelete(): number {
     return this.candidatesToDelete.length;
   }
@@ -66,6 +78,8 @@ export class SolutionStep {
     s.values = this.values.slice();
     s.indices = this.indices.slice();
     s.candidatesToDelete = this.candidatesToDelete.map((c) => new Candidate(c.index, c.value));
+    s.fins = this.fins.map((c) => new Candidate(c.index, c.value));
+    s.endoFins = this.endoFins.map((c) => new Candidate(c.index, c.value));
     s.entity = this.entity;
     s.entityNumber = this.entityNumber;
     return s;

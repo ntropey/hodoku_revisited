@@ -92,3 +92,10 @@ export const BUDDIES: readonly SudokuSet[] = Array.from({ length: LENGTH }, (_, 
 
 /** One set with all cells for each line, column, block (same order as {@link ALL_UNITS}). */
 export const ALL_CONSTRAINTS_TEMPLATES: readonly SudokuSet[] = ALL_UNITS.map((u) => SudokuSet.fromValues(u));
+
+/** One set with all cells of each line. */
+export const LINE_TEMPLATES: readonly SudokuSet[] = LINES.map((u) => SudokuSet.fromValues(u));
+/** One set with all cells of each column. */
+export const COL_TEMPLATES: readonly SudokuSet[] = COLS.map((u) => SudokuSet.fromValues(u));
+/** One set with all cells of each block. */
+export const BLOCK_TEMPLATES: readonly SudokuSet[] = BLOCKS.map((u) => SudokuSet.fromValues(u));

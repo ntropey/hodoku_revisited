@@ -97,6 +97,21 @@ export class SudokuSolver {
     return false;
   }
 
+  /**
+   * Find the next step for the solver's sudoku and apply it, recording it in
+   * {@link getSteps} and the score. Returns null if no technique finds anything.
+   * Used to run the solver one step at a time (the loop in {@link solve} does the same).
+   */
+  step(options: SolveOptions = {}): SolutionStep | null {
+    const stepConfigs = options.stepConfigs ?? this.defaultSteps;
+    const step = this.nextStep(options.singlesOnly ?? false, stepConfigs);
+    if (step !== null) {
+      this.steps.push(step);
+      this.stepFinder.doStep(step);
+    }
+    return step;
+  }
+
   /** The next logical step for `sudoku` (the solver's own sudoku is not changed), or null. */
   getHint(sudoku: Sudoku2, singlesOnly?: boolean): SolutionStep | null;
   getHint(singlesOnly: boolean, stepConfigs: StepConfig[]): SolutionStep | null;

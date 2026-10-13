@@ -8,7 +8,13 @@ import type { SolutionStep } from '../solutionStep.js';
 import type { SolutionType } from '../solutionType.js';
 import type { Sudoku2 } from '../sudoku2.js';
 import type { AbstractSolver } from './abstractSolver.js';
+import { DEFAULT_SOLVER_OPTIONS, type SolverOptions } from '../solverOptions.js';
+import { BUDDIES, LENGTH, POSSIBLE_VALUES } from '../tables.js';
+import { SudokuSet } from '../sudokuSet.js';
 import { SimpleSolver } from './simpleSolver.js';
+import { SingleDigitPatternSolver } from './singleDigitPatternSolver.js';
+import { UniquenessSolver } from './uniquenessSolver.js';
+import { WingSolver } from './wingSolver.js';
 
 /**
  * Entry point for finding and executing steps. Delegates to the specialized
@@ -23,8 +29,18 @@ export class SudokuStepFinder {
   private stepNumber = 0;
   private readonly solvers: AbstractSolver[];
 
-  constructor() {
-    this.solvers = [new SimpleSolver(this)];
+  // Data used by more than one solver; computed lazily, recomputed after every change.
+  private readonly candidates = Array.from({ length: 10 }, () => new SudokuSet());
+  private candidatesDirty = true;
+  private readonly positions = Array.from({ length: 10 }, () => new SudokuSet());
+  private positionsDirty = true;
+  private readonly candidatesAllowed = Array.from({ length: 10 }, () => new SudokuSet());
+  private readonly emptyCells = new SudokuSet();
+  private candidatesAllowedDirty = true;
+
+  constructor(readonly options: SolverOptions = { ...DEFAULT_SOLVER_OPTIONS }) {
+    // same order as in the original: the first solver that finds a step wins
+    this.solvers = [new SimpleSolver(this), new SingleDigitPatternSolver(this), new UniquenessSolver(this), new WingSolver(this)];
   }
 
   getSudoku(): Sudoku2 {
@@ -43,7 +59,61 @@ export class SudokuStepFinder {
 
   /** The sudoku has been changed: all precalculated data is invalid. */
   setSudokuDirty(): void {
+    this.candidatesDirty = true;
+    this.candidatesAllowedDirty = true;
+    this.positionsDirty = true;
     this.stepNumber++;
+  }
+
+  /** For each digit 1-9 the set of cells in which it is still a candidate (index 0 unused). */
+  getCandidates(): readonly SudokuSet[] {
+    if (this.candidatesDirty) {
+      for (let i = 1; i < 10; i++) this.candidates[i].clear();
+      for (let i = 0; i < LENGTH; i++) {
+        for (const cand of POSSIBLE_VALUES[this.sudoku.cells[i]]) this.candidates[cand].add(i);
+      }
+      this.candidatesDirty = false;
+    }
+    return this.candidates;
+  }
+
+  /** For each digit 1-9 the set of cells in which it is set as a value (index 0 unused). */
+  getPositions(): readonly SudokuSet[] {
+    if (this.positionsDirty) {
+      for (let i = 1; i < 10; i++) this.positions[i].clear();
+      for (let i = 0; i < LENGTH; i++) {
+        const v = this.sudoku.values[i];
+        if (v !== 0) this.positions[v].add(i);
+      }
+      this.positionsDirty = false;
+    }
+    return this.positions;
+  }
+
+  /** For each digit 1-9 the set of empty cells in which it is not excluded by a set value (index 0 unused). */
+  getCandidatesAllowed(): readonly SudokuSet[] {
+    this.initCandidatesAllowed();
+    return this.candidatesAllowed;
+  }
+
+  getEmptyCells(): SudokuSet {
+    this.initCandidatesAllowed();
+    return this.emptyCells;
+  }
+
+  private initCandidatesAllowed(): void {
+    if (!this.candidatesAllowedDirty) return;
+    this.emptyCells.setAll();
+    for (let i = 1; i < 10; i++) this.candidatesAllowed[i].setAll();
+    for (let i = 0; i < LENGTH; i++) {
+      const v = this.sudoku.values[i];
+      if (v !== 0) {
+        this.candidatesAllowed[v].andNot(BUDDIES[i]);
+        this.emptyCells.remove(i);
+      }
+    }
+    for (let i = 1; i < 10; i++) this.candidatesAllowed[i].and(this.emptyCells);
+    this.candidatesAllowedDirty = false;
   }
 
   /** The next step of the given type, or null. */

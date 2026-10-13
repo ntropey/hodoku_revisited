@@ -29,6 +29,9 @@ import {
  *    grids (digits and '.'/'0'); the PM-grid and library formats come later.
  *  - The cached difficulty/status fields used by the Swing UI are omitted.
  */
+/** Validity of a puzzle, as far as it is known. */
+export type SudokuStatus = 'EMPTY' | 'INVALID' | 'VALID' | 'MULTIPLE_SOLUTIONS';
+
 export class Sudoku2 {
   /** Candidate bitmaps per cell (bit d-1 = digit d). 0 means "cell already set". */
   cells = new Uint16Array(LENGTH);
@@ -49,6 +52,10 @@ export class Sudoku2 {
   /** Difficulty level ordinal (see DifficultyType), or null if not rated. */
   level: number | null = null;
   initialState: string | null = null;
+  /** Status of the sudoku. Uniqueness techniques only work on 'VALID' puzzles (exactly one solution). */
+  status: SudokuStatus = 'EMPTY';
+  /** Status if only the givens are taken into account (needed for Avoidable Rectangles). */
+  statusGivens: SudokuStatus = 'EMPTY';
   /** Newly detected Naked Singles */
   nsQueue = new SinglesQueue();
   /** Newly detected Hidden Singles */
@@ -77,6 +84,8 @@ export class Sudoku2 {
     this.solutionSet = src.solutionSet;
     this.score = src.score;
     this.level = src.level;
+    this.status = src.status;
+    this.statusGivens = src.statusGivens;
     if (src.initialState !== null) this.initialState = src.initialState;
     this.nsQueue.set(src.nsQueue);
     this.hsQueue.set(src.hsQueue);
@@ -96,6 +105,8 @@ export class Sudoku2 {
     this.unsolvedCellsAnz = LENGTH;
     this.initialState = null;
     this.solutionSet = false;
+    this.status = 'EMPTY';
+    this.statusGivens = 'EMPTY';
     this.nsQueue.clear();
     this.hsQueue.clear();
   }
@@ -121,6 +132,10 @@ export class Sudoku2 {
       if (digit > 0) this.setCell(i, digit, true, true);
     }
     this.initialState = this.getValuesString();
+    // like the original for batch use: the puzzle is simply assumed to be valid
+    // (it has exactly one solution); no check is made here
+    this.status = 'VALID';
+    this.statusGivens = 'VALID';
   }
 
   /** The values as 81-character string, '.' for empty cells. */
