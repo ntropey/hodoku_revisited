@@ -120,9 +120,13 @@ offline, and `manifest.webmanifest` makes it installable. Features: new puzzles 
 any format `@hodoku/core` reads, copy, dark mode, autosave in localStorage. Game logic is in
 `game.ts` (pure, unit tested); a browser run with Playwright covered hint, import and offline reload.
 
+Update: new puzzles now come from a bank of 1,300 puzzles (Easy to Extreme) generated with this project's own
+generator (`packages/app/scripts/gen-bank.ts`, merged by `merge-bank.mjs`). Each pick is disguised by a random
+isomorphism (digit relabeling, row/column permutations, transpose) and re-rated, and the app avoids repeats until a
+level is exhausted. Starting a game is instant; the generator is the fallback.
+
 Not yet: step-by-step explanations of chains, a "Show solution path" trainer, settings for which
-techniques the hints may use, print, German translation, PNG icons for older browsers, a precomputed
-puzzle bank (Unfair puzzles can take a while to generate), and Extreme puzzles.
+techniques the hints may use, print, German translation, PNG icons for older browsers.
 
 ## Status (M5, first version)
 
@@ -132,8 +136,12 @@ privacy and 404 pages, and the app copied to `/play/`. With `SITE_URL` set it al
 `sitemap.xml` and `robots.txt`. `.github/workflows/pages.yml` deploys it to GitHub Pages (manual run).
 Tests check that every guide exists and that internal links resolve.
 
-Not yet: worked examples with board diagrams in the guides (needs hand-checked example puzzles),
-a German version, a custom domain, ads. Ads need a consent banner (EU/UK) and a privacy page
+Update: every guide has a worked example diagram (inline SVG, light and dark). The examples are not drawn by
+hand: `packages/website/scripts/gen-examples.ts` runs the solver over ~1,900 puzzles, keeps the simplest step of
+each technique, and checks it against the puzzle's real solution before writing `src/examples.json`. Gap: no
+Simple Colors Wrap example (not in the corpus yet).
+
+Not yet: a German version, a custom domain, ads. Ads need a consent banner (EU/UK) and a privacy page
 update first; the privacy page currently promises no tracking, so change it in the same commit
 that adds ads.
 

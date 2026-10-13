@@ -8,6 +8,10 @@
   "scripts": {
     "build": "node src/build.mjs",
     "typecheck": "node --check src/build.mjs && node --check src/techniques.mjs",
-    "test": "node --test test/build.test.mjs"
+    "test": "node --test test/build.test.mjs",
+    "gen-examples": "esbuild scripts/gen-examples.ts --bundle --platform=node --format=esm --outfile=scripts/gen-examples.mjs && node scripts/gen-examples.mjs"
+  },
+  "devDependencies": {
+    "@hodoku/core": "workspace:*"
   }
 }

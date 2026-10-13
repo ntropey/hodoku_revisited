@@ -3,10 +3,15 @@
  * Static site generator: no dependencies. Run `pnpm --filter @hodoku/app build` first to include the app under /play/.
  * Set SITE_URL (e.g. https://example.org/) to also write sitemap.xml and robots.txt.
  */
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { caption, diagram, legend } from './diagram.mjs';
 import { LEVELS, TECHNIQUES } from './techniques.mjs';
+
+const examples = existsSync(new URL('./examples.json', import.meta.url))
+  ? JSON.parse(readFileSync(new URL('./examples.json', import.meta.url), 'utf8'))
+  : [];
 
 const here = dirname(fileURLToPath(import.meta.url));
 const out = join(here, '..', 'dist');
@@ -115,6 +120,15 @@ TECHNIQUES.forEach((t, i) => {
 <h1>${esc(t.name)}</h1>
 <p class="lead">${esc(t.summary)}</p>
 ${t.body.map((p) => `<p>${esc(p)}</p>`).join('\n')}
+${examples
+  .filter((e) => e.slug === t.slug)
+  .map(
+    (e) => `<figure class="example">
+${diagram(e)}
+<figcaption><strong>Example.</strong> ${esc(caption(e))}${legend(e)}</figcaption>
+</figure>`,
+  )
+  .join('\n')}
 ${t.tip ? `<p class="tip"><strong>Tip:</strong> ${esc(t.tip)}</p>` : ''}
 <p><a class="btn" href="../play/">Practice in the app</a></p>
 <nav class="pager">
@@ -170,7 +184,9 @@ add(
   }),
 );
 
-const css = `:root{--bg:#f5f6fa;--fg:#1d2330;--card:#fff;--line:#d5d9e5;--accent:#2b5fb3;--muted:#586079}
+const css = `:root{--tint-a:#dbe7fb;--tint-b:#e0f3e0;--key:#2b5fb3;--fin:#c46a00;--elim:#d33;--place:#1f8a3b;--c0:#bcd3f7;--c1:#bfe6bf}
+@media(prefers-color-scheme:dark){:root{--tint-a:#25375c;--tint-b:#24402a;--key:#8db6ff;--fin:#ffb25b;--elim:#ff6b6b;--place:#5fd07a;--c0:#2d4a7c;--c1:#2f5e36}}
+:root{--bg:#f5f6fa;--fg:#1d2330;--card:#fff;--line:#d5d9e5;--accent:#2b5fb3;--muted:#586079}
 @media(prefers-color-scheme:dark){:root{--bg:#12151c;--fg:#e8ebf3;--card:#1b2030;--line:#343b52;--accent:#6ea0f2;--muted:#a3abc2}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:1rem/1.6 system-ui,sans-serif}
@@ -190,6 +206,20 @@ h1{line-height:1.2;margin:.8em 0 .4em}
 .list span{display:block;color:var(--muted);font-size:.9rem}
 .tip{background:var(--card);border-left:4px solid var(--accent);padding:8px 12px}
 .crumbs{color:var(--muted);font-size:.9rem;margin-bottom:0}
+.example{margin:20px 0;padding:0}
+.dg{width:100%;max-width:450px;height:auto;display:block;border:2px solid var(--fg)}
+.dg .bg{fill:var(--card)}.dg .tint-a{fill:var(--tint-a)}.dg .tint-b{fill:var(--tint-b)}
+.dg .thin{stroke:var(--line);stroke-width:1}.dg .thick{stroke:var(--fg);stroke-width:2}
+.dg text{text-anchor:middle;dominant-baseline:central;fill:var(--fg)}
+.dg .val{font-size:30px;font-weight:700}.dg .val.placed{fill:var(--place)}
+.dg .cand{font-size:11px;fill:var(--muted)}.dg .cand.faded{opacity:.25}
+.dg .cand.key{fill:var(--key);font-weight:700;font-size:13px}.dg .cand.fin{fill:var(--fin);font-weight:700;font-size:13px}
+.dg .cand.elim{fill:var(--elim);font-weight:700;font-size:13px}.dg .strike{stroke:var(--elim);stroke-width:1.5}
+.dg .col-0{fill:var(--c0)}.dg .col-1{fill:var(--c1)}
+.dg .link{stroke:var(--key);stroke-width:1.5;opacity:.7}.dg .link.weak{stroke-dasharray:4 3}
+figcaption{font-size:.9rem;color:var(--muted);margin-top:6px}
+.legend{margin:4px 0}.lg{display:inline-block;margin-right:12px;font-weight:700}
+.lg.place{color:var(--place)}.lg.key{color:var(--key)}.lg.fin{color:var(--fin)}.lg.elim{color:var(--elim)}.lg.link{color:var(--muted);font-weight:400}
 .pager{display:flex;justify-content:space-between;gap:12px;margin-top:24px}
 footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);margin-top:24px}
 `;

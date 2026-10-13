@@ -8,7 +8,8 @@ this project brings it to the web as an installable app (PWA) that runs on phone
 default configuration (singles up to forcing nets, plus brute force), rates their difficulty, generates
 puzzles by level, and reads/writes the common text formats. It is verified step by step against the
 original Java solver on 587 puzzles. M4 (first version of the PWA in `packages/app`) is in too, and a static website with technique guides (`packages/website`).
-Still to do: Kraken fish, templates, "find all steps", more trainer features, worked examples in the guides, ads; see the plan.
+The app starts new puzzles instantly from a bank of generated puzzles, and every technique guide has a worked, solver-verified diagram.
+Still to do: Kraken fish, templates, "find all steps", more trainer features, ads; see the plan.
 
 - [Port plan](docs/PORT-PLAN.md)
 - [License audit](docs/LICENSE-AUDIT.md)

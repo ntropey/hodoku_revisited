@@ -34,3 +34,11 @@ test('sitemap and robots are written when SITE_URL is set', () => {
   assert.match(readFileSync(join(dist, 'sitemap.xml'), 'utf8'), /https:\/\/example\.org\/techniques\/x-wing\.html/);
   assert.match(readFileSync(join(dist, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/example\.org\/sitemap\.xml/);
 });
+
+test('technique pages with a worked example contain a diagram', () => {
+  const withExample = ['x-wing', 'xy-wing', 'hidden-single', 'als-xz', 'nice-loops', 'forcing-chains', 'skyscraper'];
+  for (const slug of withExample) {
+    const html = readFileSync(join(dist, `techniques/${slug}.html`), 'utf8');
+    assert.match(html, /<svg class="dg"/, slug);
+  }
+});
