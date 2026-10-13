@@ -68,6 +68,19 @@ const PORTED = new Set<SolutionType>([
   'TURBOT_FISH',
   'X_CHAIN',
   'XY_CHAIN',
+  'X_WING',
+  'SWORDFISH',
+  'JELLYFISH',
+  'FINNED_X_WING',
+  'SASHIMI_X_WING',
+  'FINNED_SWORDFISH',
+  'SASHIMI_SWORDFISH',
+  'FINNED_JELLYFISH',
+  'SASHIMI_JELLYFISH',
+  'FRANKEN_X_WING',
+  'FRANKEN_SWORDFISH',
+  'FINNED_FRANKEN_X_WING',
+  'FINNED_FRANKEN_SWORDFISH',
 ]);
 
 const golden: Golden[] = readFileSync(new URL('./fixtures/golden.jsonl', import.meta.url), 'utf8')

@@ -5,8 +5,15 @@
  * GPL-3.0-or-later; see LICENSE. Modified version of HoDoKu's SolutionStep and Candidate (Java).
  */
 import { Chain } from './chain.js';
+import { SudokuSet } from './sudokuSet.js';
 import type { SolutionType } from './generated/solutionType.js';
 import { compareTypes, isFish, isKrakenFish } from './solutionType.js';
+
+/** A unit: `type` is BLOCK, LINE or COL (see tables), `number` is 1-based. */
+export interface Entity {
+  type: number;
+  number: number;
+}
 
 /** A candidate: digit `value` (1-9) in cell `index` (0-80). */
 export class Candidate {
@@ -53,6 +60,12 @@ export class SolutionStep {
   /** Fish that is part of a Kraken Fish step: the type of the fish. */
   subType: SolutionType | null = null;
   isSiamese = false;
+  /** Fish: the units of the base set and of the cover set. */
+  baseEntities: Entity[] = [];
+  coverEntities: Entity[] = [];
+  /** Fish: all potential eliminations (cover candidates that are not base candidates), and the cannibalistic ones. */
+  potentialEliminations = new SudokuSet();
+  potentialCannibalisticEliminations = new SudokuSet();
   /** Unit type (see BLOCK/LINE/COL in tables) for steps that have one, e.g. Locked Candidates. */
   entity = 0;
   /** 1-based number of that unit. */
@@ -119,6 +132,10 @@ export class SolutionStep {
     s.chains = this.chains.map((c) => c.clone());
     s.subType = this.subType;
     s.isSiamese = this.isSiamese;
+    s.baseEntities = this.baseEntities.map((e) => ({ ...e }));
+    s.coverEntities = this.coverEntities.map((e) => ({ ...e }));
+    s.potentialEliminations = this.potentialEliminations.clone();
+    s.potentialCannibalisticEliminations = this.potentialCannibalisticEliminations.clone();
     s.entity = this.entity;
     s.entityNumber = this.entityNumber;
     return s;

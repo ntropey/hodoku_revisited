@@ -89,6 +89,14 @@ export class SudokuSet {
     this.cache = null;
   }
 
+  /** Set all three 32-bit words directly (cells 0-31, 32-63, 64-80). */
+  setWords(m0: number, m1: number, m2: number): void {
+    this.m0 = m0;
+    this.m1 = m1;
+    this.m2 = m2;
+    this.cache = null;
+  }
+
   clear(): void {
     this.m0 = this.m1 = this.m2 = 0;
     this.cache = null;

@@ -55,6 +55,23 @@ export function isFish(type: SolutionType): boolean {
   );
 }
 
+function categoryIs(type: SolutionType, ...categories: string[]): boolean {
+  const c = getStepConfig(type)?.category;
+  return c !== undefined && categories.includes(c);
+}
+
+export function isBasicFish(type: SolutionType): boolean {
+  return categoryIs(type, 'BASIC_FISH', 'FINNED_BASIC_FISH');
+}
+
+export function isFrankenFish(type: SolutionType): boolean {
+  return categoryIs(type, 'FRANKEN_FISH', 'FINNED_FRANKEN_FISH');
+}
+
+export function isMutantFish(type: SolutionType): boolean {
+  return categoryIs(type, 'MUTANT_FISH', 'FINNED_MUTANT_FISH');
+}
+
 export function isKrakenFish(type: SolutionType): boolean {
   return type === 'KRAKEN_FISH' || type === 'KRAKEN_FISH_TYPE_1' || type === 'KRAKEN_FISH_TYPE_2';
 }

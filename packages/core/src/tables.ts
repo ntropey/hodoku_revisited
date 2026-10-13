@@ -99,3 +99,12 @@ export const LINE_TEMPLATES: readonly SudokuSet[] = LINES.map((u) => SudokuSet.f
 export const COL_TEMPLATES: readonly SudokuSet[] = COLS.map((u) => SudokuSet.fromValues(u));
 /** One set with all cells of each block. */
 export const BLOCK_TEMPLATES: readonly SudokuSet[] = BLOCKS.map((u) => SudokuSet.fromValues(u));
+
+/**
+ * All cells that see every cell of `cells` (the intersection of their buddies).
+ * For an empty set that is every cell.
+ */
+export function getBuddiesOfSet(cells: SudokuSet, out: SudokuSet): void {
+  out.setAll();
+  for (const c of cells) out.and(BUDDIES[c]);
+}
