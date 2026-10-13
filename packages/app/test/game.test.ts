@@ -78,3 +78,28 @@ describe('hint', () => {
     expect(h.text.length).toBeGreaterThan(5);
   });
 });
+
+describe('puzzle bank', () => {
+  it('isomorphs keep the puzzle valid and unique', async () => {
+    const { isomorph } = await import('../src/bank/bank');
+    const { seededRng } = await import('@hodoku/core');
+    const rng = seededRng(7);
+    for (let k = 0; k < 5; k++) {
+      const iso = isomorph(PUZZLE, rng);
+      expect(iso.replace(/\./g, '')).toHaveLength(PUZZLE.replace(/\./g, '').length);
+      expect(analyze(iso).solution).toHaveLength(81);
+    }
+    expect(isomorph(PUZZLE, rng)).not.toBe(PUZZLE);
+  });
+
+  it('every bank puzzle has one solution and the level it is filed under', async () => {
+    const data = (await import('../src/bank/bank.json')).default as Record<string, string[]>;
+    const levels = Object.keys(data);
+    expect(levels.sort()).toEqual(['1', '2', '3', '4', '5']);
+    for (const l of levels) {
+      expect(data[l].length).toBeGreaterThanOrEqual(100);
+      // spot check: every 25th puzzle is re-rated
+      for (let i = 0; i < data[l].length; i += 25) expect(analyze(data[l][i]).level).toBe(Number(l));
+    }
+  });
+});

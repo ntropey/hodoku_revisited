@@ -41,6 +41,8 @@ interface Settings {
   showCands: boolean;
   checkMistakes: boolean;
   level: number;
+  /** bank indices already played, per level */
+  seen?: Record<number, number[]>;
 }
 
 export function App() {
@@ -55,6 +57,8 @@ export function App() {
   const [message, setMessage] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [importText, setImportText] = useState('');
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
   const solver = useRef(new SolverClient());
 
   useEffect(() => {
@@ -71,10 +75,16 @@ export function App() {
   const startNew = useCallback(
     async (level: number) => {
       solver.current.cancel();
-      setBusy(`Creating a ${LEVEL_NAMES[level]} puzzle...`);
+      setBusy(`Getting a ${LEVEL_NAMES[level]} puzzle...`);
       setMessage(null);
       try {
-        const info = await solver.current.generate(level);
+        const info = await solver.current.fromBank(level, settingsRef.current.seen?.[level] ?? []);
+        if (info.bankIndex !== undefined) {
+          const seen = settingsRef.current.seen ?? {};
+          // once every puzzle of the level was played the bank picks from all of them again
+          const played = [...new Set([...(seen[level] ?? []), info.bankIndex])];
+          setSettings((s) => ({ ...s, seen: { ...seen, [level]: played } }));
+        }
         setGame(newGame(info));
         setSelected(null);
         setHint(null);
@@ -266,7 +276,7 @@ export function App() {
           onChange={(e) => setSettings({ ...settings, level: Number(e.target.value) })}
           aria-label="Difficulty"
         >
-          {[1, 2, 3, 4].map((l) => (
+          {[1, 2, 3, 4, 5].map((l) => (
             <option key={l} value={l}>
               {LEVEL_NAMES[l]}
             </option>

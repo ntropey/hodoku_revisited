@@ -48,6 +48,11 @@ export class SolverClient {
     return this.puzzle({ kind: 'generate', level });
   }
 
+  /** A puzzle from the bank (instant); falls back to generating one if the bank has none. */
+  fromBank(level: number, seen: number[]): Promise<PuzzleInfo> {
+    return this.puzzle({ kind: 'bank', level, seen });
+  }
+
   analyze(puzzle: string): Promise<PuzzleInfo> {
     return this.puzzle({ kind: 'analyze', puzzle });
   }

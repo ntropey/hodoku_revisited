@@ -14,6 +14,7 @@ export interface HintResult {
 
 export type WorkerRequest =
   | { id: number; kind: 'generate'; level: number }
+  | { id: number; kind: 'bank'; level: number; seen: number[] }
   | { id: number; kind: 'analyze'; puzzle: string }
   | { id: number; kind: 'hint'; values: number[]; cands: number[] };
 
@@ -23,6 +24,8 @@ export interface PuzzleInfo {
   solution: number[];
   level: number;
   score: number;
+  /** Set for puzzles from the bank: its index in the level's list (to avoid repeats) */
+  bankIndex?: number;
 }
 
 export type WorkerResponse =

@@ -10,6 +10,7 @@ import {
   generatePuzzle,
   tables,
 } from '@hodoku/core';
+import { bankPuzzle, isomorph, pickBankIndex, type Rng } from './bank/bank';
 import { cellName, type HintResult, type PuzzleInfo } from './protocol';
 
 /** Rate a puzzle and find its solution. Throws if it is invalid or has no unique solution. */
@@ -34,6 +35,19 @@ export function generate(level: number): PuzzleInfo {
   if (result === null) throw new Error('No puzzle of this level found. Try again.');
   const info = analyze(result.puzzle);
   return { ...info, level: result.level, score: result.score };
+}
+
+/**
+ * A puzzle of the given level from the bank, disguised by a random isomorphism (kept only if the solver
+ * rates it the same, which it almost always does). Null if the bank has none of that level.
+ */
+export function fromBank(level: number, seen: readonly number[], rng: Rng = Math.random): PuzzleInfo | null {
+  const index = pickBankIndex(level, seen, rng);
+  if (index === null) return null;
+  const original = bankPuzzle(level, index);
+  let info = analyze(isomorph(original, rng));
+  if (info.level !== level) info = analyze(original);
+  return { ...info, bankIndex: index };
 }
 
 /** The next logical step for the given board (values and candidate bitmasks, bit d = digit d). */

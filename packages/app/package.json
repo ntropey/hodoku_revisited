@@ -10,7 +10,8 @@
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "gen-bank:build": "esbuild scripts/gen-bank.ts --bundle --platform=node --format=esm --outfile=scripts/gen-bank.mjs"
   },
   "dependencies": {
     "@hodoku/core": "workspace:*",
