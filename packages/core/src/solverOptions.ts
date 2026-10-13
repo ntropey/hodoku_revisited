@@ -30,6 +30,10 @@ export interface SolverOptions {
   /** Tabling: allow ALS nodes in chains (not supported yet). */
   allowAlsInTablingChains: boolean;
   allowAlsOverlap: boolean;
+  /** "Find all steps": maximum ALS chain length (the normal search uses 50). */
+  allStepsAlsChainLength: number;
+  /** "Find all steps": ALS chains only search forward. */
+  allStepsAlsChainForwardOnly: boolean;
   /** Kraken fish: 0 = basic only, 1 = basic + Franken, 2 = basic + Franken + Mutant. */
   krakenMaxFishType: number;
   /** Kraken fish: number of units in the base and cover sets. */
@@ -53,6 +57,8 @@ export const DEFAULT_SOLVER_OPTIONS: Readonly<SolverOptions> = {
   onlyOneChainPerStep: true,
   allowAlsInTablingChains: false,
   allowAlsOverlap: false,
+  allStepsAlsChainLength: 6,
+  allStepsAlsChainForwardOnly: true,
   krakenMaxFishType: 1,
   krakenMaxFishSize: 4,
   maxKrakenFins: 2,

@@ -130,7 +130,54 @@ export class AlsSolver extends AbstractSolver {
     this.steps = [];
     this.collectAllAlses();
     this.collectAllRCsForDeathBlossom();
-    return this.getAlsDeathBlossomInt();
+    return this.getAlsDeathBlossomInt(true);
+  }
+
+  /** All ALS-XZ, ALS-XY-Wing and ALS-Chain steps that were asked for, each group sorted. */
+  getAllAlses(doXz: boolean, doXy: boolean, doChain: boolean): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    const old = this.steps;
+    const result: SolutionStep[] = [];
+    const options = this.finder.options;
+    this.finder.setRcOnlyForward(options.allStepsAlsChainForwardOnly);
+    if (this.chain.length === MAX_RC) {
+      this.chain = new Array<RestrictedCommon | null>(options.allStepsAlsChainLength).fill(null);
+    }
+    this.collectAllAlses();
+    this.collectAllRestrictedCommons(options.allowAlsOverlap);
+    if (doXz) {
+      this.steps = [];
+      this.getAlsXZInt(false);
+      this.steps.sort(compareAlsSteps);
+      result.push(...this.steps);
+    }
+    if (doXy) {
+      this.steps = [];
+      this.getAlsXYWingInt(false);
+      this.steps.sort(compareAlsSteps);
+      result.push(...this.steps);
+    }
+    if (doChain) {
+      this.steps = [];
+      this.getAlsXYChainInt();
+      this.steps.sort(compareAlsSteps);
+      result.push(...this.steps);
+    }
+    this.steps = old;
+    return result;
+  }
+
+  /** All Death Blossoms (sorted). */
+  getAllDeathBlossoms(): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    const old = this.steps;
+    this.collectAllAlses();
+    this.collectAllRCsForDeathBlossom();
+    this.steps = [];
+    this.getAlsDeathBlossomInt(false);
+    const result = [...this.steps].sort(compareAlsSteps);
+    this.steps = old;
+    return result;
   }
 
   private getAlsXYChain(): SolutionStep | null {
@@ -149,14 +196,14 @@ export class AlsSolver extends AbstractSolver {
     this.steps = [];
     this.collectAllAlses();
     this.collectAllRestrictedCommons(this.finder.options.allowAlsOverlap);
-    return this.getAlsXYWingInt();
+    return this.getAlsXYWingInt(true);
   }
 
   private getAlsXZ(): SolutionStep | null {
     this.steps = [];
     this.collectAllAlses();
     this.collectAllRestrictedCommons(this.finder.options.allowAlsOverlap);
-    return this.getAlsXZInt();
+    return this.getAlsXZInt(true);
   }
 
   /**
@@ -167,7 +214,7 @@ export class AlsSolver extends AbstractSolver {
    * set and eliminates additional candidates; each of the two RCs can be used for "normal" ALS-XZ
    * eliminations as well.
    */
-  private getAlsXZInt(): SolutionStep | null {
+  private getAlsXZInt(onlyOne: boolean): SolutionStep | null {
     for (const rc of this.restrictedCommons) {
       if (rc.als1 > rc.als2) continue;
       const step = new SolutionStep('ALS_XZ');
@@ -186,7 +233,8 @@ export class AlsSolver extends AbstractSolver {
         step.addAls(als2.indices, als2.candidates);
         this.addRestrictedCommonToStep(als1, als2, rc.cand1, false);
         if (rc.cand2 !== 0) this.addRestrictedCommonToStep(als1, als2, rc.cand2, false);
-        return step;
+        if (onlyOne) return step;
+        this.steps.push(step);
       }
     }
     return null;
@@ -197,7 +245,7 @@ export class AlsSolver extends AbstractSolver {
    * both RCs have only one candidate those candidates must differ. Then ALS C is identified and
    * ALS A and B are checked for eliminations.
    */
-  private getAlsXYWingInt(): SolutionStep | null {
+  private getAlsXYWingInt(onlyOne: boolean): SolutionStep | null {
     const rcs = this.restrictedCommons;
     for (let i = 0; i < rcs.length; i++) {
       const rc1 = rcs[i];
@@ -258,7 +306,8 @@ export class AlsSolver extends AbstractSolver {
           if (rc1.cand2 !== 0) this.addRestrictedCommonToStep(a, c, rc1.cand2, false);
           this.addRestrictedCommonToStep(b, c, rc2.cand1, false);
           if (rc2.cand2 !== 0) this.addRestrictedCommonToStep(b, c, rc2.cand2, false);
-          return step;
+          if (onlyOne) return step;
+          this.steps.push(step);
         }
       }
     }
@@ -376,7 +425,7 @@ export class AlsSolver extends AbstractSolver {
    * (non overlapping) ALS is checked for common candidates that eliminate candidates outside the
    * ALS and the stem cell. The ALS/cell combinations must already be in `rcdb`.
    */
-  private getAlsDeathBlossomInt(): SolutionStep | null {
+  private getAlsDeathBlossomInt(onlyOne: boolean): SolutionStep | null {
     this.deletesMap.clear();
     this.globalStep = new SolutionStep('DEATH_BLOSSOM');
     for (let i = 0; i < LENGTH; i++) {
@@ -392,14 +441,14 @@ export class AlsSolver extends AbstractSolver {
       this.aktDBIndices.clear();
       this.aktDBCandidates = MAX_MASK;
       this.aktDBAls.fill(-1);
-      const step = this.checkAlsDeathBlossomRecursive(1);
-      if (step !== null) return step;
+      const step = this.checkAlsDeathBlossomRecursive(1, onlyOne);
+      if (onlyOne && step !== null) return step;
     }
     return null;
   }
 
   /** Try all ALS for `cand` in the stem cell; at the last candidate check the eliminations. */
-  private checkAlsDeathBlossomRecursive(cand: number): SolutionStep | null {
+  private checkAlsDeathBlossomRecursive(cand: number, onlyOne: boolean): SolutionStep | null {
     if (cand > this.maxDBCand) return null;
     const aktRcdb = this.aktRcdb;
     if (aktRcdb.indices[cand] > 0) {
@@ -412,8 +461,8 @@ export class AlsSolver extends AbstractSolver {
         this.aktDBCandidates &= als.candidates;
         this.aktDBIndices.or(als.indices);
         if (cand < this.maxDBCand) {
-          const step = this.checkAlsDeathBlossomRecursive(cand + 1);
-          if (step !== null) return step;
+          const step = this.checkAlsDeathBlossomRecursive(cand + 1, onlyOne);
+          if (onlyOne && step !== null) return step;
         } else {
           let found = false;
           const step = this.globalStep;
@@ -448,10 +497,28 @@ export class AlsSolver extends AbstractSolver {
               step.addAls(tmpAls.indices, tmpAls.candidates);
               step.restrictedCommons.push(new RestrictedCommon(0, 0, k, 0, 1));
             }
-            // this is the only step in the list (the search stops at the first one), so there
-            // is nothing it could replace; sorting the candidates is a side effect of the key
-            step.getCandidateKey();
-            return step;
+            let writeIt = true;
+            let replaceIndex = -1;
+            let elim: string | null = null;
+            if (this.finder.options.onlyOneAlsPerStep) {
+              elim = step.getCandidateKey();
+              const alreadyThere = this.deletesMap.get(elim);
+              if (alreadyThere !== undefined) {
+                // a step for the same eliminations exists: keep the one with fewer cells in all ALS
+                if (this.steps[alreadyThere].getAlsesIndexCount() > step.getAlsesIndexCount()) replaceIndex = alreadyThere;
+                else writeIt = false;
+              }
+            }
+            if (writeIt) {
+              if (replaceIndex !== -1) {
+                this.steps[replaceIndex] = step;
+              } else {
+                if (onlyOne) return step;
+                this.steps.push(step);
+                if (elim !== null) this.deletesMap.set(elim, this.steps.length - 1);
+              }
+            }
+            this.globalStep = new SolutionStep('DEATH_BLOSSOM');
           }
         }
         this.aktDBCandidates |= this.incDBCand[cand];
@@ -459,8 +526,8 @@ export class AlsSolver extends AbstractSolver {
       }
     } else {
       this.aktDBAls[cand] = -1;
-      const step = this.checkAlsDeathBlossomRecursive(cand + 1);
-      if (step !== null) return step;
+      const step = this.checkAlsDeathBlossomRecursive(cand + 1, onlyOne);
+      if (onlyOne && step !== null) return step;
     }
     return null;
   }

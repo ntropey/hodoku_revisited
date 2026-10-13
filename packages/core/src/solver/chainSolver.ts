@@ -6,7 +6,7 @@
  */
 import { Chain } from '../chain.js';
 import { SolutionStep } from '../solutionStep.js';
-import type { SolutionType } from '../solutionType.js';
+import { SOLUTION_TYPE_NAMES, type SolutionType } from '../solutionType.js';
 import { SudokuSet } from '../sudokuSet.js';
 import { ALL_UNITS, ANZ_VALUES, BUDDIES, CONSTRAINTS, LENGTH, POSSIBLE_VALUES, getCol, getLine } from '../tables.js';
 import { AbstractSolver } from './abstractSolver.js';
@@ -115,6 +115,23 @@ export class ChainSolver extends AbstractSolver {
       default:
         return false;
     }
+  }
+
+  /** All simple chains (Turbot Fish, X-Chains, XY-Chains, Remote Pairs), sorted by type first. */
+  getAllChains(): SolutionStep[] {
+    this.sudoku = this.finder.getSudoku();
+    this.steps = [];
+    for (const type of [ChainType.TURBOT_FISH, ChainType.X_CHAIN, ChainType.XY_CHAIN, ChainType.REMOTE_PAIR]) {
+      this.getChains(type);
+      this.steps.sort((a, b) => a.compareTo(b));
+    }
+    const all = [...this.steps];
+    all.sort((a, b) => {
+      const ta = SOLUTION_TYPE_NAMES.indexOf(a.type);
+      const tb = SOLUTION_TYPE_NAMES.indexOf(b.type);
+      return ta !== tb ? ta - tb : a.compareTo(b);
+    });
+    return all;
   }
 
   /** All chains of the type are found and sorted; the best one is returned. */

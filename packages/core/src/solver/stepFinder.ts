@@ -353,6 +353,21 @@ export class SudokuStepFinder {
     return this.withSudoku(sudoku, () => this.wingSolver.getAllWings());
   }
 
+  /** All simple chains (Turbot, X-, XY-Chains, Remote Pairs) of `sudoku`. */
+  getAllChains(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.chainSolver.getAllChains());
+  }
+
+  /** All ALS steps of `sudoku`: ALS-XZ, ALS-XY-Wing and ALS-Chains, as asked for. */
+  getAllAlses(sudoku: Sudoku2, doXz: boolean, doXy: boolean, doChain: boolean): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.alsSolver.getAllAlses(doXz, doXy, doChain));
+  }
+
+  /** All Death Blossoms of `sudoku`. */
+  getAllDeathBlossoms(sudoku: Sudoku2): SolutionStep[] {
+    return this.withSudoku(sudoku, () => this.alsSolver.getAllDeathBlossoms());
+  }
+
   /** All Simple Colors steps of `sudoku`. */
   findAllSimpleColors(sudoku: Sudoku2): SolutionStep[] {
     return this.withSudoku(sudoku, () => this.coloringSolver.findAllSimpleColors());

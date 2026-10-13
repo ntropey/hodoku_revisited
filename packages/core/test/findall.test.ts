@@ -27,6 +27,14 @@ const states: State[] = gunzipSync(readFileSync(new URL('./fixtures/golden-all.j
   .filter((l) => l.trim())
   .map((l) => JSON.parse(l) as State);
 
+/**
+ * Lists whose order is not compared: the ALS comparator of the original is not a consistent ordering
+ * (it compares eliminations by index sum only for steps that are not equivalent), so the order of
+ * steps that rank equal depends on the sort algorithm of the Java runtime. The steps themselves
+ * must be the same.
+ */
+const UNORDERED = new Set(['alses']);
+
 /** The find-all functions that are ported, by the name used in the golden data. */
 const IMPLEMENTED: Record<string, (f: SudokuStepFinder, s: Sudoku2) => SolutionStep[]> = {
   fullHouses: (f, s) => f.findAllFullHouses(s),
@@ -44,6 +52,9 @@ const IMPLEMENTED: Record<string, (f: SudokuStepFinder, s: Sudoku2) => SolutionS
   wings: (f, s) => f.getAllWings(s),
   simpleColors: (f, s) => f.findAllSimpleColors(s),
   multiColors: (f, s) => f.findAllMultiColors(s),
+  chains: (f, s) => f.getAllChains(s),
+  alses: (f, s) => f.getAllAlses(s, true, true, true),
+  deathBlossoms: (f, s) => f.getAllDeathBlossoms(s),
   sueDeCoqs: (f, s) => f.getAllSueDeCoqs(s),
   templates: (f, s) => f.getAllTemplates(s),
 };
@@ -72,8 +83,14 @@ describe('find all steps (golden data from HoDoKu 2.2.0)', () => {
         sudoku.setSudoku(g.state);
         const finder = new SudokuStepFinder();
         finder.setSudoku(sudoku);
-        const actual = find(finder, sudoku.clone()).map(summarize);
-        expect(actual, `${name} in ${g.state}`).toEqual(expected);
+        let actual = find(finder, sudoku.clone()).map(summarize);
+        let wanted = expected;
+        if (UNORDERED.has(name)) {
+          const key = (s: GoldenStep) => JSON.stringify(s);
+          actual = actual.sort((a, b) => key(a).localeCompare(key(b)));
+          wanted = [...expected].sort((a, b) => key(a).localeCompare(key(b)));
+        }
+        expect(actual, `${name} in ${g.state}`).toEqual(wanted);
         steps += expected.length;
       }
       console.log(`${name}: ${steps} steps compared`);
