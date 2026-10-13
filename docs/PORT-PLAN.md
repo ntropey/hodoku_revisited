@@ -48,8 +48,8 @@ rating.
 
 ## Milestones
 
-1. **M0** Repo, license files, CI. (this commit)
-2. **M1** Model and simple solver with golden tests.
+1. **M0** Repo, license files, CI. *(done)*
+2. **M1** Model and simple solver with golden tests. *(done)*
 3. **M2** Remaining solvers up to fish and ALS.
 4. **M3** Chains and tabling, difficulty rating, generator.
 5. **M4** Electron app: board, hints, candidates, undo, settings, print, import/export.
@@ -60,3 +60,19 @@ rating.
 `python3 scripts/fetch-reference.py HoDoKu/tags/release2.2.0 <output-dir>`
 downloads the original source from SourceForge's web file browser. The reference
 source is not committed to this repo.
+
+## Status (M1)
+
+Ported and verified against 200 puzzles solved by the original 2.2.0 jar
+(`packages/core/test/golden.test.ts`; 9,410 of 11,582 steps compared in order; 144 of the 200 puzzles are solved entirely with ported techniques):
+`SudokuSet`, `Sudoku2` (board, candidates, queues), `SimpleSolver` (Full House, Naked/Hidden
+Single, Locked Pair/Triple, Locked Candidates 1/2, Naked/Hidden Pair/Triple/Quadruple),
+solve loop with scoring and level.
+
+Known gaps in M1:
+- `setSudoku` reads 81-character and 9-line puzzles only; PM-grid and library formats are TODO.
+- The "find all steps" variants and `SolutionStep` ordering/formatting are TODO.
+- The golden corpus does not exercise the Naked/Locked subset step cache.
+
+The big constant tables (all 111 solution types with their English names, and the 92 default
+solver steps with scores) are generated from the original source by `scripts/gen-tables.py`.

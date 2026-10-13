@@ -5,6 +5,9 @@ def get(u,binary=False):
     for _ in range(4):
         try:
             d=urllib.request.urlopen(u,timeout=60).read()
+            # SourceForge sometimes appends an HTML error page to a raw file
+            if b'<title>Server Error</title>' in d[-1500:]:
+                raise IOError('server error page in response')
             return d if binary else d.decode('utf8','ignore')
         except Exception as e: err=e
     print("FAIL",u,err,file=sys.stderr); return None
