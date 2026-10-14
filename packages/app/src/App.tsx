@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Board } from './Board';
+import { AllSteps } from './components/AllSteps';
+import { BottomSheet, type Snap } from './components/BottomSheet';
+import { CommandMenu, type Command } from './components/CommandMenu';
+import { DigitPad } from './components/DigitPad';
+import { HintView } from './components/HintView';
+import { ImportDialog } from './components/ImportDialog';
+import { SettingsSheet } from './components/SettingsSheet';
+import { SidePanel } from './components/SidePanel';
+import { Summary } from './components/Summary';
+import { TopBar } from './components/TopBar';
 import {
   erase,
   fillCands,
@@ -15,11 +25,13 @@ import {
   wrongCells,
   type GameState,
 } from './game';
-import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintLevel, type HintResult } from './protocol';
+import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintResult } from './protocol';
 import { SolverClient } from './solverClient';
+import { DEFAULT_SETTINGS, type Mode, type Settings, type Tab } from './ui';
 
 const SAVE_KEY = 'hodoku-revisited:game';
 const SETTINGS_KEY = 'hodoku-revisited:settings';
+const TIME_KEY = 'hodoku-revisited:time';
 
 function load<T>(key: string): T | null {
   try {
@@ -37,28 +49,34 @@ function save(key: string, value: unknown): void {
   }
 }
 
-interface Settings {
-  showCands: boolean;
-  checkMistakes: boolean;
-  level: number;
-  hintLevel: HintLevel;
-  /** bank indices already played, per level */
-  seen?: Record<number, number[]>;
+/** A puzzle given in the address (?p=81 characters), used by the "open in app" links of the guides. */
+function puzzleFromUrl(): string | null {
+  const p = new URLSearchParams(window.location.search).get('p');
+  return p && /^[.0-9]{81}$/.test(p) ? p : null;
 }
 
 export function App() {
   const [game, setGame] = useState<GameState | null>(() => load<GameState>(SAVE_KEY));
-  const [settings, setSettings] = useState<Settings>(
-    () => load<Settings>(SETTINGS_KEY) ?? { showCands: false, checkMistakes: false, level: 1, hintLevel: 5 },
-  );
+  const [settings, setSettings] = useState<Settings>(() => ({ ...DEFAULT_SETTINGS, ...load<Settings>(SETTINGS_KEY) }));
   const [selected, setSelected] = useState<number | null>(null);
-  const [noteMode, setNoteMode] = useState(false);
+  const [mode, setMode] = useState<Mode>('value');
+  const [filterDigit, setFilterDigit] = useState(0);
   const [hint, setHint] = useState<HintResult | null>(null);
+  const [allSteps, setAllSteps] = useState<{ results: HintResult[]; total: Record<string, number> } | null>(null);
+  const [tab, setTab] = useState<Tab>('hint');
+  const [snap, setSnap] = useState<Snap>('peek');
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [allSteps, setAllSteps] = useState<{ results: HintResult[]; total: Record<string, number> } | null>(null);
   const [importing, setImporting] = useState(false);
   const [importText, setImportText] = useState('');
+  const [importError, setImportError] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [commandsOpen, setCommandsOpen] = useState(false);
+  const [seconds, setSeconds] = useState(() => {
+    const t = load<{ givens: string; seconds: number }>(TIME_KEY);
+    const g = load<GameState>(SAVE_KEY);
+    return t && g && t.givens === g.givens ? t.seconds : 0;
+  });
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const solver = useRef(new SolverClient());
@@ -67,17 +85,56 @@ export function App() {
     if (game) save(SAVE_KEY, game);
   }, [game]);
   useEffect(() => save(SETTINGS_KEY, settings), [settings]);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (settings.theme === 'system') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', settings.theme);
+  }, [settings.theme]);
 
-  const update = useCallback((fn: (g: GameState) => GameState) => {
-    setGame((g) => (g ? fn(g) : g));
+  const solved = game ? isSolved(game) : false;
+  const hintLevel = settings.hintLevel ?? 5;
+
+  // timer: counts while the page is visible and the puzzle is not solved; saved with the puzzle's givens
+  useEffect(() => {
+    if (!game || solved) return;
+    const tick = window.setInterval(() => {
+      if (!document.hidden) setSeconds((s) => s + 1);
+    }, 1000);
+    return () => window.clearInterval(tick);
+  }, [game?.givens, solved]);
+  useEffect(() => {
+    if (game && seconds % 5 === 0) save(TIME_KEY, { givens: game.givens, seconds });
+  }, [seconds, game?.givens]);
+
+  const clearPanel = useCallback(() => {
     setHint(null);
     setAllSteps(null);
     setMessage(null);
   }, []);
 
+  const update = useCallback(
+    (fn: (g: GameState) => GameState) => {
+      setGame((g) => (g ? fn(g) : g));
+      clearPanel();
+    },
+    [clearPanel],
+  );
+
+  const startGame = useCallback((g: GameState) => {
+    setGame(g);
+    setSelected(null);
+    setFilterDigit(0);
+    setHint(null);
+    setAllSteps(null);
+    setMessage(null);
+    setSeconds(0);
+    save(TIME_KEY, { givens: g.givens, seconds: 0 });
+  }, []);
+
   const startNew = useCallback(
     async (level: number) => {
       solver.current.cancel();
+      setSettings((s) => ({ ...s, level }));
       setBusy(`Getting a ${LEVEL_NAMES[level]} puzzle...`);
       setMessage(null);
       try {
@@ -88,40 +145,172 @@ export function App() {
           const played = [...new Set([...(seen[level] ?? []), info.bankIndex])];
           setSettings((s) => ({ ...s, seen: { ...seen, [level]: played } }));
         }
-        setGame(newGame(info));
-        setSelected(null);
-        setHint(null);
+        startGame(newGame(info));
       } catch (e) {
         if ((e as Error).message !== 'cancelled') setMessage((e as Error).message);
       } finally {
         setBusy(null);
       }
     },
-    [],
+    [startGame],
   );
 
+  // first start: a puzzle from the address, the saved game, or a new one
   useEffect(() => {
-    if (!game) void startNew(settings.level);
+    const p = puzzleFromUrl();
+    if (p) {
+      window.history.replaceState(null, '', window.location.pathname);
+      setBusy('Checking puzzle...');
+      solver.current
+        .analyze(p)
+        .then((info) => startGame(newGame(info)))
+        .catch((e: Error) => setMessage(e.message))
+        .finally(() => setBusy(null));
+    } else if (!game) void startNew(settings.level);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const input = useCallback(
     (d: number) => {
-      if (!game || selected === null) return;
-      if (noteMode && game.values[selected] === 0) update((g) => toggleCand(g, selected, d));
+      if (!game) return;
+      if (mode === 'filter') {
+        setFilterDigit((f) => (f === d ? 0 : d));
+        return;
+      }
+      if (selected === null) return;
+      if (mode === 'notes' && game.values[selected] === 0) update((g) => toggleCand(g, selected, d));
       else update((g) => setValue(g, selected, d));
     },
-    [game, selected, noteMode, update],
+    [game, selected, mode, update],
+  );
+
+  const wrong = useMemo(() => new Set(game && settings.checkMistakes ? wrongCells(game) : []), [game, settings.checkMistakes]);
+  const left = useMemo(() => (game ? remaining(game) : []), [game]);
+  const filled = game ? game.values.filter((v) => v !== 0).length : 0;
+
+  const askHint = useCallback(async () => {
+    if (!game) return;
+    setTab('hint');
+    setSnap((s) => (s === 'peek' ? 'half' : s));
+    setBusy('Looking for a hint...');
+    setMessage(null);
+    try {
+      const h = await solver.current.hint(game.values, game.cands, hintLevel);
+      setHint(h);
+      setMessage(h ? null : hintLevel < 5 ? 'No hint at this hint level. Raise "Hints use" above.' : 'No logical hint found.');
+    } catch (e) {
+      setMessage((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }, [game, hintLevel]);
+
+  const askAllSteps = useCallback(async () => {
+    if (!game) return;
+    setTab('steps');
+    setSnap((s) => (s === 'peek' ? 'half' : s));
+    setBusy('Looking for all steps...');
+    setHint(null);
+    try {
+      setAllSteps(await solver.current.allHints(game.values, game.cands, hintLevel));
+      setMessage(null);
+    } catch (e) {
+      setMessage((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }, [game, hintLevel]);
+
+  const applyHint = useCallback(() => {
+    if (!hint) return;
+    update((g) => {
+      let next = g;
+      for (const p of hint.marks.place) next = setValue(next, p.cell, p.digit);
+      if (hint.marks.elim.length > 0) next = removeCands(next, hint.marks.elim);
+      return next;
+    });
+  }, [hint, update]);
+
+  const doImport = async () => {
+    setBusy('Checking puzzle...');
+    setImportError(null);
+    try {
+      startGame(newGame(await solver.current.analyze(importText)));
+      setImporting(false);
+      setImportText('');
+    } catch (e) {
+      setImportError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const copyPuzzle = useCallback(async () => {
+    if (!game) return;
+    try {
+      await navigator.clipboard.writeText(game.givens);
+      setMessage('Puzzle copied.');
+    } catch {
+      setMessage(game.givens);
+    }
+  }, [game]);
+
+  const eraseSelected = useCallback(() => {
+    if (selected !== null) update((g) => erase(g, selected));
+  }, [selected, update]);
+
+  const commands: Command[] = useMemo(
+    () => [
+      ...[1, 2, 3, 4, 5].map((l) => ({ label: `New puzzle: ${LEVEL_NAMES[l]}`, run: () => void startNew(l) })),
+      { label: 'Get a hint', hint: 'H', run: () => void askHint(), disabled: !game || solved },
+      { label: 'Find all steps', run: () => void askAllSteps(), disabled: !game || solved },
+      { label: 'Apply step', hint: 'Enter', run: applyHint, disabled: !hint },
+      { label: 'Undo', hint: 'Z', run: () => update(undo), disabled: !game?.past.length },
+      { label: 'Redo', hint: 'Y', run: () => update(redo), disabled: !game?.future.length },
+      { label: 'Erase cell', run: eraseSelected, disabled: selected === null },
+      { label: 'Value mode', run: () => setMode('value') },
+      { label: 'Notes mode', hint: 'N', run: () => setMode('notes') },
+      { label: 'Filter mode', hint: 'F', run: () => setMode('filter') },
+      { label: 'Clear digit filter', run: () => setFilterDigit(0), disabled: filterDigit === 0 },
+      { label: 'Reset notes', run: () => update(fillCands) },
+      { label: `${settings.showCands ? 'Hide' : 'Show'} all candidates`, run: () => setSettings((s) => ({ ...s, showCands: !s.showCands })) },
+      { label: `Mark mistakes: ${settings.checkMistakes ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, checkMistakes: !s.checkMistakes })) },
+      { label: 'Import puzzle', run: () => setImporting(true) },
+      { label: 'Copy puzzle', run: () => void copyPuzzle() },
+      { label: 'Print', run: () => window.print() },
+      { label: 'Settings', run: () => setSettingsOpen(true) },
+      ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
+    ],
+    [askAllSteps, askHint, applyHint, copyPuzzle, eraseSelected, filterDigit, game, hint, selected, settings.checkMistakes, settings.showCands, solved, startNew, update],
   );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (importing || e.ctrlKey || e.metaKey) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandsOpen((o) => !o);
+        return;
+      }
+      if (importing || settingsOpen || commandsOpen || e.ctrlKey || e.metaKey) return;
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.altKey && e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const d = Number(e.code.slice(5));
+        setFilterDigit((f) => (f === d ? 0 : d));
+        return;
+      }
+      if (e.altKey) return;
       if (e.key >= '1' && e.key <= '9') input(Number(e.key));
-      else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
-        if (selected !== null) update((g) => erase(g, selected));
-      } else if (e.key === 'n') setNoteMode((n) => !n);
-      else if (e.key === 'z') update(undo);
+      else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') eraseSelected();
+      else if (e.key === 'n') setMode((m) => (m === 'notes' ? 'value' : 'notes'));
+      else if (e.key === 'f') setMode((m) => (m === 'filter' ? 'value' : 'filter'));
+      else if (e.key === 'h') void askHint();
+      else if (e.key === 'Enter' && hint) applyHint();
+      else if (e.key === 'Escape') {
+        setHint(null);
+        setFilterDigit(0);
+      } else if (e.key === 'z') update(undo);
       else if (e.key === 'y') update(redo);
       else if (e.key.startsWith('Arrow')) {
         e.preventDefault();
@@ -133,280 +322,121 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [input, selected, update, importing]);
+  }, [input, selected, update, importing, settingsOpen, commandsOpen, askHint, applyHint, hint, eraseSelected]);
 
-  const wrong = useMemo(
-    () => new Set(game && settings.checkMistakes ? wrongCells(game) : []),
-    [game, settings.checkMistakes],
-  );
-  const left = useMemo(() => (game ? remaining(game) : []), [game]);
-  const solved = game ? isSolved(game) : false;
-
-  const askHint = async () => {
-    if (!game) return;
-    setBusy('Looking for a hint...');
-    try {
-      const h = await solver.current.hint(game.values, game.cands, settings.hintLevel ?? 5);
-      setHint(h);
-      setMessage(
-        h
-          ? null
-          : (settings.hintLevel ?? 5) < 5
-            ? 'No hint at this hint level. Raise it in the settings below.'
-            : 'No logical hint found.',
-      );
-    } catch (e) {
-      setMessage((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const askAllSteps = async () => {
-    if (!game) return;
-    setBusy('Looking for all steps...');
-    setHint(null);
-    try {
-      setAllSteps(await solver.current.allHints(game.values, game.cands, settings.hintLevel ?? 5));
-      setMessage(null);
-    } catch (e) {
-      setMessage((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const applyHint = () => {
-    if (!hint) return;
-    update((g) => {
-      let next = g;
-      for (const p of hint.marks.place) next = setValue(next, p.cell, p.digit);
-      if (hint.marks.elim.length > 0) next = removeCands(next, hint.marks.elim);
-      return next;
-    });
-  };
-
-  const doImport = async () => {
-    setBusy('Checking puzzle...');
-    try {
-      const info = await solver.current.analyze(importText);
-      setGame(newGame(info));
-      setSelected(null);
-      setImporting(false);
-      setImportText('');
-      setMessage(null);
-    } catch (e) {
-      setMessage((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const copyPuzzle = async () => {
-    if (!game) return;
-    try {
-      await navigator.clipboard.writeText(game.givens);
-      setMessage('Puzzle copied.');
-    } catch {
-      setMessage(game.givens);
-    }
-  };
-
-  return (
-    <main className="app">
-      <header>
-        <h1>Hodoku Revisited</h1>
-        {game && (
-          <span className="badge">
-            {LEVEL_NAMES[game.level]} · {game.score}
-          </span>
-        )}
-      </header>
-
-      {game && (
-        <Board
-          game={game}
-          selected={selected}
-          showCands={settings.showCands}
+  const panel = (
+    <SidePanel tab={tab} onTab={setTab} hintLevel={hintLevel} onHintLevel={(l) => setSettings((s) => ({ ...s, hintLevel: l }))}>
+      {tab === 'hint' && (
+        <HintView
           hint={hint}
-          wrong={wrong}
-          onSelect={setSelected}
+          message={message}
+          busy={busy}
+          solved={solved}
+          disabled={!game}
+          onHint={() => void askHint()}
+          onApply={applyHint}
+          onDismiss={() => setHint(null)}
         />
       )}
-
-      <div className="status" aria-live="polite">
-        {busy ?? (solved ? '🎉 Solved!' : (hint?.text ?? message ?? ''))}
-        {hint && !busy && (
-          <div className="why">
-            {hint.summary && <p>{hint.summary}</p>}
-            {hint.notation.map((n, i) => (
-              <code key={i}>{n}</code>
-            ))}
-            {hint.slug && (
-              <a href={`../techniques/${hint.slug}.html`} target="_blank" rel="noreferrer">
-                Read the guide for {hint.name}
-              </a>
-            )}
-          </div>
-        )}
-      </div>
-
-      {allSteps && (
-        <section className="allsteps" aria-label="All available steps">
-          <h2>
-            All steps <button onClick={() => setAllSteps(null)}>Close</button>
-          </h2>
-          {allSteps.results.length === 0 && <p>No step available at this hint level.</p>}
-          {Object.entries(
-            allSteps.results.reduce<Record<string, HintResult[]>>((acc, r) => ((acc[r.name] ??= []).push(r), acc), {}),
-          ).map(([name, list]) => (
-            <details key={name} open={list.length <= 4}>
-              <summary>
-                {name} ({allSteps.total[name]})
-              </summary>
-              <ul>
-                {list.map((r, i) => (
-                  <li key={i}>
-                    <button className={r === hint ? 'on' : ''} onClick={() => setHint(r)}>
-                      {r.text.slice(r.name.length + 2)}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          ))}
-        </section>
+      {tab === 'steps' && (
+        <AllSteps
+          data={allSteps}
+          hintLevelName={hintLevel === 5 ? 'Everything' : HINT_LEVEL_NAMES[hintLevel]}
+          selected={hint}
+          busy={busy}
+          disabled={!game || solved}
+          onRefresh={() => void askAllSteps()}
+          onSelect={setHint}
+          onApply={applyHint}
+        />
       )}
+      {tab === 'summary' && <Summary game={game} />}
+    </SidePanel>
+  );
 
-      <div className="pad">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
-          <button key={d} onClick={() => input(d)} disabled={!game || left[d] === 0} aria-label={`digit ${d}`}>
-            {d}
-            <small>{left[d] ?? ''}</small>
-          </button>
-        ))}
-      </div>
+  const selCands = selected !== null && game && game.values[selected] === 0 ? [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((d) => (game.cands[selected] & (1 << d)) !== 0) : [];
 
-      <div className="tools">
-        <button onClick={() => update(undo)} disabled={!game?.past.length}>
-          Undo
-        </button>
-        <button onClick={() => update(redo)} disabled={!game?.future.length}>
-          Redo
-        </button>
-        <button
-          onClick={() => selected !== null && update((g) => erase(g, selected))}
-          disabled={selected === null || !game || isGiven(game, selected)}
-        >
-          Erase
-        </button>
-        <button className={noteMode ? 'on' : ''} onClick={() => setNoteMode(!noteMode)} aria-pressed={noteMode}>
-          Notes
-        </button>
-        <button onClick={askHint} disabled={!game || solved || !!busy}>
-          Hint
-        </button>
-        <button onClick={applyHint} disabled={!hint}>
-          Apply
-        </button>
-        <button onClick={askAllSteps} disabled={!game || solved || !!busy}>
-          All steps
-        </button>
-        <button onClick={() => update(fillCands)} disabled={!game}>
-          Reset notes
-        </button>
-      </div>
+  return (
+    <div className="shell">
+      <TopBar
+        badge={game ? { level: game.level, score: game.score } : null}
+        filled={filled}
+        seconds={seconds}
+        busy={!!busy}
+        canUndo={!!game?.past.length}
+        canRedo={!!game?.future.length}
+        onNew={(l) => void startNew(l)}
+        onCancel={() => (solver.current.cancel(), setBusy(null))}
+        onImport={() => (setImportError(null), setImporting(true))}
+        onCopy={() => void copyPuzzle()}
+        onPrint={() => window.print()}
+        onUndo={() => update(undo)}
+        onRedo={() => update(redo)}
+        onSettings={() => setSettingsOpen(true)}
+        onCommands={() => setCommandsOpen(true)}
+      />
 
-      <div className="tools">
-        <label>
-          <input
-            type="checkbox"
-            checked={settings.showCands}
-            onChange={(e) => setSettings({ ...settings, showCands: e.target.checked })}
+      <main className="stage">
+        <section className="boardcol">
+          {game && (
+            <Board
+              game={game}
+              selected={selected}
+              showCands={settings.showCands}
+              hint={hint}
+              wrong={wrong}
+              filter={filterDigit}
+              onSelect={setSelected}
+            />
+          )}
+          <DigitPad
+            mode={mode}
+            onMode={setMode}
+            left={left}
+            filterDigit={filterDigit}
+            disabled={!game}
+            canErase={selected !== null && !!game && !isGiven(game, selected)}
+            onDigit={input}
+            onFilter={(d) => setFilterDigit((f) => (f === d ? 0 : d))}
+            onErase={eraseSelected}
           />
-          Show candidates
-        </label>
-        <label>
-          Hints use
-          <select
-            value={settings.hintLevel ?? 5}
-            onChange={(e) => setSettings({ ...settings, hintLevel: Number(e.target.value) as HintLevel })}
-            aria-label="Hint level"
-          >
-            {HINT_LEVEL_NAMES.map((n, i) => (
-              <option key={n} value={i}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={settings.checkMistakes}
-            onChange={(e) => setSettings({ ...settings, checkMistakes: e.target.checked })}
-          />
-          Mark mistakes
-        </label>
-      </div>
+          <div className="statusline" aria-live="polite">
+            <span>
+              {busy ?? (selected !== null ? `r${Math.floor(selected / 9) + 1}c${(selected % 9) + 1}${selCands.length ? ` · candidates ${selCands.join(' ')}` : ''}` : (message ?? 'Select a cell'))}
+            </span>
+            <span className="dim">
+              Mark mistakes {settings.checkMistakes ? 'on' : 'off'} · show candidates {settings.showCands ? 'on' : 'off'} · autosaved
+            </span>
+          </div>
+        </section>
+        <div className="sidecol">{panel}</div>
+      </main>
 
-      <div className="tools">
-        <select
-          value={settings.level}
-          onChange={(e) => setSettings({ ...settings, level: Number(e.target.value) })}
-          aria-label="Difficulty"
-        >
-          {[1, 2, 3, 4, 5].map((l) => (
-            <option key={l} value={l}>
-              {LEVEL_NAMES[l]}
-            </option>
-          ))}
-        </select>
-        <button className="primary" onClick={() => startNew(settings.level)} disabled={!!busy}>
-          New puzzle
-        </button>
-        {busy && (
-          <button onClick={() => (solver.current.cancel(), setBusy(null))}>Cancel</button>
-        )}
-        <button onClick={() => setImporting(true)}>Import</button>
-        <button onClick={copyPuzzle} disabled={!game}>
-          Copy
-        </button>
-        <button onClick={() => window.print()} disabled={!game}>
-          Print
-        </button>
+      <div className="sheetcol">
+        <BottomSheet snap={snap} onSnap={setSnap}>
+          {panel}
+        </BottomSheet>
       </div>
 
       {importing && (
-        <div className="dialog" role="dialog" aria-label="Import puzzle">
-          <p>Paste a puzzle: 81 characters, a grid, a PM grid, or a HoDoKu library line.</p>
-          <textarea value={importText} onChange={(e) => setImportText(e.target.value)} rows={6} />
-          <div className="tools">
-            <button className="primary" onClick={doImport} disabled={!importText.trim() || !!busy}>
-              Load
-            </button>
-            <button onClick={() => (setImporting(false), setMessage(null))}>Close</button>
-          </div>
-          {message && <p className="error">{message}</p>}
-        </div>
+        <ImportDialog
+          text={importText}
+          onText={setImportText}
+          error={importError}
+          busy={!!busy}
+          onLoad={() => void doImport()}
+          onClose={() => setImporting(false)}
+        />
       )}
-
-      <footer>
-        Free software (GPL-3.0-or-later) ·{' '}
-        <details className="about">
-          <summary>About and license</summary>
-          <p>
-            Hodoku Revisited is based on <a href="https://hodoku.sourceforge.net/">HoDoKu</a> by Bernhard Hobiger (2008-12).
-            Copyright (C) 2026 Hodoku Revisited contributors. This program comes with ABSOLUTELY NO WARRANTY. It is free
-            software under the GNU General Public License, version 3 or later; you may redistribute it under those terms.
-            Not affiliated with or endorsed by the original author.
-          </p>
-          <p>
-            <a href="https://www.gnu.org/licenses/gpl-3.0.html">License text</a> ·{' '}
-            <a href="https://github.com/ntropey/hodoku_revisited">Source code</a>
-          </p>
-        </details>
-      </footer>
-    </main>
+      {settingsOpen && (
+        <SettingsSheet
+          settings={settings}
+          onChange={setSettings}
+          onResetNotes={() => update(fillCands)}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
+      {commandsOpen && <CommandMenu commands={commands} onClose={() => setCommandsOpen(false)} />}
+    </div>
   );
 }

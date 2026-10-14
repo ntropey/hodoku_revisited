@@ -3,7 +3,7 @@
  * Game state: pure functions, no React, no DOM.
  */
 import { tables } from '@hodoku/core';
-import type { PuzzleInfo } from './protocol';
+import type { PathEntry, PuzzleInfo } from './protocol';
 
 const PEERS: readonly (readonly number[])[] = tables.BUDDIES.map((b) => [...b.values()]);
 export const ALL_CANDS = 0b1111111110;
@@ -22,6 +22,8 @@ export interface GameState {
   solution: number[];
   level: number;
   score: number;
+  /** techniques of the solve path (missing in games saved by older versions) */
+  path?: PathEntry[];
   past: Snapshot[];
   future: Snapshot[];
 }
@@ -45,6 +47,7 @@ export function newGame(info: PuzzleInfo): GameState {
     solution: info.solution,
     level: info.level,
     score: info.score,
+    path: info.path,
     past: [],
     future: [],
   };

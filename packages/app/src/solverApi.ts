@@ -17,7 +17,7 @@ import {
   tables,
 } from '@hodoku/core';
 import { bankPuzzle, isomorph, pickBankIndex, type Rng } from './bank/bank';
-import type { HintLevel, HintResult, PuzzleInfo } from './protocol';
+import type { HintLevel, HintResult, PathEntry, PuzzleInfo } from './protocol';
 import { techniqueInfo } from './techniqueInfo';
 
 /** Rate a puzzle and find its solution. Throws if it is invalid or has no unique solution. */
@@ -34,7 +34,25 @@ export function analyze(puzzle: string): PuzzleInfo {
   solver.setSudoku(work);
   solver.solve();
   if (!work.isSolved()) throw new Error('The solver could not complete this puzzle.');
-  return { puzzle: clues, solution: Array.from(work.values), level: work.level ?? 5, score: work.score };
+  return { puzzle: clues, solution: Array.from(work.values), level: work.level ?? 5, score: work.score, path: solvePath(solver) };
+}
+
+/** The techniques the solver used, hardest first, then the most frequent. */
+function solvePath(solver: SudokuSolver): PathEntry[] {
+  const scores = new Map<string, number>(defaultSolverSteps().map((c) => [c.type, c.baseScore]));
+  const byType = new Map<string, PathEntry>();
+  for (const step of solver.getSteps()) {
+    if (step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') continue;
+    const e = byType.get(step.type);
+    if (e) e.count++;
+    else {
+      const info = techniqueInfo(step.type);
+      byType.set(step.type, { name: SOLUTION_TYPE_INFO[step.type].stepName, type: step.type, slug: info?.slug ?? null, count: 1, score: scores.get(step.type) ?? 0 });
+    }
+  }
+  const list = [...byType.values()];
+  const hardest = list.reduce<PathEntry | null>((a, b) => (a === null || b.score > a.score ? b : a), null);
+  return list.sort((a, b) => (a === hardest ? -1 : b === hardest ? 1 : b.count - a.count || b.score - a.score));
 }
 
 export function generate(level: number): PuzzleInfo {

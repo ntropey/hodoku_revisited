@@ -1,0 +1,75 @@
+import { HINT_LEVEL_NAMES, LEVEL_NAMES } from '../protocol';
+import type { Settings, Theme } from '../ui';
+
+interface Props {
+  settings: Settings;
+  onChange: (s: Settings) => void;
+  onResetNotes: () => void;
+  onClose: () => void;
+}
+
+export function SettingsSheet({ settings, onChange, onResetNotes, onClose }: Props) {
+  return (
+    <div className="modal" role="dialog" aria-label="Settings" aria-modal="true">
+      <div className="modal-card">
+        <h2>Settings</h2>
+        <label className="field">
+          <input type="checkbox" checked={settings.showCands} onChange={(e) => onChange({ ...settings, showCands: e.target.checked })} />
+          Show candidates in every cell
+        </label>
+        <label className="field">
+          <input type="checkbox" checked={settings.checkMistakes} onChange={(e) => onChange({ ...settings, checkMistakes: e.target.checked })} />
+          Mark mistakes (values that differ from the solution)
+        </label>
+        <label className="field">
+          Hints use
+          <select value={settings.hintLevel} onChange={(e) => onChange({ ...settings, hintLevel: Number(e.target.value) as Settings['hintLevel'] })}>
+            {HINT_LEVEL_NAMES.map((n, i) => (
+              <option key={n} value={i}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          Difficulty of new puzzles
+          <select value={settings.level} onChange={(e) => onChange({ ...settings, level: Number(e.target.value) })}>
+            {[1, 2, 3, 4, 5].map((l) => (
+              <option key={l} value={l}>
+                {LEVEL_NAMES[l]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          Theme
+          <select value={settings.theme} onChange={(e) => onChange({ ...settings, theme: e.target.value as Theme })}>
+            <option value="system">Follow the device</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+        <div className="row">
+          <button onClick={onResetNotes}>Reset notes</button>
+          <span className="spacer" />
+          <button className="primary" onClick={onClose}>
+            Done
+          </button>
+        </div>
+        <details className="about">
+          <summary>About and license</summary>
+          <p>
+            Hodoku Revisited is based on <a href="https://hodoku.sourceforge.net/">HoDoKu</a> by Bernhard Hobiger (2008-12).
+            Copyright (C) 2026 Hodoku Revisited contributors. This program comes with ABSOLUTELY NO WARRANTY. It is free software
+            under the GNU General Public License, version 3 or later; you may redistribute it under those terms. Not affiliated with
+            or endorsed by the original author.
+          </p>
+          <p>
+            <a href="https://www.gnu.org/licenses/gpl-3.0.html">License text</a> ·{' '}
+            <a href="https://github.com/ntropey/hodoku_revisited">Source code</a>
+          </p>
+        </details>
+      </div>
+    </div>
+  );
+}

@@ -8,6 +8,8 @@ interface Props {
   showCands: boolean;
   hint: HintResult | null;
   wrong: Set<number>;
+  /** digit whose candidates are tinted (Filter mode), 0 = off */
+  filter?: number;
   onSelect: (i: number) => void;
 }
 
@@ -18,7 +20,12 @@ function candPos(cell: number, digit: number): [number, number] {
   return [(cell % 9) + (1 + 2 * ((digit - 1) % 3)) / 6, Math.floor(cell / 9) + (1 + 2 * Math.floor((digit - 1) / 3)) / 6];
 }
 
-export function Board({ game, selected, showCands, hint, wrong, onSelect }: Props) {
+function candidateLabel(mask: number): string {
+  const list = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((d) => (mask & (1 << d)) !== 0);
+  return list.length ? `, candidates ${list.join(' ')}` : ', empty';
+}
+
+export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSelect }: Props) {
   const selValue = selected !== null ? game.values[selected] : 0;
   const peers = selected !== null ? new Set(PEERS[selected]) : new Set<number>();
   const m = hint?.marks;
@@ -45,19 +52,20 @@ export function Board({ game, selected, showCands, hint, wrong, onSelect }: Prop
           if (i === selected) cls.push('selected');
           else if (peers.has(i)) cls.push('peer');
           if (selValue !== 0 && v === selValue) cls.push('same');
+          if (filter !== 0 && (v === filter || (v === 0 && (game.cands[i] & (1 << filter)) !== 0))) cls.push('filtered');
           if (isGiven(game, i)) cls.push('given');
           if (wrong.has(i)) cls.push('wrong');
           if (tinted.has(i)) cls.push(`tint-${tinted.get(i)}`);
           if (placeMap.has(i)) cls.push('hint-place');
           if (i % 9 === 2 || i % 9 === 5) cls.push('rb');
           if (Math.floor(i / 9) === 2 || Math.floor(i / 9) === 5) cls.push('bb');
-          const showHere = showCands || involved.has(i);
+          const showHere = showCands || involved.has(i) || filter !== 0;
           return (
             <button
               key={i}
               className={cls.join(' ')}
               role="gridcell"
-              aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${v}` : ''}`}
+              aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${v}` : candidateLabel(game.cands[i])}`}
               onClick={() => onSelect(i)}
             >
               {v !== 0 ? (
@@ -73,6 +81,7 @@ export function Board({ game, selected, showCands, hint, wrong, onSelect }: Prop
                     else if (placeMap.get(i) === d) c.push('keep');
                     else if (keySet.has(k) || colorMap.has(k)) c.push('keyc');
                     if (colorMap.has(k)) c.push(`col-${colorMap.get(k)! % 2}`);
+                    if (filter === d) c.push('fd');
                     return (
                       <span key={d} className={c.join(' ')}>
                         {on ? d : ''}
