@@ -58,3 +58,13 @@ test('SITE_PASSWORD adds a gate without leaking the password, and blocks indexin
   // restore the normal build for other tests
   execFileSync('node', ['src/build.mjs'], { cwd: root, env: { ...process.env, SITE_PASSWORD: '', SITE_URL: 'https://example.org/' } });
 });
+
+test('manual chapters exist and every guide has an Open in app link with a valid puzzle', async () => {
+  const { readdirSync, readFileSync, existsSync } = await import('node:fs');
+  const dist = new URL('../dist/', import.meta.url);
+  assert.ok(existsSync(new URL('manual/hints.html', dist)));
+  assert.ok(existsSync(new URL('manual/keyboard-shortcuts.html', dist)));
+  const guide = readFileSync(new URL('techniques/x-wing.html', dist), 'utf8');
+  assert.match(guide, /play\/\?p=[.0-9]{81}"/);
+  assert.ok(readdirSync(new URL('fonts/', dist)).length >= 7);
+});

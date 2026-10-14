@@ -55,6 +55,12 @@ function puzzleFromUrl(): string | null {
   return p && /^[.0-9]{81}$/.test(p) ? p : null;
 }
 
+/** A difficulty in the address (?level=1..5), used by the start page: begins a new puzzle of that level. */
+function levelFromUrl(): number | null {
+  const l = Number(new URLSearchParams(window.location.search).get('level'));
+  return Number.isInteger(l) && l >= 1 && l <= 5 ? l : null;
+}
+
 export function App() {
   const [game, setGame] = useState<GameState | null>(() => load<GameState>(SAVE_KEY));
   const [settings, setSettings] = useState<Settings>(() => ({ ...DEFAULT_SETTINGS, ...load<Settings>(SETTINGS_KEY) }));
@@ -158,7 +164,11 @@ export function App() {
   // first start: a puzzle from the address, the saved game, or a new one
   useEffect(() => {
     const p = puzzleFromUrl();
-    if (p) {
+    const lv = levelFromUrl();
+    if (lv) {
+      window.history.replaceState(null, '', window.location.pathname);
+      void startNew(lv);
+    } else if (p) {
       window.history.replaceState(null, '', window.location.pathname);
       setBusy('Checking puzzle...');
       solver.current

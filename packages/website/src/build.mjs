@@ -9,7 +9,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { caption, diagram, legend } from './diagram.mjs';
 import { applyGate } from './gate.mjs';
-import { LEVELS, TECHNIQUES } from './techniques.mjs';
+import { MANUAL } from './manual.mjs';
+import { TECHNIQUES } from './techniques.mjs';
 
 const examples = existsSync(new URL('./examples.json', import.meta.url))
   ? JSON.parse(readFileSync(new URL('./examples.json', import.meta.url), 'utf8'))
@@ -23,8 +24,30 @@ const REPO = 'https://github.com/ntropey/hodoku_revisited';
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+const GROUPS = [
+  ['Singles', ['full-house', 'naked-single', 'hidden-single']],
+  ['Intersections', ['locked-candidates']],
+  ['Subsets', ['naked-subsets', 'hidden-subsets']],
+  ['Basic Fish', ['x-wing', 'swordfish']],
+  ['Single Digit Patterns', ['skyscraper', 'two-string-kite', 'empty-rectangle', 'turbot-fish']],
+  ['Uniqueness', ['unique-rectangle', 'rectangles-bug']],
+  ['Wings', ['xy-wing', 'xyz-wing', 'w-wing']],
+  ['Coloring', ['simple-colors', 'multi-colors']],
+  ['Chains and Loops', ['xy-chain', 'x-chain', 'nice-loops', 'forcing-chains']],
+  ['Almost Locked Sets', ['als-xz', 'als-xy-wing', 'als-chain', 'death-blossom']],
+  ['Finned & Complex Fish', ['finned-fish', 'franken-mutant-fish', 'kraken-fish']],
+  ['Miscellaneous', ['sue-de-coq']],
+  ['Last Resort', ['templates']],
+].map(([name, slugs], i) => ({ name, num: String(i + 1).padStart(2, '0'), items: slugs.map((s) => TECHNIQUES.find((t) => t.slug === s)) }));
+for (const g of GROUPS) for (const t of g.items) if (!t) throw new Error('unknown technique in group ' + g.name);
+const ORDERED = GROUPS.flatMap((g) => g.items);
+if (ORDERED.length !== TECHNIQUES.length) throw new Error('every technique needs a group');
+const groupOf = (t) => GROUPS.find((g) => g.items.includes(t));
+
+const LOGO = (root) => `<a class="brand" href="${root}"><img src="${root}icon.svg" alt="" width="32" height="32"><span class="wordmark">Hodoku<small>Revisited</small></span></a>`;
+
 /** `root` is the path back to the site root from the page, e.g. '../' */
-function page({ title, description, root, body, path }) {
+function page({ title, description, root, body, path, wide }) {
   const canonical = siteUrl && path ? `<link rel="canonical" href="${siteUrl}${path}">` : '';
   return `<!doctype html>
 <html lang="en">
@@ -33,58 +56,91 @@ function page({ title, description, root, body, path }) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
-<meta name="theme-color" content="#2b5fb3">
-<link rel="icon" href="${root}icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#F5F2EA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15171B" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="${root}favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="${root}apple-touch-icon.png">
+<link rel="preload" href="${root}fonts/newsreader-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${root}site.css">
 ${canonical}
 </head>
 <body>
 <header class="top">
-  <a class="brand" href="${root}"><img src="${root}icon.svg" alt="" width="28" height="28"> Hodoku Revisited</a>
-  <nav>
-    <a href="${root}play/">Play</a>
+  ${LOGO(root)}
+  <nav aria-label="Main">
     <a href="${root}techniques/">Techniques</a>
+    <a href="${root}manual/">Manual</a>
     <a href="${root}about.html">About</a>
+    <a href="${REPO}">GitHub</a>
+    <a class="btn small" href="${root}play/">Open solver</a>
   </nav>
 </header>
-<main>
+<main${wide ? ' class="wide"' : ''}>
 ${body}
 </main>
 <footer>
-  <p>Free software (GPL-3.0-or-later) · <a href="${root}about.html">About and license</a> · <a href="${REPO}">Source code</a> · <a href="${root}privacy.html">Privacy</a></p>
+  <p>Based on HoDoKu by Bernhard Hobiger. Free software under the GPL (GPL-3.0-or-later), with no warranty.</p>
+  <p><a href="${REPO}">GitHub</a> · <a href="${REPO}/commits/main">Changelog</a> · <a href="https://hodoku.sourceforge.net/">Original site</a> · <a href="${root}about.html">About and license</a> · <a href="${root}privacy.html">Privacy</a></p>
 </footer>
 </body>
 </html>
 `;
 }
 
+/** index rail for the technique pages; the group of the current page is open. On small screens it is a select. */
+function rail(root, current) {
+  const cur = current && groupOf(current);
+  return `<aside class="rail">
+<label class="railselect"><span>Technique</span><select onchange="location.href=this.value" aria-label="Jump to a technique">
+<option value="${root}techniques/">All techniques</option>
+${GROUPS.map((g) => `<optgroup label="${esc(g.name)}">${g.items.map((t) => `<option value="${root}techniques/${t.slug}.html"${t === current ? ' selected' : ''}>${esc(t.name)}</option>`).join('')}</optgroup>`).join('\n')}
+</select></label>
+<nav class="railnav" aria-label="Techniques"><h2><a href="${root}techniques/">Techniques</a></h2>
+${GROUPS.map(
+  (g) => `<details${g === cur ? ' open' : ''}><summary>${esc(g.name)} <span>${g.num}</span></summary>
+<ul>${g.items.map((t) => `<li><a href="${root}techniques/${t.slug}.html"${t === current ? ' aria-current="page"' : ''}>${esc(t.name)}</a></li>`).join('')}</ul></details>`,
+).join('\n')}
+</nav>
+</aside>`;
+}
+
+const puzzleOf = (e) => e.values.map((v) => (v ? String(v) : '.')).join('');
+
 const pages = []; // [path, content]
 const add = (path, content) => pages.push([path, content]);
 
 // ---- home
+const homeEx = examples.find((e) => e.slug === 'locked-candidates');
 add(
   'index.html',
   page({
-    title: 'Hodoku Revisited: free sudoku trainer with logical hints',
-    description: 'Play sudoku in your browser or install it as an app. Get logical hints that name the technique, practice by difficulty, import puzzles. Free and open source.',
+    title: 'Hodoku Revisited: the sudoku solver that explains every step',
+    description: 'The HoDoKu hint engine, analyzer and technique library in your browser. No install. It tells you which step comes next and why it works. Free and open source.',
     root: '',
     path: '',
+    wide: true,
     body: `<section class="hero">
-  <h1>Sudoku with hints that teach you why.</h1>
-  <p>A free, open source sudoku trainer based on HoDoKu. It finds the next logical step, names the technique and shows you the cells involved, from a simple Hidden Single up to chains and forcing nets.</p>
-  <p><a class="btn" href="play/">Play now</a> <a class="btn alt" href="techniques/">Learn the techniques</a></p>
+  <div>
+    <p class="eyebrow">The HoDoKu solver, now in your browser</p>
+    <h1>Every step,<br>explained.</h1>
+    <p class="lead">The hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript. No Java and no install. It tells you which step comes next and why it works.</p>
+    <p><a class="btn" href="play/">Open the solver</a> <a class="btn alt" href="techniques/">Browse techniques</a></p>
+    <p class="gen"><span>Generate:</span> ${['Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'].map((l, i) => `<a class="chip" href="play/?level=${i + 1}">${l}</a>`).join(' ')}</p>
+  </div>
+  ${homeEx ? `<figure class="example hero-board">${diagram(homeEx)}<figcaption><span class="mono">${esc(homeEx.name)}</span> · ${esc(caption(homeEx).replace(/^[^:]*: /, ''))}</figcaption></figure>` : ''}
 </section>
 <section class="cards">
-  <article><h2>Works everywhere</h2><p>Runs in any modern browser on phones and computers. Install it from the browser menu, and it works offline.</p></article>
-  <article><h2>Real logical hints</h2><p>The solver finds the same steps as HoDoKu 2.2.0 (we compare them step by step), so a hint is always a real technique, never a guess.</p></article>
-  <article><h2>Puzzles by difficulty</h2><p>Generate Easy to Unfair puzzles or import your own in many text formats. Ratings use HoDoKu's scoring.</p></article>
-  <article><h2>Free software</h2><p>GPL-3.0-or-later. Read, change and share the <a href="${REPO}">source code</a>.</p></article>
+  <article><p class="eyebrow">Hints</p><h2>Vague, concrete or the full step</h2><p>You choose how much it gives away. It can just name the technique, or highlight every candidate involved.</p></article>
+  <article><p class="eyebrow">Analyzer</p><h2>See the whole solution path</h2><p>Get the techniques the solver would use and the hardest one required, plus a difficulty rating for any puzzle you paste in.</p></article>
+  <article><p class="eyebrow">Library</p><h2>From singles to last resort</h2><p>${TECHNIQUES.length} technique guides, written new. Every example is a board you can step through and open in the app.</p></article>
+</section>
+<section class="trust">
+  <p>The solver finds the same steps as HoDoKu 2.2.0 (we compare them step by step), so a hint is always a real technique, never a guess. It runs entirely in your browser and works offline once installed.</p>
 </section>`,
   }),
 );
 
 // ---- technique index
-const byLevel = LEVELS.map((level) => ({ level, items: TECHNIQUES.filter((t) => t.level === level) })).filter((g) => g.items.length);
 add(
   'techniques/index.html',
   page({
@@ -92,23 +148,29 @@ add(
     description: 'Guides to the sudoku techniques the solver uses, from Naked Singles to X-Wings, chains and forcing nets.',
     root: '../',
     path: 'techniques/',
-    body: `<h1>Sudoku techniques</h1>
-<p>Each guide explains one technique in plain words. Cells are written as rXcY: row X, column Y. The in-app hint tells you which technique it used, so you can come here to read about it.</p>
-${byLevel
-  .map(
-    (g) => `<h2>${g.level}</h2>
-<ul class="list">
-${g.items.map((t) => `<li><a href="${t.slug}.html">${esc(t.name)}</a> <span>${esc(t.summary)}</span></li>`).join('\n')}
-</ul>`,
-  )
-  .join('\n')}`,
+    wide: true,
+    body: `<div class="with-rail">
+${rail('../', null)}
+<div class="content">
+<h1>Techniques</h1>
+<p class="lead">Each guide explains one technique in plain words. Cells are written rXcY: row X, column Y. The in-app hint tells you which technique it used, so you can come here to read about it.</p>
+${GROUPS.map(
+  (g) => `<section class="group"><h2><span class="num">${g.num}</span> ${esc(g.name)}</h2>
+<div class="tgrid">
+${g.items.map((t) => `<a class="tcard" href="${t.slug}.html"><span class="band lv-${t.level.toLowerCase()}">${t.level}</span><strong>${esc(t.name)}</strong><span>${esc(t.summary)}</span></a>`).join('\n')}
+</div></section>`,
+).join('\n')}
+</div></div>`,
   }),
 );
 
 // ---- technique pages
-TECHNIQUES.forEach((t, i) => {
-  const prev = TECHNIQUES[i - 1];
-  const next = TECHNIQUES[i + 1];
+const STEP_SCRIPT = `<script>document.querySelectorAll('figure.example').forEach(function(f){var b=f.querySelectorAll('.steps button');b.forEach(function(x){x.addEventListener('click',function(){f.setAttribute('data-step',x.dataset.step);b.forEach(function(y){y.setAttribute('aria-pressed',String(y===x))})})})})</script>`;
+ORDERED.forEach((t, i) => {
+  const prev = ORDERED[i - 1];
+  const next = ORDERED[i + 1];
+  const g = groupOf(t);
+  const exs = examples.filter((e) => e.slug === t.slug);
   add(
     `techniques/${t.slug}.html`,
     page({
@@ -116,25 +178,72 @@ TECHNIQUES.forEach((t, i) => {
       description: `${t.name}: ${t.summary}`,
       root: '../',
       path: `techniques/${t.slug}.html`,
-      body: `<p class="crumbs"><a href="./">Techniques</a> › ${esc(t.level)}</p>
+      wide: true,
+      body: `<div class="with-rail">
+${rail('../', t)}
+<article class="content guide">
+<p class="crumbs"><a href="./">Techniques</a> / ${esc(g.name)}</p>
 <h1>${esc(t.name)}</h1>
+<p class="meta"><span class="band lv-${t.level.toLowerCase()}">${t.level}</span></p>
 <p class="lead">${esc(t.summary)}</p>
+<div class="guide-cols">
+<div class="prose">
 ${t.body.map((p) => `<p>${esc(p)}</p>`).join('\n')}
-${examples
-  .filter((e) => e.slug === t.slug)
+${t.tip ? `<p class="tip"><strong>Tip:</strong> ${esc(t.tip)}</p>` : ''}
+${exs[0] ? `<h2>Notation</h2><p class="notation mono">${esc(exs[0].name)}: ${esc(caption(exs[0]).replace(/^[^:]*: /, ''))}</p>` : ''}
+</div>
+<div class="examples${exs.length === 1 ? ' sticky' : ''}">
+${exs
   .map(
-    (e) => `<figure class="example">
+    (e) => `<figure class="example" data-step="before">
+<div class="steps" role="group" aria-label="Show the board"><button type="button" data-step="before" aria-pressed="true">← Before</button><button type="button" data-step="after" aria-pressed="false">After →</button></div>
 ${diagram(e)}
-<figcaption><strong>Example.</strong> ${esc(caption(e))}${legend(e)}</figcaption>
+<figcaption>${esc(caption(e))}${legend(e)}<a class="btn small" href="../play/?p=${puzzleOf(e)}">Open in app</a></figcaption>
 </figure>`,
   )
   .join('\n')}
-${t.tip ? `<p class="tip"><strong>Tip:</strong> ${esc(t.tip)}</p>` : ''}
-<p><a class="btn" href="../play/">Practice in the app</a></p>
+${exs.length ? '' : `<p><a class="btn" href="../play/">Practice in the app</a></p>`}
+</div>
+</div>
 <nav class="pager">
-${prev ? `<a href="${prev.slug}.html">← ${esc(prev.name)}</a>` : '<span></span>'}
-${next ? `<a href="${next.slug}.html">${esc(next.name)} →</a>` : '<span></span>'}
-</nav>`,
+${prev ? `<a href="${prev.slug}.html"><small>Previous</small>← ${esc(prev.name)}</a>` : '<span></span>'}
+${next ? `<a href="${next.slug}.html"><small>Next</small>${esc(next.name)} →</a>` : '<span></span>'}
+</nav>
+</article></div>
+${exs.length ? STEP_SCRIPT : ''}`,
+    }),
+  );
+});
+
+// ---- manual
+const manualRail = (current) => `<aside class="rail"><label class="railselect"><span>Chapter</span><select onchange="location.href=this.value" aria-label="Jump to a chapter">${MANUAL.map((c) => `<option value="${c.slug}.html"${c === current ? ' selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>
+<nav class="railnav" aria-label="Manual"><h2><a href="./">Manual</a></h2><ul class="flat">${MANUAL.map((c) => `<li><a href="${c.slug}.html"${c === current ? ' aria-current="page"' : ''}>${esc(c.title)}</a></li>`).join('')}</ul></nav></aside>`;
+add(
+  'manual/index.html',
+  page({
+    title: 'Manual | Hodoku Revisited',
+    description: 'How to use Hodoku Revisited: hints, candidates, filters, importing puzzles, shortcuts and settings.',
+    root: '../',
+    path: 'manual/',
+    wide: true,
+    body: `<div class="with-rail">${manualRail(null)}<div class="content"><h1>Manual</h1>
+<p class="lead">How to use the solver, one chapter at a time.</p>
+<div class="tgrid">${MANUAL.map((c, i) => `<a class="tcard" href="${c.slug}.html"><span class="band">${String(i + 1).padStart(2, '0')}</span><strong>${esc(c.title)}</strong><span>${esc(c.summary)}</span></a>`).join('\n')}</div></div></div>`,
+  }),
+);
+MANUAL.forEach((c, i) => {
+  const prev = MANUAL[i - 1];
+  const next = MANUAL[i + 1];
+  add(
+    `manual/${c.slug}.html`,
+    page({
+      title: `${c.title} | Manual | Hodoku Revisited`,
+      description: c.summary,
+      root: '../',
+      path: `manual/${c.slug}.html`,
+      wide: true,
+      body: `<div class="with-rail">${manualRail(c)}<article class="content guide"><p class="crumbs"><a href="./">Manual</a></p><h1>${esc(c.title)}</h1><p class="lead">${esc(c.summary)}</p><div class="prose">${c.body}</div>
+<nav class="pager">${prev ? `<a href="${prev.slug}.html"><small>Previous</small>← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a href="${next.slug}.html"><small>Next</small>${esc(next.title)} →</a>` : '<span></span>'}</nav></article></div>`,
     }),
   );
 });
@@ -184,44 +293,96 @@ add(
   }),
 );
 
-const css = `:root{--tint-a:#dbe7fb;--tint-b:#e0f3e0;--key:#2b5fb3;--fin:#c46a00;--elim:#d33;--place:#1f8a3b;--c0:#bcd3f7;--c1:#bfe6bf}
-@media(prefers-color-scheme:dark){:root{--tint-a:#25375c;--tint-b:#24402a;--key:#8db6ff;--fin:#ffb25b;--elim:#ff6b6b;--place:#5fd07a;--c0:#2d4a7c;--c1:#2f5e36}}
-:root{--bg:#f5f6fa;--fg:#1d2330;--card:#fff;--line:#d5d9e5;--accent:#2b5fb3;--muted:#586079}
-@media(prefers-color-scheme:dark){:root{--bg:#12151c;--fg:#e8ebf3;--card:#1b2030;--line:#343b52;--accent:#6ea0f2;--muted:#a3abc2}}
+const FONTS = [
+  ['newsreader', 'Newsreader', 400], ['newsreader', 'Newsreader', 500],
+  ['ibm-plex-sans', 'IBM Plex Sans', 400], ['ibm-plex-sans', 'IBM Plex Sans', 500], ['ibm-plex-sans', 'IBM Plex Sans', 600],
+  ['ibm-plex-mono', 'IBM Plex Mono', 400], ['ibm-plex-mono', 'IBM Plex Mono', 600],
+];
+const fontFaces = FONTS.map(([id, family, w]) => `@font-face{font-family:'${family}';font-weight:${w};font-style:normal;font-display:swap;src:url(fonts/${id}-latin-${w}-normal.woff2) format('woff2')}`).join('\n');
+
+// Tokens are the same as the app (packages/app/src/styles.css), so guides and board look alike.
+const css = `${fontFaces}
+:root{--bg:#F5F2EA;--card:#FFFDF8;--fg:#1C1B18;--muted:#55524A;--line:#D9D3C5;--thick:#1C1B18;--accent:#2B4EA2;--surface-2:#EAE5D8;--accent-soft:#E3E8F5;
+--tint-a:#EEF2FB;--tint-b:#FBF3E2;--key:#2B4EA2;--c0:#C9D6F4;--c1:#F3E3C0;--fin:#6B3FA0;--elim:#A8321F;--elim-bg:#F6D3CA;--place:#2E7D4F;--place-bg:#D5EBDC;
+--font-display:'Newsreader',Georgia,serif;--font-ui:'IBM Plex Sans',system-ui,sans-serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#15171B;--card:#1D2026;--fg:#ECE8DF;--muted:#A9A498;--line:#3A3E47;--thick:#ECE8DF;--accent:#9DB4F5;--surface-2:#252932;--accent-soft:#22384F;
+--tint-a:#232A3A;--tint-b:#2E2A1E;--key:#9DB4F5;--c0:#2C3D66;--c1:#4A3A1C;--fin:#C9A6F0;--elim:#FF9A85;--elim-bg:#5A2A22;--place:#7FD39B;--place-bg:#22402C}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:1rem/1.6 system-ui,sans-serif}
-.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--card)}
-.brand{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--fg);text-decoration:none}
-.top nav{display:flex;gap:16px}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 16px/1.6 var(--font-ui)}
+h1,h2,h3{font-family:var(--font-display);font-weight:500;line-height:1.15;margin:1.4em 0 .4em}
+h1{font-size:clamp(2rem,4vw,3rem);margin-top:.6em}h2{font-size:1.6rem}h3{font-size:1.25rem}
 a{color:var(--accent)}
-main,footer{max-width:760px;margin:0 auto;padding:16px}
-h1{line-height:1.2;margin:.8em 0 .4em}
-.hero{padding:24px 0}.hero h1{font-size:2rem}
+code,kbd,.mono{font-family:var(--font-mono);font-size:.88em}
+kbd{padding:1px 6px;border:1px solid var(--line);border-radius:3px;background:var(--card)}
+code{background:var(--surface-2);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;padding:12px max(16px,calc((100vw - 1200px)/2));border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;color:var(--fg);text-decoration:none}
+.wordmark{font:500 1.5rem/1 var(--font-display);display:flex;flex-direction:column}.wordmark small{font:400 .6rem/1.4 var(--font-mono);letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.top nav{display:flex;flex-wrap:wrap;align-items:center;gap:4px 20px}.top nav a:not(.btn){color:var(--fg);text-decoration:none}.top nav a:not(.btn):hover{text-decoration:underline}
+main{max-width:760px;margin:0 auto;padding:16px}main.wide{max-width:1200px}
+.eyebrow{font:600 .75rem/1.4 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 .5em}
 .lead{font-size:1.15rem;color:var(--muted)}
-.btn{display:inline-block;padding:10px 18px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;margin:4px 8px 4px 0}
-.btn.alt{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.cards article{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 16px 12px}
-.list{padding:0;list-style:none}.list li{padding:8px 0;border-bottom:1px solid var(--line)}
-.list span{display:block;color:var(--muted);font-size:.9rem}
-.tip{background:var(--card);border-left:4px solid var(--accent);padding:8px 12px}
-.crumbs{color:var(--muted);font-size:.9rem;margin-bottom:0}
-.example{margin:20px 0;padding:0}
-.dg{width:100%;max-width:450px;height:auto;display:block;border:2px solid var(--fg)}
+.btn{display:inline-block;padding:10px 20px;border-radius:6px;background:var(--accent);color:var(--card);text-decoration:none;font-weight:500;margin:4px 8px 4px 0;border:1px solid var(--accent)}
+.btn:hover{filter:brightness(1.1)}.btn.alt{background:transparent;color:var(--accent)}.btn.small{padding:6px 14px;font-size:.9rem;margin:4px 0 4px 0}
+.top .btn.small{color:var(--card)}
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:48px;align-items:center;padding:48px 0 32px}
+.hero h1{font-size:clamp(2.6rem,6vw,4.5rem);margin:.1em 0 .3em}
+.gen{color:var(--muted)}.chip{display:inline-block;padding:2px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);text-decoration:none;font-size:.9rem}.chip:hover{background:var(--surface-2)}
+.hero-board{margin:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:24px 0}
+.cards article{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 24px}.cards h2{font-size:1.35rem;margin:.2em 0 .4em}
+.trust{border-top:1px solid var(--line);margin-top:32px;color:var(--muted)}
+.band{display:inline-block;font:600 .7rem/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:3px;background:var(--surface-2);color:var(--muted)}
+.lv-medium{background:var(--tint-b)}.lv-hard{background:var(--c1)}.lv-unfair{background:var(--elim-bg);color:var(--elim)}.lv-extreme{background:var(--fg);color:var(--bg)}.lv-easy{background:var(--place-bg);color:var(--place)}
+.with-rail{display:grid;grid-template-columns:240px minmax(0,1fr);gap:48px;align-items:start}
+.rail{position:sticky;top:16px;padding-top:8px;font-size:.95rem}
+.railselect{display:none}.railnav h2{font:600 .75rem/1.4 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;margin:0 0 8px}.railnav h2 a{color:var(--muted);text-decoration:none}
+.railnav details{border-top:1px solid var(--line)}.railnav summary{cursor:pointer;padding:8px 0;list-style:none;display:flex;justify-content:space-between}.railnav summary::-webkit-details-marker{display:none}
+.railnav summary span{font:400 .75rem/1.9 var(--font-mono);color:var(--muted)}
+.railnav ul{list-style:none;margin:0 0 8px;padding:0 0 0 12px;border-left:2px solid var(--line)}.railnav li a{display:block;padding:3px 8px;color:var(--fg);text-decoration:none}
+.railnav a[aria-current]{color:var(--accent);font-weight:600}.railnav li a:hover{text-decoration:underline}.railnav ul.flat{padding:0;border:0}
+.crumbs{color:var(--muted);font-size:.9rem;margin:8px 0 0}.crumbs a{color:var(--muted)}
+.meta{margin:.5em 0}
+.group h2{font-size:1.4rem;border-top:1px solid var(--line);padding-top:24px}.num{font:400 .8rem var(--font-mono);color:var(--muted);margin-right:8px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:16px}
+.tcard{display:flex;flex-direction:column;gap:6px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;color:var(--fg);text-decoration:none}
+.tcard:hover{border-color:var(--accent)}.tcard strong{font:500 1.15rem var(--font-display)}.tcard span:last-child{color:var(--muted);font-size:.9rem;line-height:1.4}
+.guide-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,430px);gap:40px;align-items:start}
+.sticky{position:sticky;top:16px}
+.prose{max-width:62ch}.prose table{border-collapse:collapse;width:100%;font-size:.95rem}.prose th,.prose td{border-bottom:1px solid var(--line);padding:8px 10px 8px 0;text-align:left;vertical-align:top}.prose dt{font-weight:600;margin-top:12px}.prose dd{margin:0}
+.tip{background:var(--card);border-left:4px solid var(--accent);padding:8px 14px}
+.notation{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+.example{margin:0 0 24px}
+.steps{display:inline-flex;margin-bottom:8px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.steps button{font:inherit;padding:6px 14px;border:0;background:var(--card);color:var(--fg);cursor:pointer}.steps button+button{border-left:1px solid var(--line)}.steps button[aria-pressed=true]{background:var(--accent);color:var(--card)}
+.dg{width:100%;max-width:450px;height:auto;display:block;border:2px solid var(--thick);border-radius:2px}
 .dg .bg{fill:var(--card)}.dg .tint-a{fill:var(--tint-a)}.dg .tint-b{fill:var(--tint-b)}
-.dg .thin{stroke:var(--line);stroke-width:1}.dg .thick{stroke:var(--fg);stroke-width:2}
+.dg .thin{stroke:var(--line);stroke-width:1}.dg .thick{stroke:var(--thick);stroke-width:2}
 .dg text{text-anchor:middle;dominant-baseline:central;fill:var(--fg)}
-.dg .val{font-size:30px;font-weight:700}.dg .val.placed{fill:var(--place)}
-.dg .cand{font-size:11px;fill:var(--muted)}.dg .cand.faded{opacity:.25}
-.dg .cand.key{fill:var(--key);font-weight:700;font-size:13px}.dg .cand.fin{fill:var(--fin);font-weight:700;font-size:13px}
-.dg .cand.elim{fill:var(--elim);font-weight:700;font-size:13px}.dg .strike{stroke:var(--elim);stroke-width:1.5}
+.dg .val{font-family:var(--font-display);font-size:32px;font-weight:500}.dg .val.placed{fill:var(--place);font-family:var(--font-ui);font-weight:600}
+.dg .cand{font-family:var(--font-mono);font-size:11px;fill:var(--muted)}.dg .cand.faded{opacity:.3}
+.dg .cand.key{fill:var(--key);font-weight:600;font-size:13px}.dg .cand.fin{fill:var(--fin);font-weight:600;font-size:13px}
+.dg .cand.elim{fill:var(--elim);font-weight:600;font-size:13px}.dg .strike{stroke:var(--elim);stroke-width:1.5}
 .dg .col-0{fill:var(--c0)}.dg .col-1{fill:var(--c1)}
 .dg .link{stroke:var(--key);stroke-width:1.5;opacity:.7}.dg .link.weak{stroke-dasharray:4 3}
-figcaption{font-size:.9rem;color:var(--muted);margin-top:6px}
-.legend{margin:4px 0}.lg{display:inline-block;margin-right:12px;font-weight:700}
+.example[data-step=before] .val.placed{display:none}.example[data-step=before] .cand.faded{opacity:1}
+.example[data-step=after] .cand.elim,.example[data-step=after] .strike{display:none}
+figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
+.legend{margin:4px 0}.lg{display:inline-block;margin-right:12px;font:600 .8rem var(--font-mono)}
 .lg.place{color:var(--place)}.lg.key{color:var(--key)}.lg.fin{color:var(--fin)}.lg.elim{color:var(--elim)}.lg.link{color:var(--muted);font-weight:400}
-.pager{display:flex;justify-content:space-between;gap:12px;margin-top:24px}
-footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);margin-top:24px}
+.pager{display:flex;justify-content:space-between;gap:12px;margin:40px 0 24px;border-top:1px solid var(--line);padding-top:16px}.pager a{display:flex;flex-direction:column;text-decoration:none}.pager small{color:var(--muted);font:400 .75rem var(--font-mono);text-transform:uppercase}
+footer{max-width:1200px;margin:48px auto 0;padding:24px 16px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}footer p{margin:.2em 0}
+@media(max-width:959px){
+.hero{grid-template-columns:1fr;gap:24px;padding-top:24px}
+.with-rail{grid-template-columns:1fr;gap:8px}.rail{position:static}.railnav{display:none}
+.railselect{display:flex;flex-direction:column;gap:4px;color:var(--muted);font-size:.85rem}.railselect select{font:inherit;min-height:44px;padding:0 12px;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px}
+.guide-cols{grid-template-columns:1fr;gap:16px}.sticky{position:static}
+}
+@media(max-width:599px){.top nav{gap:4px 14px;font-size:.95rem}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media print{.top,footer,.rail,.steps,.pager,.btn{display:none}body{background:#fff;color:#000}}
 `;
 
 // ---- write
@@ -233,7 +394,10 @@ for (const [path, content] of pages) {
   writeFileSync(file, content);
 }
 writeFileSync(join(out, 'site.css'), css);
-cpSync(join(here, '..', '..', 'app', 'public', 'icon.svg'), join(out, 'icon.svg'));
+for (const f of ['icon.svg', 'favicon.svg', 'apple-touch-icon.png']) cpSync(join(here, '..', '..', 'app', 'public', f), join(out, f));
+const fontSrc = join(here, '..', '..', 'app', 'node_modules', '@fontsource');
+mkdirSync(join(out, 'fonts'), { recursive: true });
+for (const [id, , w] of FONTS) cpSync(join(fontSrc, id, 'files', `${id}-latin-${w}-normal.woff2`), join(out, 'fonts', `${id}-latin-${w}-normal.woff2`));
 if (existsSync(appDist)) cpSync(appDist, join(out, 'play'), { recursive: true });
 else console.warn('packages/app/dist not found: the site is built without /play/');
 

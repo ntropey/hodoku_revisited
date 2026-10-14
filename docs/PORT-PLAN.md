@@ -163,6 +163,16 @@ hand: `packages/website/scripts/gen-examples.ts` runs the solver over ~1,900 puz
 each technique, and checks it against the puzzle's real solution before writing `src/examples.json`. A second pass uses "find all steps"
 for techniques the solver rarely picks first (Simple Colors Wrap).
 
+## Status (redesign)
+
+Design's spec (`docs/design/`) is implemented. App: new tokens and bundled fonts, new logo and icons; desktop
+layout with a side panel (Hint / All steps / Summary), a bottom sheet on screens under 960 px, the digit filter
+mode (Filter segment, Alt+digit, long press), timer, command search (Ctrl/Cmd+K), theme override, `?p=` (open a
+puzzle) and `?level=` (new puzzle) links. The Summary tab's "Techniques used" comes from `analyze()`, which now
+returns the grouped solve path. Website: restyled with the same tokens, technique index rail grouped in 13
+categories, Before/After toggle and "Open in app" on every diagram, and a nine-chapter manual (`src/manual.mjs`,
+must be kept in step with the app's behaviour).
+
 Not yet: a German version, a custom domain, ads. Ads need a consent banner (EU/UK) and a privacy page
 update first; the privacy page currently promises no tracking, so change it in the same commit
 that adds ads.
