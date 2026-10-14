@@ -1,19 +1,45 @@
+/* Design tokens: Hodoku Revisited design spec (warm paper, black ink, one blue). Same names as before, new values. */
 :root {
-  --bg: #f5f6fa; --fg: #1d2330; --card: #fff; --line: #aab2c5; --thick: #1d2330;
-  --accent: #2b5fb3; --sel: #bcd3f7; --peer: #e6edfa; --same: #cfe0fb; --given: #1d2330;
-  --tint-a: #dbe7fb; --tint-b: #dff2df; --fin: #c46a00; --c0: #bcd3f7; --c1: #bfe6bf;
-  --user: #2b5fb3; --wrong: #d33; --hint: #fff2c2; --place: #c9f0c9; --muted: #6b7388;
+  --bg: #F5F2EA; --card: #FFFDF8; --fg: #1C1B18; --muted: #55524A;
+  --line: #D9D3C5; --thick: #1C1B18; --accent: #2B4EA2;
+  --given: #1C1B18; --user: #2B4EA2; --wrong: #A8321F;
+  --sel: #F3E5B0; --peer: #F2EEE4; --same: #E3E8F5;
+  --hint: #F3E5B0; --place: #D5EBDC;
+  --tint-a: #EEF2FB; --tint-b: #FBF3E2;
+  --c0: #C9D6F4; --c1: #F3E3C0; --fin: #6B3FA0;
+  --surface-2: #EAE5D8; --accent-soft: #E3E8F5;
+  --elim: #A8321F; --elim-bg: #F6D3CA; --filter: #DDEBF7;
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #12151c; --fg: #e8ebf3; --card: #1b2030; --line: #4a526a; --thick: #c5cbe0;
-    --accent: #6ea0f2; --sel: #2d4a7c; --peer: #232a3f; --same: #2a4068; --given: #e8ebf3;
-    --tint-a: #25375c; --tint-b: #24402a; --fin: #ffb25b; --c0: #2d4a7c; --c1: #2f5e36;
-    --user: #8db6ff; --wrong: #ff6b6b; --hint: #4b4220; --place: #28502d; --muted: #98a0b8;
+  :root:not([data-theme='light']) {
+    --bg: #15171B; --card: #1D2026; --fg: #ECE8DF; --muted: #A9A498;
+    --line: #3A3E47; --thick: #ECE8DF; --accent: #9DB4F5;
+    --given: #ECE8DF; --user: #9DB4F5; --wrong: #FF9A85;
+    --sel: #4A4227; --peer: #252932; --same: #22384F;
+    --hint: #4A4227; --place: #22402C;
+    --tint-a: #232A3A; --tint-b: #2E2A1E;
+    --c0: #2C3D66; --c1: #4A3A1C; --fin: #C9A6F0;
+    --surface-2: #252932; --accent-soft: #22384F;
+    --elim: #FF9A85; --elim-bg: #5A2A22; --filter: #22384F;
   }
 }
+/* manual override from Settings */
+:root[data-theme='dark'] {
+  --bg: #15171B; --card: #1D2026; --fg: #ECE8DF; --muted: #A9A498;
+  --line: #3A3E47; --thick: #ECE8DF; --accent: #9DB4F5;
+  --given: #ECE8DF; --user: #9DB4F5; --wrong: #FF9A85;
+  --sel: #4A4227; --peer: #252932; --same: #22384F;
+  --hint: #4A4227; --place: #22402C;
+  --tint-a: #232A3A; --tint-b: #2E2A1E;
+  --c0: #2C3D66; --c1: #4A3A1C; --fin: #C9A6F0;
+  --surface-2: #252932; --accent-soft: #22384F;
+  --elim: #FF9A85; --elim-bg: #5A2A22; --filter: #22384F;
+}
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font-family: system-ui, sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-ui); }
 .app { max-width: 520px; margin: 0 auto; padding: 12px 16px calc(24px + env(safe-area-inset-bottom)); }
 header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 h1 { font-size: 1.25rem; margin: 4px 0 10px; }
@@ -31,7 +57,7 @@ h1 { font-size: 1.25rem; margin: 4px 0 10px; }
 .cell.bb { border-bottom: 2px solid var(--thick); }
 .cell:nth-child(9n) { border-right: 0; }
 .cell:nth-child(n + 73) { border-bottom: 0; }
-.cell.given { color: var(--given); font-weight: 700; }
+.cell.given { color: var(--given); font-family: var(--font-display); font-weight: 500; }
 .cell.peer { background: var(--peer); }
 .cell.same { background: var(--same); }
 .cell.hint { background: var(--hint); }
@@ -39,9 +65,9 @@ h1 { font-size: 1.25rem; margin: 4px 0 10px; }
 .cell.selected { background: var(--sel); }
 .cell.wrong { color: var(--wrong); }
 .cell:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
-.cands { position: absolute; inset: 2px; display: grid; grid-template-columns: repeat(3, 1fr); font-size: clamp(0.5rem, 2.4vw, 0.8rem); color: var(--muted); }
+.cands { font-family: var(--font-mono); position: absolute; inset: 2px; display: grid; grid-template-columns: repeat(3, 1fr); font-size: clamp(0.5rem, 2.4vw, 0.8rem); color: var(--muted); }
 .cands span { display: flex; align-items: center; justify-content: center; }
-.cands .del { color: var(--wrong); text-decoration: line-through; font-weight: 700; }
+.cands .del { color: var(--elim); background: var(--elim-bg); text-decoration: line-through; font-weight: 600; border-radius: 3px; }
 .cands .keep { color: var(--user); font-weight: 700; }
 .status { min-height: 3em; margin: 8px 0; font-size: 0.95rem; }
 .pad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }

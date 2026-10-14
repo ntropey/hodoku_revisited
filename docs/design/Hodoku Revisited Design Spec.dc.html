@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Hodoku Revisited — Design Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
+<style>
+body{margin:0;background:#F5F2EA;color:#1C1B18;font-family:'IBM Plex Sans',sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#2B4EA2;text-decoration:underline;text-underline-offset:3px}
+a:hover{color:#1C1B18}
+*{box-sizing:border-box}
+</style>
+</helmet>
+
+<div style="max-width:1320px; margin:0 auto; padding:56px 40px 120px; display:flex; flex-direction:column; gap:120px">
+
+<!-- 00 COVER -->
+<header data-screen-label="00 Cover" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:48px; align-items:end; border-bottom:2px solid #1C1B18; padding-bottom:48px">
+  <div style="display:flex; flex-direction:column; gap:28px">
+    <div style="display:flex; align-items:center; gap:16px">
+      <div style="width:56px; height:56px; box-sizing:border-box; border:2px solid #1C1B18; border-radius:3px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); overflow:hidden"><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:6px; height:6px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:6px; height:6px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:6px; height:6px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:6px; height:6px; background:#2B4EA2"></span></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:6px; height:6px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:6px; height:6px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="display:grid; place-items:center; min-width:0; min-height:0"><span style="width:6px; height:6px; background:#1C1B18"></span></span></div>
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <span style="font-family:'Newsreader',serif; font-size:30px; font-weight:500; letter-spacing:-0.01em; line-height:1">Hodoku</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.28em; text-transform:uppercase; color:#55524A">Revisited</span>
+      </div>
+    </div>
+    <h1 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:clamp(44px,6vw,76px); line-height:0.98; letter-spacing:-0.025em; text-wrap:balance">Design &amp; implementation spec</h1>
+    <p style="margin:0; max-width:560px; font-size:18px; line-height:1.55; color:#55524A; text-wrap:pretty">Brand, website and web-app design for the TypeScript port of HoDoKu. One direction, light and dark, written to be handed straight to implementation.</p>
+  </div>
+  <div style="display:grid; grid-template-columns:auto minmax(0,1fr); gap:10px 24px; font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.5">
+    <span style="color:#55524A">Version</span><span>1.0 · Oct 2026</span>
+    <span style="color:#55524A">Repo</span><span>ntropey/hodoku_revisited · g/zealous-dirac-gad3np</span>
+    <span style="color:#55524A">Direction</span><span>Modern reimagining, solver-first</span>
+    <span style="color:#55524A">Modes</span><span>Light + dark</span>
+    <span style="color:#55524A">Contents</span>
+    <span style="display:flex; flex-direction:column; gap:4px">
+      <a href="#s1">01 Brand</a><a href="#s2">02 Foundations</a><a href="#s3">03 Website</a><a href="#s4">04 Solver app</a><a href="#s5">05 Components &amp; states</a><a href="#s6">06 Implementation notes</a><a href="#s7">07 Today vs. new</a>
+    </span>
+  </div>
+</header>
+
+<!-- 01 BRAND -->
+<section id="s1" data-screen-label="01 Brand" style="display:flex; flex-direction:column; gap:40px">
+  <div style="display:grid; grid-template-columns:120px minmax(0,1fr) minmax(0,1fr); gap:32px; align-items:baseline">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:14px; color:#2B4EA2">01</span>
+    <h2 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:48px; letter-spacing:-0.02em; line-height:1">Brand</h2>
+    <p style="margin:0; font-size:16px; line-height:1.6; color:#55524A; text-wrap:pretty">The mark is a ruled 3×3 box with pencil marks in place. The candidates 1 3 4 5 6 7 9 sit in their fixed slots and spell an H. The 5 in the centre is accent blue — the one you're about to place. The grid lines are what make it read as sudoku, not dice.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr)); gap:24px">
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:48px 32px 56px; display:grid; place-items:center; min-height:380px; position:relative">
+      <div style="display:flex; align-items:center; gap:28px; flex-wrap:wrap; justify-content:center">
+        <div style="width:132px; height:132px; box-sizing:border-box; border:4.5px solid #1C1B18; border-radius:8px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); overflow:hidden"><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:26px; line-height:1; color:#1C1B18">1</span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:26px; line-height:1; color:#1C1B18">3</span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:26px; line-height:1; color:#1C1B18">4</span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:26px; line-height:1; color:#2B4EA2">5</span></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:26px; line-height:1; color:#1C1B18">6</span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:26px; line-height:1; color:#1C1B18">7</span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:26px; line-height:1; color:#1C1B18">9</span></span></div>
+        <div style="display:flex; flex-direction:column; gap:8px">
+          <span style="font-family:'Newsreader',serif; font-size:clamp(56px,6vw,84px); font-weight:500; letter-spacing:-0.02em; line-height:0.9">Hodoku</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:20px; letter-spacing:0.42em; text-transform:uppercase; color:#55524A; padding-left:4px">Revisited</span>
+        </div>
+      </div>
+      <span style="position:absolute; left:20px; bottom:16px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A; letter-spacing:0.08em">PRIMARY LOCKUP · HORIZONTAL</span>
+    </div>
+
+    <div style="display:grid; grid-template-rows:1fr 1fr; gap:24px">
+      <div style="background:#1C1B18; border-radius:6px; padding:32px 32px 44px; display:grid; place-items:center; position:relative">
+        <div style="display:flex; align-items:center; gap:16px">
+          <div style="width:64px; height:64px; box-sizing:border-box; border:2px solid #ECE8DF; border-radius:4px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); overflow:hidden"><span style="border-right:1px solid #ECE8DF; border-bottom:1px solid #ECE8DF; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#ECE8DF">1</span></span><span style="border-right:1px solid #ECE8DF; border-bottom:1px solid #ECE8DF; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="border-bottom:1px solid #ECE8DF; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#ECE8DF">3</span></span><span style="border-right:1px solid #ECE8DF; border-bottom:1px solid #ECE8DF; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#ECE8DF">4</span></span><span style="border-right:1px solid #ECE8DF; border-bottom:1px solid #ECE8DF; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#9DB4F5">5</span></span><span style="border-bottom:1px solid #ECE8DF; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#ECE8DF">6</span></span><span style="border-right:1px solid #ECE8DF; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#ECE8DF">7</span></span><span style="border-right:1px solid #ECE8DF; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#ECE8DF">9</span></span></div>
+          <div style="display:flex; flex-direction:column; gap:4px">
+            <span style="font-family:'Newsreader',serif; font-size:40px; font-weight:500; color:#ECE8DF; line-height:0.9">Hodoku</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.42em; text-transform:uppercase; color:#A9A498">Revisited</span>
+          </div>
+        </div>
+        <span style="position:absolute; left:20px; bottom:14px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:#A9A498; letter-spacing:0.08em">REVERSED · DARK UI</span>
+      </div>
+      <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:28px; display:flex; align-items:center; justify-content:space-around; position:relative">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px">
+          <div style="width:64px; height:64px; box-sizing:border-box; border:2px solid #1C1B18; border-radius:4px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); overflow:hidden"><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#1C1B18">1</span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#1C1B18">3</span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#1C1B18">4</span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#2B4EA2">5</span></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#1C1B18">6</span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#1C1B18">7</span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="display:grid; place-items:center; min-width:0; min-height:0"><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px; line-height:1; color:#1C1B18">9</span></span></div>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">64</span>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px">
+          <div style="width:32px; height:32px; box-sizing:border-box; border:1.5px solid #1C1B18; border-radius:2px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); overflow:hidden"><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#2B4EA2"></span></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span></div>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">32</span>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px">
+          <div style="width:16px; height:16px; box-sizing:border-box; background:#1C1B18; padding:2px; border-radius:2px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); overflow:hidden"><span style="border-right:1px solid #F5F2EA; border-bottom:1px solid #F5F2EA; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:2px; height:2px; background:#F5F2EA"></span></span><span style="border-right:1px solid #F5F2EA; border-bottom:1px solid #F5F2EA; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="border-bottom:1px solid #F5F2EA; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:2px; height:2px; background:#F5F2EA"></span></span><span style="border-right:1px solid #F5F2EA; border-bottom:1px solid #F5F2EA; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:2px; height:2px; background:#F5F2EA"></span></span><span style="border-right:1px solid #F5F2EA; border-bottom:1px solid #F5F2EA; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:2px; height:2px; background:#9DB4F5"></span></span><span style="border-bottom:1px solid #F5F2EA; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:2px; height:2px; background:#F5F2EA"></span></span><span style="border-right:1px solid #F5F2EA; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:2px; height:2px; background:#F5F2EA"></span></span><span style="border-right:1px solid #F5F2EA; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="display:grid; place-items:center; min-width:0; min-height:0"><span style="width:2px; height:2px; background:#F5F2EA"></span></span></div>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">16 · favicon</span>
+        </div>
+        <span style="position:absolute; left:20px; bottom:14px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A; letter-spacing:0.08em">MARK · SIZES</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:24px; font-size:14px; line-height:1.55; color:#55524A">
+    <div style="display:flex; flex-direction:column; gap:6px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#1C1B18; letter-spacing:0.06em">CONSTRUCTION</span>A square box ruled into a 3×3 grid. The outer rule is about 3× the inner rules, the way box lines are drawn on the board. Digits are Plex Mono 600 at 20% of the mark's width. Corner radius is 6%.</div>
+    <div style="display:flex; flex-direction:column; gap:6px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#1C1B18; letter-spacing:0.06em">CLEAR SPACE</span>Keep one cell-width of space on every side. Don't place the mark inside another box.</div>
+    <div style="display:flex; flex-direction:column; gap:6px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#1C1B18; letter-spacing:0.06em">BELOW 24PX</span>Under 60px the digits become small square marks in the same slots. Under 24px use the filled favicon: inverted, with rules kept.</div>
+    <div style="display:flex; flex-direction:column; gap:6px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#1C1B18; letter-spacing:0.06em">WORDMARK</span>“Hodoku” in Newsreader 500. “Revisited” in Plex Mono, uppercase, tracked +0.42em, set at about 24% of the cap height.</div>
+  </div>
+</section>
+
+<!-- 02 FOUNDATIONS -->
+<section id="s2" data-screen-label="02 Foundations" style="display:flex; flex-direction:column; gap:40px">
+  <div style="display:grid; grid-template-columns:120px minmax(0,1fr) minmax(0,1fr); gap:32px; align-items:baseline">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:14px; color:#2B4EA2">02</span>
+    <h2 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:48px; letter-spacing:-0.02em; line-height:1">Foundations</h2>
+    <p style="margin:0; font-size:16px; line-height:1.6; color:#55524A; text-wrap:pretty">Warm paper, black ink, one blue. Everything else in the palette is <em>semantic</em>: the technique colours mean the same thing in the app, the docs and the marketing site.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:24px">
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:28px; display:flex; flex-direction:column; gap:16px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">CORE · LIGHT / DARK</span>
+      <div style="display:grid; grid-template-columns:minmax(0,1.3fr) 56px 56px; gap:10px 14px; align-items:center; font-size:13px">
+        <span style="font-family:'IBM Plex Mono',monospace; color:#55524A; font-size:11px">TOKEN</span><span style="font-family:'IBM Plex Mono',monospace; color:#55524A; font-size:11px">LIGHT</span><span style="font-family:'IBM Plex Mono',monospace; color:#55524A; font-size:11px">DARK</span>
+        <span style="font-family:'IBM Plex Mono',monospace">--hr-bg</span><span style="height:32px; border-radius:4px; background:#F5F2EA; border:1px solid #D9D3C5"></span><span style="height:32px; border-radius:4px; background:#15171B"></span>
+        <span style="font-family:'IBM Plex Mono',monospace">--hr-surface</span><span style="height:32px; border-radius:4px; background:#FFFDF8; border:1px solid #D9D3C5"></span><span style="height:32px; border-radius:4px; background:#1D2026"></span>
+        <span style="font-family:'IBM Plex Mono',monospace">--hr-ink</span><span style="height:32px; border-radius:4px; background:#1C1B18"></span><span style="height:32px; border-radius:4px; background:#ECE8DF"></span>
+        <span style="font-family:'IBM Plex Mono',monospace">--hr-ink-muted</span><span style="height:32px; border-radius:4px; background:#55524A"></span><span style="height:32px; border-radius:4px; background:#A9A498"></span>
+        <span style="font-family:'IBM Plex Mono',monospace">--hr-line</span><span style="height:32px; border-radius:4px; background:#D9D3C5"></span><span style="height:32px; border-radius:4px; background:#333740"></span>
+        <span style="font-family:'IBM Plex Mono',monospace">--hr-accent</span><span style="height:32px; border-radius:4px; background:#2B4EA2"></span><span style="height:32px; border-radius:4px; background:#9DB4F5"></span>
+        <span style="font-family:'IBM Plex Mono',monospace">--hr-accent-soft</span><span style="height:32px; border-radius:4px; background:#E3E8F5"></span><span style="height:32px; border-radius:4px; background:#22384F"></span>
+        <span style="font-family:'IBM Plex Mono',monospace">--hr-cell-selected</span><span style="height:32px; border-radius:4px; background:#F3E5B0"></span><span style="height:32px; border-radius:4px; background:#4A4227"></span>
+        <span style="font-family:'IBM Plex Mono',monospace">--hr-cell-peer</span><span style="height:32px; border-radius:4px; background:#F2EEE4; border:1px solid #D9D3C5"></span><span style="height:32px; border-radius:4px; background:#252932"></span>
+      </div>
+    </div>
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:28px; display:flex; flex-direction:column; gap:16px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">STEP ROLES · FROM StepMarks (core/stepMarks.ts)</span>
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div style="display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:14px; align-items:center"><span style="height:44px; border-radius:6px; background:#D5EBDC; color:#2E7D4F; display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:18px">7</span><span style="display:flex; flex-direction:column"><span style="font-weight:500">Place</span><span style="font-size:13px; color:#55524A">marks.place · digit the step sets</span></span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">--place</span></div>
+        <div style="display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:14px; align-items:center"><span style="height:44px; border-radius:6px; background:#F6D3CA; color:#A8321F; display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:18px">4</span><span style="display:flex; flex-direction:column"><span style="font-weight:500">Eliminate</span><span style="font-size:13px; color:#55524A">marks.elim · candidates removed</span></span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">--elim</span></div>
+        <div style="display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:14px; align-items:center"><span style="height:44px; border-radius:6px; background:#C9D6F4; color:#1F3F8F; display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:18px">4</span><span style="display:flex; flex-direction:column"><span style="font-weight:500">Key · colour 0</span><span style="font-size:13px; color:#55524A">marks.key, colors[even], tint a</span></span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">--c0</span></div>
+        <div style="display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:14px; align-items:center"><span style="height:44px; border-radius:6px; background:#F3E3C0; color:#8A5A12; display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:18px">2</span><span style="display:flex; flex-direction:column"><span style="font-weight:500">Colour 1 · cover</span><span style="font-size:13px; color:#55524A">colors[odd], tint b (cover units, 2nd ALS)</span></span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">--c1</span></div>
+        <div style="display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:14px; align-items:center"><span style="height:44px; border-radius:6px; background:#E6DAF4; color:#6B3FA0; display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:18px">9</span><span style="display:flex; flex-direction:column"><span style="font-weight:500">Fin</span><span style="font-size:13px; color:#55524A">marks.fins · fins, endo fins, connectors</span></span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">--fin</span></div>
+      </div>
+      <p style="margin:0; font-size:13px; line-height:1.55; color:#55524A">Never use colour alone. Eliminations also get a strike-through when the step is applied, and every step has a written description in the panel.</p>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:24px">
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:28px; display:flex; flex-direction:column; gap:20px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">TYPE</span>
+      <div style="display:grid; grid-template-columns:150px minmax(0,1fr); gap:18px 20px; align-items:baseline">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">display · 64/1.0</span><span style="font-family:'Newsreader',serif; font-size:56px; line-height:1; letter-spacing:-0.025em">Every step, explained</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">h2 · 36/1.1</span><span style="font-family:'Newsreader',serif; font-size:36px; line-height:1.1; letter-spacing:-0.015em">Locked Candidates</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">h3 · 20/1.3 sans</span><span style="font-size:20px; font-weight:600">Pointing and claiming</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">body · 16/1.6</span><span style="font-size:16px; line-height:1.6">If every candidate for a digit in a box sits in one row, that digit can be removed from the rest of the row.</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">ui · 14/1.4</span><span style="font-size:14px">Apply step · Next hint · Import puzzle</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">notation · 14 mono</span><span style="font-family:'IBM Plex Mono',monospace; font-size:14px">4 in b3 ⇒ r1c6&lt;&gt;4</span>
+      </div>
+    </div>
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:28px; display:flex; flex-direction:column; gap:18px; font-size:14px; line-height:1.55">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">FAMILIES &amp; ROLES</span>
+      <div style="display:flex; flex-direction:column; gap:4px"><span style="font-family:'Newsreader',serif; font-size:24px">Newsreader</span><span style="color:#55524A">Display, page titles, article headings, given digits on the board.</span></div>
+      <div style="display:flex; flex-direction:column; gap:4px"><span style="font-size:22px; font-weight:500">IBM Plex Sans</span><span style="color:#55524A">UI and body text. Also user-entered digits, so they read differently from givens.</span></div>
+      <div style="display:flex; flex-direction:column; gap:4px"><span style="font-family:'IBM Plex Mono',monospace; font-size:20px">IBM Plex Mono</span><span style="color:#55524A">Candidates, step notation (r1c6, b3), shortcuts, labels. Uses tabular figures throughout.</span></div>
+      <div style="border-top:1px solid #D9D3C5; padding-top:14px; display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 16px; font-family:'IBM Plex Mono',monospace; font-size:12px">
+        <span style="color:#55524A">space</span><span>4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96</span>
+        <span style="color:#55524A">radius</span><span>3 cands · 6 controls · 10 sheets</span>
+        <span style="color:#55524A">rule</span><span>1px minor · 2px box / major</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 WEBSITE -->
+<section id="s3" data-screen-label="03 Website" style="display:flex; flex-direction:column; gap:40px">
+  <div style="display:grid; grid-template-columns:120px minmax(0,1fr) minmax(0,1fr); gap:32px; align-items:baseline">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:14px; color:#2B4EA2">03</span>
+    <h2 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:48px; letter-spacing:-0.02em; line-height:1">Website</h2>
+    <p style="margin:0; font-size:16px; line-height:1.6; color:#55524A; text-wrap:pretty">The static site built by <span style="font-family:'IBM Plex Mono',monospace; font-size:14px">website/src/build.mjs</span> stays as it is: the start page, 32 technique guides, about and privacy pages, and the app under /play/. This spec restyles all of it and adds a manual. The guide diagrams keep coming from examples.json.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; font-size:13px">
+    <div style="border-top:2px solid #1C1B18; padding-top:10px; display:flex; flex-direction:column; gap:4px"><span style="font-weight:600">Home</span><span style="color:#55524A">/</span></div>
+    <div style="border-top:2px solid #2B4EA2; padding-top:10px; display:flex; flex-direction:column; gap:4px"><span style="font-weight:600">Play</span><span style="color:#55524A">/play/ · the PWA</span></div>
+    <div style="border-top:2px solid #1C1B18; padding-top:10px; display:flex; flex-direction:column; gap:4px"><span style="font-weight:600">Techniques</span><span style="color:#55524A">/techniques/:slug.html</span></div>
+    <div style="border-top:2px solid #1C1B18; padding-top:10px; display:flex; flex-direction:column; gap:4px"><span style="font-weight:600">Manual</span><span style="color:#55524A">/manual/:chapter · new</span></div>
+    <div style="border-top:2px solid #1C1B18; padding-top:10px; display:flex; flex-direction:column; gap:4px"><span style="font-weight:600">About</span><span style="color:#55524A">/about · /privacy · licence</span></div>
+  </div>
+
+  <!-- HOME -->
+  <div style="display:flex; flex-direction:column; gap:14px">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#55524A">3A · HOME · 1280 DESKTOP</span>
+    <div style="overflow-x:auto; border-radius:8px; border:1px solid #D9D3C5; box-shadow:0 24px 48px -24px rgba(28,27,24,0.25)">
+      <div style="width:1280px; background:#F5F2EA">
+        <nav style="height:68px; padding:0 48px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #D9D3C5">
+          <div style="display:flex; align-items:center; gap:12px">
+            <div style="width:32px; height:32px; box-sizing:border-box; border:1.5px solid #1C1B18; border-radius:2px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); overflow:hidden"><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#2B4EA2"></span></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="display:grid; place-items:center; min-width:0; min-height:0"><span style="width:4px; height:4px; background:#1C1B18"></span></span></div>
+            <span style="font-family:'Newsreader',serif; font-size:22px; font-weight:500">Hodoku</span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.3em; color:#55524A">REVISITED</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:32px; font-size:14px">
+            <span>Techniques</span><span>Manual</span><span>About</span><span style="color:#55524A">GitHub</span>
+            <span style="background:#1C1B18; color:#F5F2EA; padding:10px 18px; border-radius:6px; font-weight:500">Open solver</span>
+          </div>
+        </nav>
+        <div style="display:grid; grid-template-columns:minmax(0,1fr) 520px; gap:64px; padding:80px 48px 72px; align-items:center">
+          <div style="display:flex; flex-direction:column; gap:28px">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.12em; color:#2B4EA2">THE HODOKU SOLVER, NOW IN YOUR BROWSER</span>
+            <h1 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:76px; line-height:0.98; letter-spacing:-0.03em">Every step,<br><em>explained.</em></h1>
+            <p style="margin:0; font-size:19px; line-height:1.55; color:#55524A; max-width:500px">The hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript. No Java and no install. It tells you which step comes next and why it works.</p>
+            <div style="display:flex; gap:12px">
+              <span style="background:#1C1B18; color:#F5F2EA; padding:14px 22px; border-radius:6px; font-weight:500; font-size:15px">Open the solver</span>
+              <span style="border:1px solid #1C1B18; padding:13px 22px; border-radius:6px; font-weight:500; font-size:15px">Browse techniques</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A; padding-top:12px">
+              <span>Generate:</span>
+              <span style="border:1px solid #D9D3C5; background:#FFFDF8; padding:5px 10px; border-radius:20px">Easy</span>
+              <span style="border:1px solid #D9D3C5; background:#FFFDF8; padding:5px 10px; border-radius:20px">Medium</span>
+              <span style="border:1px solid #1C1B18; background:#FFFDF8; padding:5px 10px; border-radius:20px; color:#1C1B18">Hard</span>
+              <span style="border:1px solid #D9D3C5; background:#FFFDF8; padding:5px 10px; border-radius:20px">Unfair</span>
+              <span style="border:1px solid #D9D3C5; background:#FFFDF8; padding:5px 10px; border-radius:20px">Extreme</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:14px">
+            <dc-import name="Sudoku Board" size="{{ 512 }}" hint="{{ true }}" hint-size="516px,516px"></dc-import>
+            <div style="display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">
+              <span>Locked Candidates Type 1 (Pointing)</span><span style="color:#1C1B18">4 in b3 ⇒ r1c6&lt;&gt;4</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border-top:1px solid #D9D3C5">
+          <div style="padding:36px 48px; border-right:1px solid #D9D3C5; display:flex; flex-direction:column; gap:10px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#2B4EA2">HINTS</span><span style="font-family:'Newsreader',serif; font-size:26px">Vague, concrete or the full step</span><span style="font-size:15px; line-height:1.55; color:#55524A">You choose how much it gives away. It can just name the technique, or highlight every candidate involved.</span></div>
+          <div style="padding:36px 48px; border-right:1px solid #D9D3C5; display:flex; flex-direction:column; gap:10px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#2B4EA2">ANALYZER</span><span style="font-family:'Newsreader',serif; font-size:26px">See the whole solution path</span><span style="font-size:15px; line-height:1.55; color:#55524A">Get every step the solver would take and the hardest technique required, plus a difficulty rating for any puzzle you paste in.</span></div>
+          <div style="padding:36px 48px; display:flex; flex-direction:column; gap:10px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#2B4EA2">LIBRARY</span><span style="font-family:'Newsreader',serif; font-size:26px">From singles to last resort</span><span style="font-size:15px; line-height:1.55; color:#55524A">The original technique write-ups, revised. Every example is a board you can step through.</span></div>
+        </div>
+        <footer style="padding:28px 48px; border-top:1px solid #D9D3C5; display:flex; justify-content:space-between; font-size:13px; color:#55524A">
+          <span>Based on HoDoKu by Bernhard Hobiger. Open source under the GPL.</span>
+          <span style="display:flex; gap:24px"><span>GitHub</span><span>Changelog</span><span>Original site</span></span>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECHNIQUES ARTICLE -->
+  <div style="display:flex; flex-direction:column; gap:14px">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#55524A">3B · TECHNIQUES · INDEX RAIL + ARTICLE</span>
+    <div style="overflow-x:auto; border-radius:8px; border:1px solid #D9D3C5; box-shadow:0 24px 48px -24px rgba(28,27,24,0.25)">
+      <div style="width:1280px; background:#F5F2EA; display:grid; grid-template-columns:260px minmax(0,1fr)">
+        <aside style="border-right:1px solid #D9D3C5; padding:32px 24px; display:flex; flex-direction:column; gap:4px; font-size:14px">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em; color:#55524A; padding:0 10px 12px">TECHNIQUES</span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Singles</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">01</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between; background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; font-weight:600"><span>Intersections</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#2B4EA2">02</span></span>
+          <span style="padding:5px 10px 5px 22px; color:#2B4EA2; font-weight:500">Locked Candidates</span>
+          <span style="padding:5px 10px 5px 22px; color:#55524A">Claiming</span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Subsets</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">03</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Basic Fish</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">04</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Single Digit Patterns</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">05</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Uniqueness</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">06</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Wings</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">07</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Coloring</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">08</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Chains and Loops</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">09</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Almost Locked Sets</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">10</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Finned &amp; Complex Fish</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">11</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Miscellaneous</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">12</span></span>
+          <span style="padding:7px 10px; display:flex; justify-content:space-between"><span>Last Resort</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#55524A">13</span></span>
+        </aside>
+        <article style="padding:48px 64px 64px; display:grid; grid-template-columns:minmax(0,1fr) 400px; gap:56px">
+          <div style="display:flex; flex-direction:column; gap:22px">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">Techniques / Intersections</span>
+            <h1 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:56px; line-height:1; letter-spacing:-0.025em">Locked Candidates</h1>
+            <div style="display:flex; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:12px">
+              <span style="background:#E3E8F5; color:#2B4EA2; padding:4px 10px; border-radius:20px">Medium</span>
+              <span style="border:1px solid #D9D3C5; padding:4px 10px; border-radius:20px; color:#55524A">Type 1 · Pointing</span>
+              <span style="border:1px solid #D9D3C5; padding:4px 10px; border-radius:20px; color:#55524A">Type 2 · Claiming</span>
+            </div>
+            <p style="margin:0; font-family:'Newsreader',serif; font-size:22px; line-height:1.5; text-wrap:pretty">A box and a row (or column) overlap in three cells. If a digit can only go in that overlap for one of them, it can't go anywhere else in the other.</p>
+            <h3 style="margin:12px 0 0; font-size:20px; font-weight:600">Type 1 · Pointing</h3>
+            <p style="margin:0; font-size:16px; line-height:1.65; color:#1C1B18; text-wrap:pretty">In box 3 the digit <strong>4</strong> only fits in r1c7 and r1c9, both in row 1. Wherever the 4 goes in box 3, it uses up row 1. So the 4 at r1c6 can be eliminated.</p>
+            <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:16px 18px; display:flex; flex-direction:column; gap:6px">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#55524A">NOTATION</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:15px">Locked Candidates Type 1 (Pointing): 4 in b3 ⇒ r1c6&lt;&gt;4</span>
+            </div>
+            <h3 style="margin:12px 0 0; font-size:20px; font-weight:600">Type 2 · Claiming</h3>
+            <p style="margin:0; font-size:16px; line-height:1.65; color:#55524A; text-wrap:pretty">This is the same overlap read the other way round. If a row's candidates for a digit all sit in one box, you can eliminate that digit from the rest of the box…</p>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:14px; position:sticky; top:24px; align-self:start">
+            <dc-import name="Sudoku Board" size="{{ 396 }}" hint="{{ true }}" hint-size="400px,400px"></dc-import>
+            <div style="display:flex; gap:16px; font-size:13px; color:#55524A">
+              <span style="display:flex; align-items:center; gap:6px"><span style="width:12px; height:12px; border-radius:3px; background:#C9D6F4; border:1px solid #1F3F8F"></span>Key</span>
+              <span style="display:flex; align-items:center; gap:6px"><span style="width:12px; height:12px; border-radius:3px; background:#F6D3CA; border:1px solid #A8321F"></span>Eliminated</span>
+            </div>
+            <div style="display:grid; grid-template-columns:auto auto minmax(0,1fr); gap:8px">
+              <span style="border:1px solid #D9D3C5; background:#FFFDF8; padding:9px 14px; border-radius:6px; font-size:14px">← Before</span>
+              <span style="border:1px solid #D9D3C5; background:#FFFDF8; padding:9px 14px; border-radius:6px; font-size:14px">After →</span>
+              <span style="background:#1C1B18; color:#F5F2EA; padding:9px 14px; border-radius:6px; font-size:14px; text-align:center">Open in app</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; font-size:14px; line-height:1.55; color:#55524A">
+      <span><strong style="color:#1C1B18">Index rail.</strong> It groups the 32 existing guides (slugs as in techniqueInfo.ts). The active group expands to show its guides. On screens under 960px the rail becomes a select at the top of the page.</span>
+      <span><strong style="color:#1C1B18">Example board.</strong> It's the same component as the app, read-only, and it sticks to the top while you scroll. Before/After steps through the example. “Open in app” loads that position at /play/?p=… (new; the app currently only imports pasted puzzles).</span>
+      <span><strong style="color:#1C1B18">Index page</strong> (/techniques) uses the same rail with a card grid: category name, difficulty band, and a short description of each technique.</span>
+    </div>
+  </div>
+
+  <!-- MANUAL -->
+  <div style="display:flex; flex-direction:column; gap:14px">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#55524A">3C · MANUAL · CHAPTER PAGE</span>
+    <div style="overflow-x:auto; border-radius:8px; border:1px solid #D9D3C5; box-shadow:0 24px 48px -24px rgba(28,27,24,0.25)">
+      <div style="width:1280px; background:#FFFDF8; display:grid; grid-template-columns:240px minmax(0,1fr) 220px">
+        <aside style="border-right:1px solid #D9D3C5; padding:32px 24px; display:flex; flex-direction:column; gap:2px; font-size:14px; background:#F5F2EA">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em; color:#55524A; padding:0 10px 12px">MANUAL</span>
+          <span style="padding:7px 10px">Getting started</span>
+          <span style="padding:7px 10px">Entering puzzles</span>
+          <span style="padding:7px 10px">Candidates &amp; filters</span>
+          <span style="padding:7px 10px; background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; font-weight:600">Hints</span>
+          <span style="padding:7px 10px">Analyzer</span>
+          <span style="padding:7px 10px">Generator &amp; levels</span>
+          <span style="padding:7px 10px">Import / export formats</span>
+          <span style="padding:7px 10px">Keyboard shortcuts</span>
+          <span style="padding:7px 10px">Settings</span>
+        </aside>
+        <article style="padding:48px 64px; display:flex; flex-direction:column; gap:20px; max-width:760px">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">Manual / 04</span>
+          <h1 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:48px; line-height:1.05; letter-spacing:-0.02em">Hints</h1>
+          <p style="margin:0; font-size:17px; line-height:1.65; text-wrap:pretty">A hint is the next step the solver would take from your current position. It names the technique, highlights the cells involved, strikes out what it removes, and links to the guide. “Hints use” limits which techniques it may use.</p>
+          <div style="display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:0; border:1px solid #D9D3C5; border-radius:6px; overflow:hidden; font-size:14px">
+            <span style="padding:12px 16px; background:#F5F2EA; font-family:'IBM Plex Mono',monospace; font-size:12px; border-bottom:1px solid #D9D3C5">PART</span><span style="padding:12px 16px; background:#F5F2EA; font-family:'IBM Plex Mono',monospace; font-size:12px; border-bottom:1px solid #D9D3C5">COMES FROM</span><span style="padding:12px 16px; background:#F5F2EA; font-family:'IBM Plex Mono',monospace; font-size:12px; border-bottom:1px solid #D9D3C5">FIELD</span>
+            <span style="padding:12px 16px; border-bottom:1px solid #D9D3C5; font-weight:500">What to do</span><span style="padding:12px 16px; border-bottom:1px solid #D9D3C5">“remove 4 from r1c6”</span><span style="padding:12px 16px; border-bottom:1px solid #D9D3C5; font-family:'IBM Plex Mono',monospace">text</span>
+            <span style="padding:12px 16px; border-bottom:1px solid #D9D3C5; font-weight:500">Why</span><span style="padding:12px 16px; border-bottom:1px solid #D9D3C5">One-sentence reason</span><span style="padding:12px 16px; border-bottom:1px solid #D9D3C5; font-family:'IBM Plex Mono',monospace">summary</span>
+            <span style="padding:12px 16px; font-weight:500">Chain</span><span style="padding:12px 16px">AIC notation, for chain steps</span><span style="padding:12px 16px; font-family:'IBM Plex Mono',monospace">notation[]</span>
+          </div>
+          <div style="background:#E3E8F5; border-radius:6px; padding:16px 18px; font-size:14px; line-height:1.55; color:#1C1B18">Tip: set “Hints use” to Singles only while you're learning. If nothing is found at that level, the hint suggests raising it.</div>
+        </article>
+        <aside style="padding:48px 24px; border-left:1px solid #D9D3C5; display:flex; flex-direction:column; gap:10px; font-size:13px; color:#55524A">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.12em">ON THIS PAGE</span>
+          <span style="color:#2B4EA2">Hint levels</span><span>Restricting techniques</span><span>Applying a step</span><span>When no hint is found</span>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 APP -->
+<section id="s4" data-screen-label="04 Solver app" style="display:flex; flex-direction:column; gap:40px">
+  <div style="display:grid; grid-template-columns:120px minmax(0,1fr) minmax(0,1fr); gap:32px; align-items:baseline">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:14px; color:#2B4EA2">04</span>
+    <h2 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:48px; letter-spacing:-0.02em; line-height:1">Solver app</h2>
+    <p style="margin:0; font-size:16px; line-height:1.6; color:#55524A; text-wrap:pretty">The board gets the most space. App.tsx today is a 520px column with rows of buttons. Desktop gets a slim top bar, a digit row and a side panel with three tabs: Hint, All steps and Summary. Every existing control has a place. Use the Tweaks panel to toggle the hint and the digit filter.</p>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:14px">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#55524A">4A · SOLVE + HINT · 1280 × 820</span>
+    <div style="overflow-x:auto; border-radius:8px; border:1px solid #D9D3C5; box-shadow:0 24px 48px -24px rgba(28,27,24,0.25)">
+      <div style="width:1280px; height:820px; background:#F5F2EA; display:grid; grid-template-rows:56px minmax(0,1fr) 30px">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0 20px; border-bottom:1px solid #D9D3C5; background:#FFFDF8">
+          <div style="display:flex; align-items:center; gap:20px">
+            <div style="display:flex; align-items:center; gap:10px">
+              <div style="width:28px; height:28px; box-sizing:border-box; border:1.5px solid #1C1B18; border-radius:2px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); overflow:hidden"><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:3px; height:3px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:3px; height:3px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:3px; height:3px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:3px; height:3px; background:#2B4EA2"></span></span><span style="border-bottom:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:3px; height:3px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"><span style="width:3px; height:3px; background:#1C1B18"></span></span><span style="border-right:1px solid #1C1B18; display:grid; place-items:center; min-width:0; min-height:0"></span><span style="display:grid; place-items:center; min-width:0; min-height:0"><span style="width:3px; height:3px; background:#1C1B18"></span></span></div>
+              <span style="font-family:'Newsreader',serif; font-size:19px; font-weight:500">Hodoku</span>
+            </div>
+            <div style="width:1px; height:24px; background:#D9D3C5"></div>
+            <div style="display:flex; gap:4px; font-size:14px">
+              <span style="padding:7px 12px; border-radius:6px">New puzzle ▾</span><span style="padding:7px 12px; border-radius:6px">Import</span><span style="padding:7px 12px; border-radius:6px">Copy</span><span style="padding:7px 12px; border-radius:6px">Print</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:13px">
+            <span style="background:#F3E3C0; color:#8A5A12; padding:4px 10px; border-radius:20px">Hard · score</span>
+            <span style="color:#55524A">37/81</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:14px">
+            <span style="font-family:'IBM Plex Mono',monospace; padding:0 10px">08:42</span>
+            <span style="border:1px solid #D9D3C5; padding:6px 10px; border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:13px">↶</span>
+            <span style="border:1px solid #D9D3C5; padding:6px 10px; border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:13px">↷</span>
+            <span style="border:1px solid #D9D3C5; padding:6px 12px; border-radius:6px; display:flex; gap:10px; align-items:center; color:#55524A; width:200px; justify-content:space-between"><span>Search commands</span><span style="font-family:'IBM Plex Mono',monospace; font-size:12px">⌘K</span></span>
+            <span style="border:1px solid #D9D3C5; padding:6px 10px; border-radius:6px">Settings</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:minmax(0,1fr) 400px; min-height:0">
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:24px">
+            <dc-import name="Sudoku Board" size="{{ 576 }}" hint="{{ showHint }}" filter="{{ filterDigit }}" selected="{{ selCell }}" hint-size="580px,580px"></dc-import>
+            <div style="display:flex; align-items:center; gap:16px">
+              <div style="display:flex; background:#EAE5D8; border-radius:8px; padding:3px; font-size:13px; font-weight:500">
+                <span style="background:#FFFDF8; padding:8px 14px; border-radius:6px; box-shadow:0 1px 2px rgba(28,27,24,0.15)">Value</span>
+                <span style="padding:8px 14px; color:#55524A">Notes</span>
+                <span style="padding:8px 14px; color:#55524A">Filter</span>
+              </div>
+              <div style="display:flex; gap:6px">
+                <sc-for list="{{ keys }}" as="k" hint-placeholder-count="9">
+                  <span style="width:50px; height:56px; border-radius:6px; border:1px solid {{ k.border }}; background:{{ k.bg }}; color:{{ k.color }}; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px">
+                    <span style="font-family:'Newsreader',serif; font-size:24px; line-height:1">{{ k.d }}</span>
+                    <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; opacity:0.75">{{ k.left }}</span>
+                  </span>
+                </sc-for>
+              </div>
+              <span style="width:50px; height:56px; border-radius:6px; border:1px solid #D9D3C5; background:#FFFDF8; display:grid; place-items:center; font-size:12px; color:#55524A">Erase</span>
+            </div>
+          </div>
+
+          <aside style="border-left:1px solid #D9D3C5; background:#FFFDF8; display:flex; flex-direction:column; min-height:0">
+            <div style="display:flex; gap:4px; padding:12px 16px 0; border-bottom:1px solid #D9D3C5; font-size:14px">
+              <span style="padding:10px 12px; border-bottom:2px solid #1C1B18; font-weight:600">Hint</span>
+              <span style="padding:10px 12px; color:#55524A">All steps</span>
+              <span style="padding:10px 12px; color:#55524A">Summary</span>
+            </div>
+            <sc-if value="{{ showHint }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:24px; display:flex; flex-direction:column; gap:20px">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#55524A">
+                  <span>Hints use</span>
+                  <span style="border:1px solid #D9D3C5; border-radius:6px; padding:6px 10px; color:#1C1B18">Everything ▾</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px">
+                  <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#55524A">HINT</span>
+                  <span style="font-family:'Newsreader',serif; font-size:30px; line-height:1.1; letter-spacing:-0.01em">Locked Candidates Type 1 (Pointing)</span>
+                </div>
+                <div style="background:#F5F2EA; border-radius:6px; padding:12px 14px; font-family:'IBM Plex Mono',monospace; font-size:15px">remove 4 from r1c6</div>
+                <p style="margin:0; font-size:14px; line-height:1.6; text-wrap:pretty">A digit confined to the overlap of a box and a line, so it can be removed from the rest of the box or line.</p>
+                <a href="#s3" style="font-size:14px">Read the guide for Locked Candidates Type 1 (Pointing) →</a>
+                <div style="display:flex; flex-direction:column; gap:8px; font-size:13px">
+                  <span style="display:flex; align-items:center; gap:8px"><span style="width:20px; height:20px; border-radius:4px; background:#C9D6F4; color:#1F3F8F; display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600">4</span>Key · r1c7, r1c9</span>
+                  <span style="display:flex; align-items:center; gap:8px"><span style="width:20px; height:20px; border-radius:4px; background:#F6D3CA; color:#A8321F; display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600">4</span>Eliminate · r1c6</span>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding-top:4px">
+                  <span style="background:#1C1B18; color:#F5F2EA; padding:11px; border-radius:6px; font-size:14px; font-weight:500; text-align:center">Apply step</span>
+                  <span style="border:1px solid #D9D3C5; padding:11px; border-radius:6px; font-size:14px; text-align:center">Dismiss</span>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noHint }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:24px; display:flex; flex-direction:column; gap:16px">
+                <span style="font-family:'Newsreader',serif; font-size:26px; line-height:1.15">Stuck?</span>
+                <p style="margin:0; font-size:14px; line-height:1.6; color:#55524A">Get the next logical step. It's highlighted on the board, and Apply carries it out.</p>
+                <span style="background:#1C1B18; color:#F5F2EA; padding:11px; border-radius:6px; font-size:14px; font-weight:500; text-align:center">Get a hint</span>
+              </div>
+            </sc-if>
+          </aside>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:0 20px; border-top:1px solid #D9D3C5; background:#FFFDF8; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#55524A">
+          <span>r1c6 · candidates 3 4 5</span>
+          <span>Mark mistakes off · show candidates on · autosaved</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:24px; font-size:14px; line-height:1.55; color:#55524A">
+      <span><strong style="color:#1C1B18">Top bar.</strong> Holds New puzzle (with the level menu, Easy–Extreme), Import, Copy, Print, the level · score badge, undo/redo and Settings. Show candidates, Mark mistakes, Hints use and Reset notes move into Settings. The timer and ⌘K are new.</span>
+      <span><strong style="color:#1C1B18">Digit row.</strong> Each key shows how many of that digit are left (remaining()). It goes grey at 0, as the disabled state does today. Value / Notes replaces the Notes toggle (N).</span>
+      <span><strong style="color:#1C1B18">Filter (new).</strong> This is HoDoKu's signature feature. Every cell that still has the digit as a candidate gets tinted. It's a third mode, or Alt+1…9. It builds on the existing “same” highlight.</span>
+      <span><strong style="color:#1C1B18">Board size.</strong> The board is min(viewport height − 240, viewport width − 460) and never smaller than 432px. Above 1440px the panel grows to 440.</span>
+    </div>
+  </div>
+
+  <!-- ANALYZER PANELS -->
+  <div style="display:flex; flex-direction:column; gap:14px">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#55524A">4B · ALL STEPS + SUMMARY TABS · PANEL 400</span>
+    <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start">
+      <div style="width:400px; background:#FFFDF8; border:1px solid #D9D3C5; border-radius:8px; overflow:hidden; box-shadow:0 24px 48px -24px rgba(28,27,24,0.25)">
+        <div style="display:flex; gap:4px; padding:12px 16px 0; border-bottom:1px solid #D9D3C5; font-size:14px">
+          <span style="padding:10px 12px; color:#55524A">Hint</span>
+          <span style="padding:10px 12px; border-bottom:2px solid #1C1B18; font-weight:600">All steps</span>
+          <span style="padding:10px 12px; color:#55524A">Summary</span>
+        </div>
+        <div style="padding:12px 16px; display:flex; justify-content:space-between; align-items:center; font-size:13px; color:#55524A; border-bottom:1px solid #D9D3C5">
+          <span>Available now · Hints use: Everything</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:12px">7 steps</span>
+        </div>
+        <div style="display:flex; flex-direction:column">
+          <sc-for list="{{ groups }}" as="gr" hint-placeholder-count="2">
+            <div style="padding:14px 16px; border-bottom:1px solid #EFEAE0; display:flex; flex-direction:column; gap:10px">
+              <span style="display:flex; justify-content:space-between; gap:12px; font-size:14px; font-weight:600"><span>{{ gr.name }}</span><span style="font-family:'IBM Plex Mono',monospace; font-weight:400; color:#55524A">{{ gr.total }}</span></span>
+              <div style="display:flex; flex-wrap:wrap; gap:6px">
+                <sc-for list="{{ gr.items }}" as="it">
+                  <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; padding:5px 9px; border-radius:6px; border:1px solid {{ it.border }}; background:{{ it.bg }}; color:{{ it.color }}">{{ it.t }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:14px 16px; display:flex; gap:8px">
+          <span style="flex:1; background:#1C1B18; color:#F5F2EA; padding:9px; border-radius:6px; font-size:13px; text-align:center">Apply selected</span>
+          <span style="flex:1; border:1px solid #D9D3C5; padding:9px; border-radius:6px; font-size:13px; text-align:center">Refresh</span>
+        </div>
+      </div>
+
+      <div style="width:400px; background:#FFFDF8; border:1px solid #D9D3C5; border-radius:8px; overflow:hidden; box-shadow:0 24px 48px -24px rgba(28,27,24,0.25)">
+        <div style="display:flex; gap:4px; padding:12px 16px 0; border-bottom:1px solid #D9D3C5; font-size:14px">
+          <span style="padding:10px 12px; color:#55524A">Hint</span>
+          <span style="padding:10px 12px; color:#55524A">All steps</span>
+          <span style="padding:10px 12px; border-bottom:2px solid #1C1B18; font-weight:600">Summary</span>
+        </div>
+        <div style="padding:24px 20px; display:flex; flex-direction:column; gap:20px">
+          <div style="display:flex; flex-direction:column; gap:6px">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#55524A">RATING</span>
+            <span style="display:flex; align-items:baseline; gap:12px"><span style="font-family:'Newsreader',serif; font-size:40px; line-height:1">Hard</span><span style="font-family:'IBM Plex Mono',monospace; font-size:14px; color:#55524A">score from Sudoku2.score</span></span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:3px">
+            <span style="height:6px; border-radius:2px; background:#2B4EA2"></span><span style="height:6px; border-radius:2px; background:#2B4EA2"></span><span style="height:6px; border-radius:2px; background:#2B4EA2"></span><span style="height:6px; border-radius:2px; background:#D9D3C5"></span><span style="height:6px; border-radius:2px; background:#D9D3C5"></span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(5,1fr); font-family:'IBM Plex Mono',monospace; font-size:10px; color:#55524A; margin-top:-14px">
+            <span>Easy</span><span>Medium</span><span style="color:#1C1B18">Hard</span><span>Unfair</span><span>Extreme</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0; border-top:1px solid #D9D3C5">
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#55524A; padding:14px 0 8px">TECHNIQUES USED · NEW</span>
+            <span style="display:flex; justify-content:space-between; padding:8px 0; font-size:14px; border-bottom:1px solid #EFEAE0"><span>Hidden Single</span><span style="font-family:'IBM Plex Mono',monospace">12</span></span>
+            <span style="display:flex; justify-content:space-between; padding:8px 0; font-size:14px; border-bottom:1px solid #EFEAE0"><span>Naked Single</span><span style="font-family:'IBM Plex Mono',monospace">1</span></span>
+            <span style="display:flex; justify-content:space-between; padding:8px 0; font-size:14px; border-bottom:1px solid #EFEAE0"><span>Locked Candidates Type 1</span><span style="font-family:'IBM Plex Mono',monospace">1</span></span>
+            <span style="display:flex; justify-content:space-between; padding:8px 0; font-size:14px; color:#55524A"><span>…remaining steps</span><span style="font-family:'IBM Plex Mono',monospace">—</span></span>
+          </div>
+          <p style="margin:0; font-size:13px; line-height:1.55; color:#55524A">Each row links to its article in the technique library. “Hardest step” is pinned to the top after a full analysis.</p>
+        </div>
+      </div>
+
+      <div style="flex:1; min-width:260px; display:flex; flex-direction:column; gap:14px; font-size:14px; line-height:1.55; color:#55524A">
+        <span><strong style="color:#1C1B18">All steps</strong> is the existing allHints() output: one group per technique, sorted easy to hard, with a count (total[name]) and up to 12 chips each (perType). The chip label is r.text with the name removed, as App.tsx does it. Clicking a chip shows it on the board, and Apply carries it out. These groups are real: they come from the board above.</span>
+        <span><strong style="color:#1C1B18">Summary</strong> shows the level and score the app already has. “Techniques used” needs a solve-path call in the worker (planned in PORT-PLAN as “Show solution path”). The counts shown are placeholders.</span>
+        <span><strong style="color:#1C1B18">Selected chip</strong> uses accent-soft, the same as the className="on" state today.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE -->
+  <div style="display:flex; flex-direction:column; gap:14px">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#55524A">4C · MOBILE · 390 × 844 · DARK</span>
+    <div style="display:flex; gap:48px; flex-wrap:wrap; align-items:flex-start">
+      <div style="width:390px; height:844px; background:#15171B; border-radius:44px; border:10px solid #0B0C0E; overflow:hidden; display:flex; flex-direction:column; color:#ECE8DF; box-shadow:0 30px 60px -30px rgba(28,27,24,0.5)">
+        <div style="height:44px; display:flex; justify-content:space-between; align-items:center; padding:0 24px; font-size:13px; font-weight:600"><span>9:41</span><span style="font-family:'IBM Plex Mono',monospace; font-size:11px">●●● ▮</span></div>
+        <div style="height:52px; display:flex; align-items:center; justify-content:space-between; padding:0 16px">
+          <span style="width:44px; height:44px; display:grid; place-items:center; font-size:20px">≡</span>
+          <div style="display:flex; align-items:center; gap:8px; font-family:'IBM Plex Mono',monospace; font-size:12px">
+            <span style="background:#3A2F18; color:#E9C27A; padding:4px 10px; border-radius:20px">Hard</span><span style="color:#A9A498">08:42</span>
+          </div>
+          <span style="width:44px; height:44px; display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-size:18px">↶</span>
+        </div>
+        <div style="padding:4px 10px 0; display:flex; justify-content:center">
+          <dc-import name="Sudoku Board" size="{{ 346 }}" dark="{{ true }}" hint="{{ showHint }}" filter="{{ filterDigit }}" hint-size="350px,350px"></dc-import>
+        </div>
+        <div style="padding:16px 12px 0; display:flex; flex-direction:column; gap:10px">
+          <div style="display:flex; background:#1D2026; border-radius:10px; padding:3px; font-size:13px; font-weight:500">
+            <span style="flex:1; text-align:center; background:#333740; padding:10px; border-radius:8px">Value</span>
+            <span style="flex:1; text-align:center; padding:10px; color:#A9A498">Notes</span>
+            <span style="flex:1; text-align:center; padding:10px; color:#A9A498">Filter</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(9,1fr); gap:4px">
+            <sc-for list="{{ keysDark }}" as="k" hint-placeholder-count="9">
+              <span style="height:56px; border-radius:8px; background:{{ k.bg }}; color:{{ k.color }}; display:flex; flex-direction:column; align-items:center; justify-content:center">
+                <span style="font-family:'Newsreader',serif; font-size:24px; line-height:1">{{ k.d }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace; font-size:9px; opacity:0.7">{{ k.left }}</span>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="margin-top:auto; background:#1D2026; border-radius:20px 20px 0 0; padding:10px 20px 28px; display:flex; flex-direction:column; gap:10px; border-top:1px solid #333740">
+          <span style="width:36px; height:4px; border-radius:2px; background:#4A4E57; align-self:center"></span>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px">
+            <div style="display:flex; flex-direction:column; gap:3px; min-width:0">
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:0.1em; color:#A9A498">HINT · INTERSECTIONS</span>
+              <span style="font-family:'Newsreader',serif; font-size:20px; line-height:1.1">Locked Candidates (Pointing)</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:#A9A498">remove 4 from r1c6</span>
+            </div>
+            <span style="background:#ECE8DF; color:#15171B; padding:12px 16px; border-radius:8px; font-size:14px; font-weight:600; flex-shrink:0">Apply</span>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:280px; max-width:520px; display:flex; flex-direction:column; gap:18px; font-size:14px; line-height:1.6; color:#55524A">
+        <span><strong style="color:#1C1B18">Breakpoints.</strong> Under 960px the side panel turns into a bottom sheet with three snap points: peek, half and full. Under 600px the top bar collapses to a menu, the difficulty badge and undo.</span>
+        <span><strong style="color:#1C1B18">Board.</strong> The board is full width minus 20px. At 346px each cell is about 38px, so candidates are 9px Mono. That's the floor: on narrower screens candidate text stays at 9px and the cell padding shrinks instead.</span>
+        <span><strong style="color:#1C1B18">Digit keys.</strong> One row of nine, each 56px tall, so the full key is tappable. Long-press a key to filter that digit. Swipe the sheet up to see All steps and Summary as tabs.</span>
+        <span><strong style="color:#1C1B18">Dark mode.</strong> It follows prefers-color-scheme, as styles.css does now. A manual override in Settings is new. The board keeps its warm-ink character: givens are #ECE8DF, user digits are #9DB4F5.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 COMPONENTS -->
+<section id="s5" data-screen-label="05 Components" style="display:flex; flex-direction:column; gap:40px">
+  <div style="display:grid; grid-template-columns:120px minmax(0,1fr) minmax(0,1fr); gap:32px; align-items:baseline">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:14px; color:#2B4EA2">05</span>
+    <h2 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:48px; letter-spacing:-0.02em; line-height:1">Components &amp; states</h2>
+    <p style="margin:0; font-size:16px; line-height:1.6; color:#55524A; text-wrap:pretty">The full inventory is small on purpose. The cell is the most complex component, and every one of its states is listed below.</p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px">
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:24px; display:flex; flex-direction:column; gap:16px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">BUTTON</span>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center">
+        <span style="background:#1C1B18; color:#F5F2EA; padding:10px 16px; border-radius:6px; font-size:14px; font-weight:500">Primary</span>
+        <span style="background:#3A3934; color:#F5F2EA; padding:10px 16px; border-radius:6px; font-size:14px; font-weight:500">Hover</span>
+        <span style="border:1px solid #1C1B18; padding:9px 16px; border-radius:6px; font-size:14px; font-weight:500">Secondary</span>
+        <span style="border:1px solid #D9D3C5; padding:9px 16px; border-radius:6px; font-size:14px">Quiet</span>
+        <span style="border:1px solid #D9D3C5; padding:9px 16px; border-radius:6px; font-size:14px; color:#A9A498">Disabled</span>
+      </div>
+      <span style="font-size:13px; line-height:1.5; color:#55524A">Heights are 40 (desktop) and 44 (touch). Focus is a 2px accent outline with a 2px offset on every control.</span>
+    </div>
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:24px; display:flex; flex-direction:column; gap:16px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">DIGIT KEY</span>
+      <div style="display:flex; gap:10px">
+        <span style="display:flex; flex-direction:column; align-items:center; gap:6px"><span style="width:50px; height:56px; border-radius:6px; border:1px solid #D9D3C5; background:#FFFDF8; display:flex; flex-direction:column; align-items:center; justify-content:center"><span style="font-family:'Newsreader',serif; font-size:24px; line-height:1">4</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10px; color:#55524A">5</span></span><span style="font-size:11px; color:#55524A">Default</span></span>
+        <span style="display:flex; flex-direction:column; align-items:center; gap:6px"><span style="width:50px; height:56px; border-radius:6px; border:1px solid #2B4EA2; background:#E3E8F5; color:#2B4EA2; display:flex; flex-direction:column; align-items:center; justify-content:center"><span style="font-family:'Newsreader',serif; font-size:24px; line-height:1">4</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10px">5</span></span><span style="font-size:11px; color:#55524A">Filtering</span></span>
+        <span style="display:flex; flex-direction:column; align-items:center; gap:6px"><span style="width:50px; height:56px; border-radius:6px; border:1px solid #1C1B18; background:#1C1B18; color:#F5F2EA; display:flex; flex-direction:column; align-items:center; justify-content:center"><span style="font-family:'Newsreader',serif; font-size:24px; line-height:1">4</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10px">5</span></span><span style="font-size:11px; color:#55524A">Pressed</span></span>
+        <span style="display:flex; flex-direction:column; align-items:center; gap:6px"><span style="width:50px; height:56px; border-radius:6px; border:1px solid #EFEAE0; background:#F5F2EA; color:#B9B3A6; display:flex; flex-direction:column; align-items:center; justify-content:center"><span style="font-family:'Newsreader',serif; font-size:24px; line-height:1">1</span><span style="font-family:'IBM Plex Mono',monospace; font-size:10px">✓</span></span><span style="font-size:11px; color:#55524A">Complete</span></span>
+      </div>
+      <span style="font-size:13px; line-height:1.5; color:#55524A">The small number is how many are left to place. Complete keys still work in Filter mode.</span>
+    </div>
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:24px; display:flex; flex-direction:column; gap:16px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">SEGMENTED · TABS</span>
+      <div style="display:flex; background:#EAE5D8; border-radius:8px; padding:3px; font-size:13px; font-weight:500; align-self:flex-start">
+        <span style="background:#FFFDF8; padding:8px 14px; border-radius:6px; box-shadow:0 1px 2px rgba(28,27,24,0.15)">Value</span><span style="padding:8px 14px; color:#55524A">Candidate</span><span style="padding:8px 14px; color:#55524A">Filter</span>
+      </div>
+      <div style="display:flex; gap:4px; border-bottom:1px solid #D9D3C5; font-size:14px">
+        <span style="padding:8px 12px; border-bottom:2px solid #1C1B18; font-weight:600">Hint</span><span style="padding:8px 12px; color:#55524A">Steps</span><span style="padding:8px 12px; color:#55524A">Summary</span>
+      </div>
+      <span style="font-size:13px; line-height:1.5; color:#55524A">Use Segmented for modes and Tabs for panel views. Never mix the two.</span>
+    </div>
+  </div>
+
+  <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:28px; display:flex; flex-direction:column; gap:20px">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">CELL STATES · 64PX REFERENCE</span>
+    <div style="display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:16px">
+      <div style="display:flex; flex-direction:column; gap:8px"><span style="aspect-ratio:1; border:1px solid #D9D3C5; background:#FFFDF8; display:grid; place-items:center; font-family:'Newsreader',serif; font-size:38px; font-weight:500">5</span><span style="font-size:12px; font-weight:500">Given</span><span style="font-size:11px; color:#55524A; font-family:'IBM Plex Mono',monospace">Newsreader 500 · ink</span></div>
+      <div style="display:flex; flex-direction:column; gap:8px"><span style="aspect-ratio:1; border:1px solid #D9D3C5; background:#FFFDF8; display:grid; place-items:center; font-size:34px; font-weight:500; color:#2B4EA2">7</span><span style="font-size:12px; font-weight:500">User value</span><span style="font-size:11px; color:#55524A; font-family:'IBM Plex Mono',monospace">Plex Sans · accent</span></div>
+      <div style="display:flex; flex-direction:column; gap:8px"><span style="aspect-ratio:1; border:1px solid #D9D3C5; background:#FFFDF8; display:grid; grid-template-columns:repeat(3,1fr); padding:4px; font-family:'IBM Plex Mono',monospace; font-size:13px; color:#6B675D; text-align:center; align-content:space-around"><span>1</span><span></span><span>3</span><span></span><span>5</span><span></span><span></span><span>8</span><span></span></span><span style="font-size:12px; font-weight:500">Candidates</span><span style="font-size:11px; color:#55524A; font-family:'IBM Plex Mono',monospace">Mono · fixed slot</span></div>
+      <div style="display:flex; flex-direction:column; gap:8px"><span style="aspect-ratio:1; border:1px solid #D9D3C5; background:#F3E5B0; display:grid; place-items:center; font-size:34px; font-weight:500; color:#2B4EA2">2</span><span style="font-size:12px; font-weight:500">Selected</span><span style="font-size:11px; color:#55524A; font-family:'IBM Plex Mono',monospace">.selected · --sel</span></div>
+      <div style="display:flex; flex-direction:column; gap:8px"><span style="aspect-ratio:1; border:1px solid #D9D3C5; background:#F2EEE4"></span><span style="font-size:12px; font-weight:500">Peer / same</span><span style="font-size:11px; color:#55524A; font-family:'IBM Plex Mono',monospace">.peer · .same</span></div>
+      <div style="display:flex; flex-direction:column; gap:8px"><span style="aspect-ratio:1; border:1px solid #D9D3C5; background:#DDEBF7; display:grid; grid-template-columns:repeat(3,1fr); padding:4px; font-family:'IBM Plex Mono',monospace; font-size:13px; color:#6B675D; text-align:center; align-content:space-around"><span></span><span></span><span></span><span style="color:#1C1B18; font-weight:600">4</span><span></span><span>6</span><span></span><span></span><span></span></span><span style="font-size:12px; font-weight:500">Filtered</span><span style="font-size:11px; color:#55524A; font-family:'IBM Plex Mono',monospace">--filter · new</span></div>
+      <div style="display:flex; flex-direction:column; gap:8px"><span style="aspect-ratio:1; border:1px solid #D9D3C5; background:#FFFDF8; display:grid; place-items:center; font-size:34px; font-weight:500; color:#A8321F; box-shadow:inset 0 0 0 2px #A8321F">3</span><span style="font-size:12px; font-weight:500">Wrong</span><span style="font-size:11px; color:#55524A; font-family:'IBM Plex Mono',monospace">.wrong · Mark mistakes</span></div>
+      <div style="display:flex; flex-direction:column; gap:8px"><span style="aspect-ratio:1; border:1px solid #D9D3C5; background:#EEF2FB; display:grid; grid-template-columns:repeat(3,1fr); padding:4px; gap:2px; font-family:'IBM Plex Mono',monospace; font-size:13px; text-align:center; align-content:space-around"><span></span><span></span><span style="color:#6B675D">3</span><span style="background:#C9D6F4; color:#1F3F8F; border-radius:3px; font-weight:600">4</span><span></span><span style="color:#6B675D">6</span><span></span><span style="color:#6B675D">8</span><span></span></span><span style="font-size:12px; font-weight:500">Tint a + key</span><span style="font-size:11px; color:#55524A; font-family:'IBM Plex Mono',monospace">.tint-a · .keyc</span></div>
+    </div>
+    <span style="font-size:13px; line-height:1.55; color:#55524A">Layer order from bottom to top: card → tint a/b → filter → peer → same → hint-place → selected → candidate marks (.keyc / .fin / .del / col-0/1) → value. Eliminated candidates keep the strike-through they have today. Each candidate has a fixed slot in a 3×3 grid (1 is top-left, 9 is bottom-right), so a digit is always in the same place.</span>
+  </div>
+
+  <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:28px; display:flex; flex-direction:column; gap:16px">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">KEYBOARD · <span style="color:#2B4EA2">BLUE = NEW</span>, OTHERS ALREADY IN APP.TSX</span>
+    <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px 40px; font-size:14px">
+      <sc-for list="{{ shortcuts }}" as="s" hint-placeholder-count="12">
+        <span style="display:flex; justify-content:space-between; gap:16px; padding:6px 0; border-bottom:1px solid #EFEAE0"><span>{{ s.a }}</span><span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:{{ s.c }}">{{ s.k }}</span></span>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<!-- 06 IMPLEMENTATION -->
+<section id="s6" data-screen-label="06 Implementation" style="display:flex; flex-direction:column; gap:40px">
+  <div style="display:grid; grid-template-columns:120px minmax(0,1fr) minmax(0,1fr); gap:32px; align-items:baseline">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:14px; color:#2B4EA2">06</span>
+    <h2 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:48px; letter-spacing:-0.02em; line-height:1">Implementation notes</h2>
+    <p style="margin:0; font-size:16px; line-height:1.6; color:#55524A; text-wrap:pretty">These notes are written against packages/app (React 18 + Vite, solver in a Web Worker). The token names are the ones styles.css already uses, so a first pass is mostly new values plus a few added variables.</p>
+  </div>
+  <div style="display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:24px">
+    <pre style="margin:0; background:#1C1B18; color:#ECE8DF; border-radius:6px; padding:28px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7; overflow-x:auto">/* packages/app/src/styles.css: same names, new values */
+:root {
+  --bg:#F5F2EA;  --card:#FFFDF8;  --fg:#1C1B18;  --muted:#55524A;
+  --line:#D9D3C5; --thick:#1C1B18; --accent:#2B4EA2;
+  --given:#1C1B18; --user:#2B4EA2; --wrong:#A8321F;
+  --sel:#F3E5B0;  --peer:#F2EEE4;  --same:#E3E8F5;
+  --hint:#F3E5B0; --place:#D5EBDC;
+  --tint-a:#EEF2FB; --tint-b:#FBF3E2;
+  --c0:#C9D6F4;  --c1:#F3E3C0;  --fin:#6B3FA0;
+  /* added */
+  --surface-2:#EAE5D8; --accent-soft:#E3E8F5;
+  --elim:#A8321F; --elim-bg:#F6D3CA; --filter:#DDEBF7;
+  --font-display:'Newsreader',serif;
+  --font-ui:'IBM Plex Sans',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:#15171B;  --card:#1D2026;  --fg:#ECE8DF;  --muted:#A9A498;
+  --line:#3A3E47; --thick:#ECE8DF; --accent:#9DB4F5;
+  --given:#ECE8DF; --user:#9DB4F5; --wrong:#FF9A85;
+  --sel:#4A4227;  --peer:#252932;  --same:#22384F;
+  --hint:#4A4227; --place:#22402C;
+  --tint-a:#232A3A; --tint-b:#2E2A1E;
+  --c0:#2C3D66;  --c1:#4A3A1C;  --fin:#C9A6F0;
+  --surface-2:#252932; --accent-soft:#22384F;
+  --elim:#FF9A85; --elim-bg:#5A2A22; --filter:#22384F;
+}}
+/* also support [data-theme] for the manual override */
+.cell.given { font-family:var(--font-display); font-weight:500 }
+.cands { font-family:var(--font-mono) }
+.cands .del { color:var(--elim); background:var(--elim-bg) }
+.overlay line { stroke:var(--accent) } /* .weak keeps dasharray */</pre>
+    <div style="display:flex; flex-direction:column; gap:20px; font-size:14px; line-height:1.6">
+      <div style="display:flex; flex-direction:column; gap:8px">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">COMPONENT INVENTORY</span>
+        <div style="display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 16px">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:13px">Board.tsx</span><span style="color:#55524A">Keep it as it is. Add a filter prop and the --filter class; restyle only.</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:13px">App.tsx → split</span><span style="color:#55524A">TopBar, DigitPad (.pad), SidePanel, SettingsSheet, ImportDialog (.dialog)</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:13px">HintView</span><span style="color:#55524A">the current .status / .why block: text, summary, notation[], slug link</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:13px">AllSteps</span><span style="color:#55524A">the current .allsteps section, turned from &lt;details&gt; into grouped chips</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:13px">Summary</span><span style="color:#55524A">new; game.level, game.score (+ solve path later)</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:13px">BottomSheet</span><span style="color:#55524A">new; holds SidePanel under 960px</span>
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:13px">public/icon.svg</span><span style="color:#55524A">replace it with the new mark, and add PNG icons (also an open item in PORT-PLAN)</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">HIGHLIGHT MODEL</span>
+        <span style="color:#55524A">Nothing changes in core. describeStep() already returns StepMarks { key, fins, elim, place, colors, tint, chains, digits }, and Board.tsx maps them to classes: key → .keyc, fins → .fin, elim → .del, place → .keep/.hint-place, colors → col-0/1, tint → tint-a/b, and chains → SVG lines (strong solid, weak dashed). The website diagrams use the same data, so restyle both from the same tokens.</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">ACCESSIBILITY · MOTION</span>
+        <span style="color:#55524A">Keep role="grid", the arrow keys and the aria-live status, which are already in place. Extend each cell's aria-label to read its candidates too (“row 1 column 6, candidates 3 4 5”). Animate only opacity and colour, for 120ms. Applying a step fades eliminated candidates over 200ms. Respect prefers-reduced-motion.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s7" data-screen-label="07 Today vs new" style="display:flex; flex-direction:column; gap:40px">
+  <div style="display:grid; grid-template-columns:120px minmax(0,1fr) minmax(0,1fr); gap:32px; align-items:baseline">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:14px; color:#2B4EA2">07</span>
+    <h2 style="margin:0; font-family:'Newsreader',serif; font-weight:400; font-size:48px; letter-spacing:-0.02em; line-height:1">Today vs. new</h2>
+    <p style="margin:0; font-size:16px; line-height:1.6; color:#55524A; text-wrap:pretty">This is checked against the repo at g/zealous-dirac-gad3np. Restyling only touches CSS and layout. New features need logic too.</p>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; font-size:14px; line-height:1.55">
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:24px; display:flex; flex-direction:column; gap:10px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em">RESTYLE · EXISTS TODAY</span>
+      <span>Board, pencil marks, peers / same highlights</span><span>Hint: text, summary, notation, guide link, Apply</span><span>All steps grouped by technique</span><span>Hints use (level 0–5), Mark mistakes, Show candidates</span><span>New puzzle by level, Import, Copy, Print</span><span>Undo / redo, keyboard, dark mode, autosave, offline</span><span>Website: start page, 32 guides with diagrams, about, privacy</span>
+    </div>
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:24px; display:flex; flex-direction:column; gap:10px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#2B4EA2">NEW · UI + SMALL LOGIC</span>
+      <span>Desktop two-column layout and side panel</span><span>Mobile bottom sheet</span><span>Digit filter mode (Alt+1–9)</span><span>Timer, ⌘K command menu, theme override</span><span>Hint key H, Apply with Enter</span><span>Logo, favicon, PNG app icons</span><span>“Open in app” deep link (/play/?p=)</span>
+    </div>
+    <div style="background:#FFFDF8; border:1px solid #D9D3C5; border-radius:6px; padding:24px; display:flex; flex-direction:column; gap:10px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.08em; color:#A8321F">NEW · NEEDS WORKER / CONTENT</span>
+      <span>Summary: techniques used (needs a solve-path call; “Show solution path” in PORT-PLAN)</span><span>Manual pages (content to write)</span><span>Technique groups for the index rail (techniques.mjs)</span>
+    </div>
+  </div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showHint&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;App mockups&quot;},&quot;filterDigit&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:9,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;App mockups&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const showHint = this.props.showHint ?? true;
+    const filterDigit = +(this.props.filterDigit ?? 0);
+    const left = [0, 0, 2, 8, 5, 6, 6, 5, 8, 4];
+    const keys = [1,2,3,4,5,6,7,8,9].map(d => {
+      const done = left[d] === 0, f = filterDigit === d;
+      return {
+        d, left: done ? '✓' : left[d],
+        bg: f ? '#E3E8F5' : done ? '#F5F2EA' : '#FFFDF8',
+        border: f ? '#2B4EA2' : done ? '#EFEAE0' : '#D9D3C5',
+        color: f ? '#2B4EA2' : done ? '#B9B3A6' : '#1C1B18'
+      };
+    });
+    const keysDark = [1,2,3,4,5,6,7,8,9].map(d => {
+      const done = left[d] === 0, f = filterDigit === d;
+      return { d, left: done ? '✓' : left[d], bg: f ? '#22384F' : '#1D2026', color: f ? '#9DB4F5' : done ? '#4A4E57' : '#ECE8DF' };
+    });
+    const path = ['Hidden Single|r2c6=7','Hidden Single|r2c9=9','Hidden Single|r9c2=4','Hidden Single|r3c9=1','Hidden Single|r3c7=2','Hidden Single|r5c4=1','Hidden Single|r6c2=1','Hidden Single|r5c6=2','Naked Single|r8c6=6','Hidden Single|r7c6=9','Hidden Single|r8c3=1','Hidden Single|r7c8=1','Hidden Single|r9c8=2','Locked Candidates Type 1 (Pointing)|4 in b3 ⇒ r1c6<>4'];
+    const steps = path.slice(7).map((p, i) => {
+      const [name, note] = p.split('|'); const n = i + 8; const cur = n === 14;
+      return { n: String(n).padStart(2, '0'), name, note, bg: cur ? '#E3E8F5' : 'transparent', w: cur ? 600 : 400 };
+    });
+    steps.unshift({ n: '01', name: '7 singles', note: 'r2c6=7 … r6c2=1', bg: 'transparent', w: 400 });
+    const E = '#55524A', N = '#2B4EA2';
+    const shortcuts = [
+      { a: 'Set value (or note in Notes mode)', k: '1–9', c: E }, { a: 'Erase', k: 'Backspace / Del / 0', c: E }, { a: 'Toggle Notes', k: 'N', c: E },
+      { a: 'Move selection', k: '← ↑ → ↓', c: E }, { a: 'Undo', k: 'Z', c: E }, { a: 'Redo', k: 'Y', c: E },
+      { a: 'Filter digit', k: 'Alt + 1–9', c: N }, { a: 'Hint', k: 'H', c: N }, { a: 'Apply hint', k: 'Enter', c: N },
+      { a: 'Command menu', k: '⌘K', c: N }, { a: 'Paste puzzle (opens Import)', k: '⌘V', c: N }, { a: 'Toggle theme', k: '⇧⌘L', c: N }
+    ];
+    const chip = (t, on) => ({ t, bg: on ? '#E3E8F5' : '#FFFDF8', border: on ? '#2B4EA2' : '#D9D3C5', color: on ? '#2B4EA2' : '#1C1B18' });
+    const groups = [
+      { name: 'Locked Candidates Type 1 (Pointing)', total: 6, items: ['remove 4 from r1c6','remove 5 from r1c6','remove 8 from r5c7, r5c8, r5c9','remove 4 from r5c5','remove 7 from r5c1, r5c2, r5c3','remove 7 from r7c1, r7c3'].map((t, i) => chip(t, i === 0)) },
+      { name: 'Locked Candidates Type 2 (Claiming)', total: 1, items: [chip('remove 4 from r3c4, r3c5', false)] }
+    ];
+    return { showHint, noHint: !showHint, filterDigit, selCell: showHint ? -1 : 5, keys, keysDark, steps, shortcuts, groups };
+  }
+}
+</script>
+</body>
+</html>

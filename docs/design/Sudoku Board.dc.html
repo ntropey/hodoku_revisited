@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
+</helmet>
+<div style="display:grid; grid-template-columns:repeat(9,1fr); width:{{px}}; height:{{px}}; border:2px solid {{major}}; background:{{bg}}; box-sizing:content-box; border-radius:2px; overflow:hidden">
+  <sc-for list="{{cells}}" as="c" hint-placeholder-count="81">
+    <div style="position:relative; box-sizing:border-box; border-right:{{c.br}}; border-bottom:{{c.bb}}; background:{{c.bg}}; display:grid; place-items:center; min-width:0; min-height:0">
+      <sc-if value="{{c.hasVal}}" hint-placeholder-val="{{false}}">
+        <span style="font-family:{{c.vf}}; font-size:{{c.vfs}}; font-weight:{{c.vw}}; color:{{c.vc}}; line-height:1">{{c.v}}</span>
+      </sc-if>
+      <sc-if value="{{c.noVal}}" hint-placeholder-val="{{false}}">
+        <div style="position:absolute; inset:{{c.pad}}; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:1px">
+          <sc-for list="{{c.cands}}" as="k">
+            <span style="display:grid; place-items:center; font-family:'IBM Plex Mono',monospace; font-size:{{k.fs}}; font-weight:{{k.w}}; color:{{k.color}}; background:{{k.bg}}; border-radius:3px; line-height:1">{{k.t}}</span>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:580,&quot;height&quot;:580},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:540,&quot;tsType&quot;:&quot;number&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;hint&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;filter&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:9,&quot;tsType&quot;:&quot;number&quot;},&quot;selected&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:-1,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  model() {
+    const P = "100920000524010000000000070050008102000000000402700090060000000000030945000071006";
+    const g = [...P].map(Number), user = Array(81).fill(false);
+    const A = [...Array(81).keys()];
+    const R = i => i / 9 | 0, Cc = i => i % 9, B = i => (R(i) / 3 | 0) * 3 + (Cc(i) / 3 | 0);
+    const units = [];
+    for (let k = 0; k < 9; k++) { units.push(A.filter(i => R(i) == k)); units.push(A.filter(i => Cc(i) == k)); units.push(A.filter(i => B(i) == k)); }
+    const peers = A.map(i => A.filter(j => j != i && (R(j) == R(i) || Cc(j) == Cc(i) || B(j) == B(i))));
+    const cand = () => g.map((v, i) => { if (v) return []; const s = new Set(peers[i].map(j => g[j])); return [1,2,3,4,5,6,7,8,9].filter(d => !s.has(d)); });
+    for (let n = 0; n < 60; n++) {
+      const C = cand(); let done = false;
+      for (let i = 0; i < 81 && !done; i++) if (C[i].length == 1) { g[i] = C[i][0]; user[i] = true; done = true; }
+      if (!done) for (const u of units) { for (let d = 1; d <= 9 && !done; d++) { const p = u.filter(i => C[i].includes(d)); if (p.length == 1) { g[p[0]] = d; user[p[0]] = true; done = true; } } if (done) break; }
+      if (!done) break;
+    }
+    const C = cand(); let step = null;
+    for (let b = 0; b < 9 && !step; b++) for (let d = 1; d <= 9 && !step; d++) {
+      const cs = A.filter(i => B(i) == b && C[i].includes(d)); if (cs.length < 2) continue;
+      for (const f of [R, Cc]) { if (step) break; if (cs.every(i => f(i) == f(cs[0]))) { const el = A.filter(i => f(i) == f(cs[0]) && B(i) != b && C[i].includes(d)); if (el.length) step = { b, d, base: cs, el }; } }
+    }
+    return { g, user, C, step, peers, B };
+  }
+  renderVals() {
+    if (!this._m) this._m = this.model();
+    const { g, user, C, step, peers, B } = this._m;
+    const size = this.props.size ?? 540, dark = !!this.props.dark, hint = this.props.hint ?? true;
+    const filter = +(this.props.filter ?? 0), sel = this.props.selected ?? -1;
+    const T = dark ? {
+      bg: '#1D2026', major: '#ECE8DF', minor: '#3A3E47', given: '#ECE8DF', user: '#9DB4F5', cand: '#8E8A80',
+      sel: '#4A4227', peer: '#252932', filt: '#22384F', boxHi: '#232A3A',
+      base: '#9DB4F5', baseBg: '#2C3D66', elim: '#FF9A85', elimBg: '#5A2A22'
+    } : {
+      bg: '#FFFDF8', major: '#1C1B18', minor: '#D9D3C5', given: '#1C1B18', user: '#2B4EA2', cand: '#6B675D',
+      sel: '#F3E5B0', peer: '#F2EEE4', filt: '#DDEBF7', boxHi: '#EEF2FB',
+      base: '#1F3F8F', baseBg: '#C9D6F4', elim: '#A8321F', elimBg: '#F6D3CA'
+    };
+    const s = size / 9;
+    const peerSet = sel >= 0 ? new Set(peers[sel]) : new Set();
+    const showStep = hint && step;
+    const cells = g.map((v, i) => {
+      const r = i / 9 | 0, c = i % 9;
+      let bg = T.bg;
+      if (filter && !v && C[i].includes(filter)) bg = T.filt;
+      if (filter && v === filter) bg = T.filt;
+      if (showStep && B(i) === step.b) bg = T.boxHi;
+      if (peerSet.has(i)) bg = T.peer;
+      if (i === sel) bg = T.sel;
+      const br = c === 8 ? 'none' : (c % 3 === 2 ? `2px solid ${T.major}` : `1px solid ${T.minor}`);
+      const bb = r === 8 ? 'none' : (r % 3 === 2 ? `2px solid ${T.major}` : `1px solid ${T.minor}`);
+      const cands = [1,2,3,4,5,6,7,8,9].map(d => {
+        const has = !v && C[i].includes(d);
+        let color = T.cand, kbg = 'transparent', w = 400;
+        if (has && showStep && d === step.d && step.base.includes(i)) { color = T.base; kbg = T.baseBg; w = 600; }
+        if (has && showStep && d === step.d && step.el.includes(i)) { color = T.elim; kbg = T.elimBg; w = 600; }
+        if (has && filter === d && !(showStep && d === step.d)) { color = dark ? '#ECE8DF' : '#1C1B18'; w = 600; }
+        return { t: has ? d : '', color, bg: has ? kbg : 'transparent', w, fs: (s * 0.24).toFixed(1) + 'px' };
+      });
+      return {
+        br, bb, bg, hasVal: !!v, noVal: !v, v: v || '',
+        vf: user[i] ? "'IBM Plex Sans',sans-serif" : "'Newsreader',serif",
+        vw: user[i] ? 500 : 500, vc: user[i] ? T.user : T.given,
+        vfs: (s * (user[i] ? 0.54 : 0.62)).toFixed(1) + 'px',
+        pad: Math.max(1, s * 0.05).toFixed(1) + 'px', cands
+      };
+    });
+    return { cells, px: size + 'px', major: T.major, bg: T.bg };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+ 
+ Hodoku Revisited — Design Spec 
+ Hodoku 
+ Revisited 
+Design & implementation spec 
+Brand, website and web-app design for the TypeScript port of HoDoKu. One direction, light and dark, written to be handed straight to implementation. 
+ Version 1.0 · Oct 2026 
+ Repo ntropey/hodoku_revisited · g/zealous-dirac-gad3np 
+ Direction Modern reimagining, solver-first 
+ Modes Light + dark 
+ Contents 
+ 01 Brand 02 Foundations 03 Website 04 Solver app 05 Components & states 06 Implementation notes 07 Today vs. new 
+ 01 
+Brand 
+The mark is a ruled 3×3 box with pencil marks in place. The candidates 1 3 4 5 6 7 9 sit in their fixed slots and spell an H. The 5 in the centre is accent blue — the one you're about to place. The grid lines are what make it read as sudoku, not dice. 
+ 1 3 4 5 6 7 9 
+ Hodoku 
+ Revisited 
+ PRIMARY LOCKUP · HORIZONTAL 
+ 1 3 4 5 6 7 9 
+ Hodoku 
+ Revisited 
+ REVERSED · DARK UI 
+ 1 3 4 5 6 7 9 
+ 64 
+ 32 
+ 16 · favicon 
+ MARK · SIZES 
+ CONSTRUCTION A square box ruled into a 3×3 grid. The outer rule is about 3× the inner rules, the way box lines are drawn on the board. Digits are Plex Mono 600 at 20% of the mark's width. Corner radius is 6%. 
+ CLEAR SPACE Keep one cell-width of space on every side. Don't place the mark inside another box. 
+ BELOW 24PX Under 60px the digits become small square marks in the same slots. Under 24px use the filled favicon: inverted, with rules kept. 
+ WORDMARK “Hodoku” in Newsreader 500. “Revisited” in Plex Mono, uppercase, tracked +0.42em, set at about 24% of the cap height. 
+ 02 
+Foundations 
+Warm paper, black ink, one blue. Everything else in the palette is semantic : the technique colours mean the same thing in the app, the docs and the marketing site. 
+ CORE · LIGHT / DARK 
+ TOKEN LIGHT DARK 
+ --hr-bg 
+ --hr-surface 
+ --hr-ink 
+ --hr-ink-muted 
+ --hr-line 
+ --hr-accent 
+ --hr-accent-soft 
+ --hr-cell-selected 
+ --hr-cell-peer 
+ STEP ROLES · FROM StepMarks (core/stepMarks.ts) 
+ 7 Place marks.place · digit the step sets --place 
+ 4 Eliminate marks.elim · candidates removed --elim 
+ 4 Key · colour 0 marks.key, colors[even], tint a --c0 
+ 2 Colour 1 · cover colors[odd], tint b (cover units, 2nd ALS) --c1 
+ 9 Fin marks.fins · fins, endo fins, connectors --fin 
+Never use colour alone. Eliminations also get a strike-through when the step is applied, and every step has a written description in the panel. 
+ TYPE 
+ display · 64/1.0 Every step, explained 
+ h2 · 36/1.1 Locked Candidates 
+ h3 · 20/1.3 sans Pointing and claiming 
+ body · 16/1.6 If every candidate for a digit in a box sits in one row, that digit can be removed from the rest of the row. 
+ ui · 14/1.4 Apply step · Next hint · Import puzzle 
+ notation · 14 mono 4 in b3 ⇒ r1c6<>4 
+ FAMILIES & ROLES 
+ Newsreader Display, page titles, article headings, given digits on the board. 
+ IBM Plex Sans UI and body text. Also user-entered digits, so they read differently from givens. 
+ IBM Plex Mono Candidates, step notation (r1c6, b3), shortcuts, labels. Uses tabular figures throughout. 
+ space 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96 
+ radius 3 cands · 6 controls · 10 sheets 
+ rule 1px minor · 2px box / major 
+ 03 
+Website 
+The static site built by website/src/build.mjs stays as it is: the start page, 32 technique guides, about and privacy pages, and the app under /play/. This spec restyles all of it and adds a manual. The guide diagrams keep coming from examples.json. 
+ Home / 
+ Play /play/ · the PWA 
+ Techniques /techniques/:slug.html 
+ Manual /manual/:chapter · new 
+ About /about · /privacy · licence 
+ 3A · HOME · 1280 DESKTOP 
+ Hodoku 
+ REVISITED 
+ Techniques Manual About GitHub 
+ Open solver 
+ THE HODOKU SOLVER, NOW IN YOUR BROWSER 
+Every step,
+ explained. 
+The hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript. No Java and no install. It tells you which step comes next and why it works. 
+ Open the solver 
+ Browse techniques 
+ Generate: 
+ Easy 
+ Medium 
+ Hard 
+ Unfair 
+ Extreme 
+ Locked Candidates Type 1 (Pointing) 4 in b3 ⇒ r1c6<>4 
+ HINTS Vague, concrete or the full step You choose how much it gives away. It can just name the technique, or highlight every candidate involved. 
+ ANALYZER See the whole solution path Get every step the solver would take and the hardest technique required, plus a difficulty rating for any puzzle you paste in. 
+ LIBRARY From singles to last resort The original technique write-ups, revised. Every example is a board you can step through. 
+ Based on HoDoKu by Bernhard Hobiger. Open source under the GPL. 
+ GitHub Changelog Original site 
+ 3B · TECHNIQUES · INDEX RAIL + ARTICLE 
+ TECHNIQUES 
+ Singles 01 
+ Intersections 02 
+ Locked Candidates 
+ Claiming 
+ Subsets 03 
+ Basic Fish 04 
+ Single Digit Patterns 05 
+ Uniqueness 06 
+ Wings 07 
+ Coloring 08 
+ Chains and Loops 09 
+ Almost Locked Sets 10 
+ Finned & Complex Fish 11 
+ Miscellaneous 12 
+ Last Resort 13 
+ Techniques / Intersections 
+Locked Candidates 
+ Medium 
+ Type 1 · Pointing 
+ Type 2 · Claiming 
+A box and a row (or column) overlap in three cells. If a digit can only go in that overlap for one of them, it can't go anywhere else in the other. 
+Type 1 · Pointing 
+In box 3 the digit 4 only fits in r1c7 and r1c9, both in row 1. Wherever the 4 goes in box 3, it uses up row 1. So the 4 at r1c6 can be eliminated. 
+ NOTATION 
+ Locked Candidates Type 1 (Pointing): 4 in b3 ⇒ r1c6<>4 
+Type 2 · Claiming 
+This is the same overlap read the other way round. If a row's candidates for a digit all sit in one box, you can eliminate that digit from the rest of the box… 
+ Key 
+ Eliminated 
+ ← Before 
+ After → 
+ Open in app 
+ Index rail. It groups the 32 existing guides (slugs as in techniqueInfo.ts). The active group expands to show its guides. On screens under 960px the rail becomes a select at the top of the page. 
+ Example board. It's the same component as the app, read-only, and it sticks to the top while you scroll. Before/After steps through the example. “Open in app” loads that position at /play/?p=… (new; the app currently only imports pasted puzzles). 
+ Index page (/techniques) uses the same rail with a card grid: category name, difficulty band, and a short description of each technique. 
+ 3C · MANUAL · CHAPTER PAGE 
+ MANUAL 
+ Getting started 
+ Entering puzzles 
+ Candidates & filters 
+ Hints 
+ Analyzer 
+ Generator & levels 
+ Import / export formats 
+ Keyboard shortcuts 
+ Settings 
+ Manual / 04 
+Hints 
+A hint is the next step the solver would take from your current position. It names the technique, highlights the cells involved, strikes out what it removes, and links to the guide. “Hints use” limits which techniques it may use. 
+ PART COMES FROM FIELD 
+ What to do “remove 4 from r1c6” text 
+ Why One-sentence reason summary 
+ Chain AIC notation, for chain steps notation[] 
+Tip: set “Hints use” to Singles only while you're learning. If nothing is found at that level, the hint suggests raising it. 
+ ON THIS PAGE 
+ Hint levels Restricting techniques Applying a step When no hint is found 
+ 04 
+Solver app 
+The board gets the most space. App.tsx today is a 520px column with rows of buttons. Desktop gets a slim top bar, a digit row and a side panel with three tabs: Hint, All steps and Summary. Every existing control has a place. Use the Tweaks panel to toggle the hint and the digit filter. 
+ 4A · SOLVE + HINT · 1280 × 820 
+ Hodoku 
+ New puzzle ▾ Import Copy Print 
+ Hard · score 
+ 37/81 
+ 08:42 
+ ↶ 
+ ↷ 
+ Search commands ⌘K 
+ Settings 
+ Value 
+ Notes 
+ Filter 
+ {{ k.d }} 
+ {{ k.left }} 
+ Erase 
+ Hint 
+ All steps 
+ Summary 
+ Hints use 
+ Everything ▾ 
+ HINT 
+ Locked Candidates Type 1 (Pointing) 
+remove 4 from r1c6 
+A digit confined to the overlap of a box and a line, so it can be removed from the rest of the box or line. 
+ Read the guide for Locked Candidates Type 1 (Pointing) → 
+ 4 Key · r1c7, r1c9 
+ 4 Eliminate · r1c6 
+ Apply step 
+ Dismiss 
+ Stuck? 
+Get the next logical step. It's highlighted on the board, and Apply carries it out. 
+ Get a hint 
+ r1c6 · candidates 3 4 5 
+ Mark mistakes off · show candidates on · autosaved 
+ Top bar. Holds New puzzle (with the level menu, Easy–Extreme), Import, Copy, Print, the level · score badge, undo/redo and Settings. Show candidates, Mark mistakes, Hints use and Reset notes move into Settings. The timer and ⌘K are new. 
+ Digit row. Each key shows how many of that digit are left (remaining()). It goes grey at 0, as the disabled state does today. Value / Notes replaces the Notes toggle (N). 
+ Filter (new). This is HoDoKu's signature feature. Every cell that still has the digit as a candidate gets tinted. It's a third mode, or Alt+1…9. It builds on the existing “same” highlight. 
+ Board size. The board is min(viewport height − 240, viewport width − 460) and never smaller than 432px. Above 1440px the panel grows to 440. 
+ 4B · ALL STEPS + SUMMARY TABS · PANEL 400 
+ Hint 
+ All steps 
+ Summary 
+ Available now · Hints use: Everything 
+ 7 steps 
+ {{ gr.name }} {{ gr.total }} 
+ {{ it.t }} 
+ Apply selected 
+ Refresh 
+ Hint 
+ All steps 
+ Summary 
+ RATING 
+ Hard score from Sudoku2.score 
+ Easy Medium Hard Unfair Extreme 
+ TECHNIQUES USED · NEW 
+ Hidden Single 12 
+ Naked Single 1 
+ Locked Candidates Type 1 1 
+ …remaining steps — 
+Each row links to its article in the technique library. “Hardest step” is pinned to the top after a full analysis. 
+ All steps is the existing allHints() output: one group per technique, sorted easy to hard, with a count (total[name]) and up to 12 chips each (perType). The chip label is r.text with the name removed, as App.tsx does it. Clicking a chip shows it on the board, and Apply carries it out. These groups are real: they come from the board above. 
+ Summary shows the level and score the app already has. “Techniques used” needs a solve-path call in the worker (planned in PORT-PLAN as “Show solution path”). The counts shown are placeholders. 
+ Selected chip uses accent-soft, the same as the className="on" state today. 
+ 4C · MOBILE · 390 × 844 · DARK 
+ 9:41 ●●● ▮ 
+ ≡ 
+ Hard 08:42 
+ ↶ 
+ Value 
+ Notes 
+ Filter 
+ {{ k.d }} 
+ {{ k.left }} 
+ HINT · INTERSECTIONS 
+ Locked Candidates (Pointing) 
+ remove 4 from r1c6 
+ Apply 
+ Breakpoints. Under 960px the side panel turns into a bottom sheet with three snap points: peek, half and full. Under 600px the top bar collapses to a menu, the difficulty badge and undo. 
+ Board. The board is full width minus 20px. At 346px each cell is about 38px, so candidates are 9px Mono. That's the floor: on narrower screens candidate text stays at 9px and the cell padding shrinks instead. 
+ Digit keys. One row of nine, each 56px tall, so the full key is tappable. Long-press a key to filter that digit. Swipe the sheet up to see All steps and Summary as tabs. 
+ Dark mode. It follows prefers-color-scheme, as styles.css does now. A manual override in Settings is new. The board keeps its warm-ink character: givens are #ECE8DF, user digits are #9DB4F5. 
+ 05 
+Components & states 
+The full inventory is small on purpose. The cell is the most complex component, and every one of its states is listed below. 
+ BUTTON 
+ Primary 
+ Hover 
+ Secondary 
+ Quiet 
+ Disabled 
+ Heights are 40 (desktop) and 44 (touch). Focus is a 2px accent outline with a 2px offset on every control. 
+ DIGIT KEY 
+ 4 5 Default 
+ 4 5 Filtering 
+ 4 5 Pressed 
+ 1 ✓ Complete 
+ The small number is how many are left to place. Complete keys still work in Filter mode. 
+ SEGMENTED · TABS 
+ Value Candidate Filter 
+ Hint Steps Summary 
+ Use Segmented for modes and Tabs for panel views. Never mix the two. 
+ CELL STATES · 64PX REFERENCE 
+ 5 Given Newsreader 500 · ink 
+ 7 User value Plex Sans · accent 
+ 1 3 5 8 Candidates Mono · fixed slot 
+ 2 Selected .selected · --sel 
+ Peer / same .peer · .same 
+ 4 6 Filtered --filter · new 
+ 3 Wrong .wrong · Mark mistakes 
+ 3 4 6 8 Tint a + key .tint-a · .keyc 
+ Layer order from bottom to top: card → tint a/b → filter → peer → same → hint-place → selected → candidate marks (.keyc / .fin / .del / col-0/1) → value. Eliminated candidates keep the strike-through they have today. Each candidate has a fixed slot in a 3×3 grid (1 is top-left, 9 is bottom-right), so a digit is always in the same place. 
+ KEYBOARD · BLUE = NEW , OTHERS ALREADY IN APP.TSX 
+ {{ s.a }} {{ s.k }} 
+ 06 
+Implementation notes 
+These notes are written against packages/app (React 18 + Vite, solver in a Web Worker). The token names are the ones styles.css already uses, so a first pass is mostly new values plus a few added variables. 
+/* packages/app/src/styles.css: same names, new values */
+:root {
+ --bg:#F5F2EA; --card:#FFFDF8; --fg:#1C1B18; --muted:#55524A;
+ --line:#D9D3C5; --thick:#1C1B18; --accent:#2B4EA2;
+ --given:#1C1B18; --user:#2B4EA2; --wrong:#A8321F;
+ --sel:#F3E5B0; --peer:#F2EEE4; --same:#E3E8F5;
+ --hint:#F3E5B0; --place:#D5EBDC;
+ --tint-a:#EEF2FB; --tint-b:#FBF3E2;
+ --c0:#C9D6F4; --c1:#F3E3C0; --fin:#6B3FA0;
+ /* added */
+ --surface-2:#EAE5D8; --accent-soft:#E3E8F5;
+ --elim:#A8321F; --elim-bg:#F6D3CA; --filter:#DDEBF7;
+ --font-display:'Newsreader',serif;
+ --font-ui:'IBM Plex Sans',sans-serif;
+ --font-mono:'IBM Plex Mono',monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+ --bg:#15171B; --card:#1D2026; --fg:#ECE8DF; --muted:#A9A498;
+ --line:#3A3E47; --thick:#ECE8DF; --accent:#9DB4F5;
+ --given:#ECE8DF; --user:#9DB4F5; --wrong:#FF9A85;
+ --sel:#4A4227; --peer:#252932; --same:#22384F;
+ --hint:#4A4227; --place:#22402C;
+ --tint-a:#232A3A; --tint-b:#2E2A1E;
+ --c0:#2C3D66; --c1:#4A3A1C; --fin:#C9A6F0;
+ --surface-2:#252932; --accent-soft:#22384F;
+ --elim:#FF9A85; --elim-bg:#5A2A22; --filter:#22384F;
+}}
+/* also support [data-theme] for the manual override */
+.cell.given { font-family:var(--font-display); font-weight:500 }
+.cands { font-family:var(--font-mono) }
+.cands .del { color:var(--elim); background:var(--elim-bg) }
+.overlay line { stroke:var(--accent) } /* .weak keeps dasharray */ 
+ COMPONENT INVENTORY 
+ Board.tsx Keep it as it is. Add a filter prop and the --filter class; restyle only. 
+ App.tsx → split TopBar, DigitPad (.pad), SidePanel, SettingsSheet, ImportDialog (.dialog) 
+ HintView the current .status / .why block: text, summary, notation[], slug link 
+ AllSteps the current .allsteps section, turned from <details> into grouped chips 
+ Summary new; game.level, game.score (+ solve path later) 
+ BottomSheet new; holds SidePanel under 960px 
+ public/icon.svg replace it with the new mark, and add PNG icons (also an open item in PORT-PLAN) 
+ HIGHLIGHT MODEL 
+ Nothing changes in core. describeStep() already returns StepMarks { key, fins, elim, place, colors, tint, chains, digits }, and Board.tsx maps them to classes: key → .keyc, fins → .fin, elim → .del, place → .keep/.hint-place, colors → col-0/1, tint → tint-a/b, and chains → SVG lines (strong solid, weak dashed). The website diagrams use the same data, so restyle both from the same tokens. 
+ ACCESSIBILITY · MOTION 
+ Keep role="grid", the arrow keys and the aria-live status, which are already in place. Extend each cell's aria-label to read its candidates too (“row 1 column 6, candidates 3 4 5”). Animate only opacity and colour, for 120ms. Applying a step fades eliminated candidates over 200ms. Respect prefers-reduced-motion. 
+ 07 
+Today vs. new 
+This is checked against the repo at g/zealous-dirac-gad3np. Restyling only touches CSS and layout. New features need logic too. 
+ RESTYLE · EXISTS TODAY 
+ Board, pencil marks, peers / same highlights Hint: text, summary, notation, guide link, Apply All steps grouped by technique Hints use (level 0–5), Mark mistakes, Show candidates New puzzle by level, Import, Copy, Print Undo / redo, keyboard, dark mode, autosave, offline Website: start page, 32 guides with diagrams, about, privacy 
+ NEW · UI + SMALL LOGIC 
+ Desktop two-column layout and side panel Mobile bottom sheet Digit filter mode (Alt+1–9) Timer, ⌘K command menu, theme override Hint key H, Apply with Enter Logo, favicon, PNG app icons “Open in app” deep link (/play/?p=) 
+ NEW · NEEDS WORKER / CONTENT 
+ Summary: techniques used (needs a solve-path call; “Show solution path” in PORT-PLAN) Manual pages (content to write) Technique groups for the index rail (techniques.mjs) 
