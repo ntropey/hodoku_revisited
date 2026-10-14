@@ -39,7 +39,19 @@ const WANTED: Record<string, SolutionType[]> = {
   'xyz-wing': ['XYZ_WING'],
   'w-wing': ['W_WING'],
   'simple-colors': ['SIMPLE_COLORS_TRAP', 'SIMPLE_COLORS_WRAP'],
-  'unique-rectangle': ['UNIQUENESS_1'],
+  'unique-rectangle': ['UNIQUENESS_1', 'UNIQUENESS_2', 'UNIQUENESS_3', 'UNIQUENESS_4'],
+  'rectangles-bug': ['HIDDEN_RECTANGLE', 'AVOIDABLE_RECTANGLE_1', 'BUG_PLUS_1'],
+  'turbot-fish': ['TURBOT_FISH'],
+  'x-chain': ['X_CHAIN'],
+  'finned-fish': ['FINNED_X_WING', 'SASHIMI_X_WING', 'FINNED_SWORDFISH'],
+  'franken-mutant-fish': ['FRANKEN_X_WING', 'FINNED_FRANKEN_X_WING', 'MUTANT_X_WING'],
+  'kraken-fish': ['KRAKEN_FISH_TYPE_1', 'KRAKEN_FISH_TYPE_2'],
+  'sue-de-coq': ['SUE_DE_COQ'],
+  'als-xy-wing': ['ALS_XY_WING'],
+  'als-chain': ['ALS_XY_CHAIN'],
+  'death-blossom': ['DEATH_BLOSSOM'],
+  'multi-colors': ['MULTI_COLORS_1', 'MULTI_COLORS_2'],
+  templates: ['TEMPLATE_SET', 'TEMPLATE_DEL'],
   'xy-chain': ['XY_CHAIN', 'REMOTE_PAIR'],
   'als-xz': ['ALS_XZ'],
   'nice-loops': ['CONTINUOUS_NICE_LOOP', 'DISCONTINUOUS_NICE_LOOP', 'AIC'],
@@ -111,8 +123,29 @@ for (const puzzle of puzzles) {
 
 // Second pass: techniques the solver rarely picks first (it prefers simpler steps) are searched with
 // "find all steps" in the state where only singles are left
-const rare: Partial<Record<SolutionType, (f: SudokuStepFinder, s: Sudoku2) => ReturnType<SudokuStepFinder['findAllSimpleColors']>>> = {
+type Finder = (f: SudokuStepFinder, s: Sudoku2) => SolutionStep[];
+const rare: Partial<Record<SolutionType, Finder>> = {
   SIMPLE_COLORS_WRAP: (f, s) => f.findAllSimpleColors(s),
+  MULTI_COLORS_1: (f, s) => f.findAllMultiColors(s),
+  MULTI_COLORS_2: (f, s) => f.findAllMultiColors(s),
+  FRANKEN_X_WING: (f, s) => f.getAllFishes(s, 2, 2, 0, 0, -1, 1),
+  FINNED_FRANKEN_X_WING: (f, s) => f.getAllFishes(s, 2, 2, 5, 2, -1, 1),
+  MUTANT_X_WING: (f, s) => f.getAllFishes(s, 2, 2, 0, 0, -1, 2),
+  KRAKEN_FISH_TYPE_1: (f, s) => f.getAllKrakenFishes(s, 2, 3, 2, 0, -1, 1),
+  KRAKEN_FISH_TYPE_2: (f, s) => f.getAllKrakenFishes(s, 2, 3, 2, 0, -1, 1),
+  TEMPLATE_SET: (f, s) => f.getAllTemplates(s),
+  TEMPLATE_DEL: (f, s) => f.getAllTemplates(s),
+  AVOIDABLE_RECTANGLE_1: (f, s) => f.getAllUniqueness(s),
+  HIDDEN_RECTANGLE: (f, s) => f.getAllUniqueness(s),
+  UNIQUENESS_2: (f, s) => f.getAllUniqueness(s),
+  UNIQUENESS_3: (f, s) => f.getAllUniqueness(s),
+  UNIQUENESS_4: (f, s) => f.getAllUniqueness(s),
+  SUE_DE_COQ: (f, s) => f.getAllSueDeCoqs(s),
+  ALS_XY_WING: (f, s) => f.getAllAlses(s, false, true, false),
+  ALS_XY_CHAIN: (f, s) => f.getAllAlses(s, false, false, true),
+  DEATH_BLOSSOM: (f, s) => f.getAllDeathBlossoms(s),
+  X_CHAIN: (f, s) => f.getAllChains(s),
+  TURBOT_FISH: (f, s) => f.getAllChains(s),
 };
 const stillMissing = () => [...wantedTypes].filter((t) => !best.has(t) && rare[t]);
 if (stillMissing().length > 0) {
@@ -126,12 +159,15 @@ if (stillMissing().length > 0) {
     let st: SolutionStep | null;
     while ((st = singlesSolver.getHint(s, true)) !== null) singlesSolver.doStep(s, st);
     if (s.isSolved()) continue;
+    const cache = new Map<Finder, SolutionStep[]>();
     for (const type of stillMissing()) {
-      for (const step of rare[type]!(finder, s.clone())) {
+      const find = rare[type]!;
+      if (!cache.has(find)) cache.set(find, find(finder, s.clone()));
+      for (const step of cache.get(find)!) {
         if (step.type !== type) continue;
         const d = describe(step, s);
-        const size = d.key.length + d.fins.length + d.colors.length;
-        const score = size * 3 + d.elim.length * 2;
+        const size = d.key.length + d.fins.length + d.colors.length + d.chains.reduce((a, c) => a + c.length, 0);
+        const score = size * 3 + d.elim.length * 2 + (d.place.length > 0 ? 0 : 0);
         const old = best.get(type);
         if (old && old.score <= score) continue;
         best.set(type, {

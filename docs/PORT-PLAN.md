@@ -153,7 +153,7 @@ techniques the hints may use, print, German translation, PNG icons for older bro
 ## Status (M5, first version)
 
 `packages/website` is a dependency-free static site generator (`src/build.mjs`): start page,
-19 technique guides (`src/techniques.mjs`, original text, grouped by difficulty), about/license,
+32 technique guides (`src/techniques.mjs`, original text, grouped by difficulty; each with a solver-verified diagram), about/license,
 privacy and 404 pages, and the app copied to `/play/`. With `SITE_URL` set it also writes
 `sitemap.xml` and `robots.txt`. `.github/workflows/pages.yml` deploys it to GitHub Pages (manual run).
 Tests check that every guide exists and that internal links resolve.

@@ -203,6 +203,129 @@ export const TECHNIQUES = [
     ],
   },
   {
+    slug: 'turbot-fish',
+    name: 'Turbot Fish',
+    level: 'Hard',
+    summary: 'Strong link, weak link, strong link on one digit; the two ends cannot both be false.',
+    body: [
+      'Pick a digit. Find a unit where it has exactly two candidates (a strong link between A and B), another strong link between C and D, and connect them with a weak link: B and C see each other. If A is false then B is true, which makes C false, which makes D true. So at least one of A and D is true.',
+      'Any cell that sees both A and D cannot hold the digit. Skyscrapers, 2-String Kites and Empty Rectangles are special shapes of the Turbot Fish, which is why the solver treats them as separate, simpler names.',
+    ],
+  },
+  {
+    slug: 'x-chain',
+    name: 'X-Chain',
+    level: 'Unfair',
+    summary: 'A longer Turbot Fish: strong and weak links alternate, all on one digit.',
+    body: [
+      'Extend the turbot fish: strong link, weak link, strong link, weak link, and so on, always for the same digit, and always starting and ending with a strong link. If the first cell is false, the chain forces the last cell to be true. So at least one of the two ends is true.',
+      'Remove the digit from every cell that sees both ends. The chain must not visit the same cell twice.',
+    ],
+  },
+  {
+    slug: 'multi-colors',
+    name: 'Multi Colors',
+    level: 'Hard',
+    summary: 'Simple Colors with two or more separate chains for the same digit.',
+    body: [
+      'Color several chains of strong links for one digit, each with its own two colors. Exactly one color per chain is true. Two rules link the chains:',
+      'Type 2: if a cell of one color sees cells of both colors of another chain, that color cannot be true (one of the other chain\'s colors has to be, and the cell would clash with it). Remove the digit from all cells of that color. Type 1: if two cells of different chains see each other, those two colors cannot both be true, so one of the two other colors is. Any cell that sees both of those other colors loses the digit.',
+    ],
+  },
+  {
+    slug: 'finned-fish',
+    name: 'Finned and Sashimi Fish',
+    level: 'Hard',
+    summary: 'A fish with one or two extra candidates (fins) next to a corner.',
+    body: [
+      'A finned fish is a fish (X-Wing, Swordfish, Jellyfish) in which one base line has an extra candidate, the fin, that the cover lines do not cover. If the fin is false, the ordinary fish exists. If the fin is true, it removes the digit from every cell it sees.',
+      'So only the cells that the plain fish would eliminate and that also see the fin can lose the digit. Those are usually cells in the fin\'s box. A Sashimi fish is a finned fish where one of the base lines is missing a corner, so only the fin and one other candidate remain in that line.',
+    ],
+  },
+  {
+    slug: 'franken-mutant-fish',
+    name: 'Franken and Mutant Fish',
+    level: 'Unfair',
+    summary: 'Fish whose base or cover sets include boxes (Franken) or mix rows, columns and boxes (Mutant).',
+    body: [
+      'A normal fish uses rows as base lines and columns as cover lines (or the reverse). A Franken fish may use boxes among the base or the cover sets. A Mutant fish mixes rows, columns and boxes on both sides.',
+      'The rule stays the same: N base units and N cover units, every candidate of the digit in the base units lies in a cover unit, and the base units do not overlap. Then the digit must sit in exactly one cell of each base unit and therefore be used up by the cover units; all other candidates of the cover units can be removed. Fins and sashimi work as for ordinary fish. Mutant fish are very rare.',
+    ],
+  },
+  {
+    slug: 'sue-de-coq',
+    name: 'Sue de Coq',
+    level: 'Unfair',
+    summary: 'The cells where a box meets a line, plus one set of cells in the line and one in the box, form a locked set.',
+    body: [
+      'Take the two or three cells where a box and a line (row or column) cross. Together they hold at least two more digits than they have cells. Look for a group of cells in the line (outside the box) and a group in the box (outside the line) whose digits come from the crossing cells, with the two groups using different digits, so that the digits of all three groups number exactly as many as their cells.',
+      'Then these cells are a locked set. Remove from the rest of the line every digit of the three groups that does not appear in the box group, and from the rest of the box every digit that does not appear in the line group.',
+    ],
+    tip: 'A Sue de Coq is a pair of almost locked sets with a special shape. If you know ALS-XZ it helps to read the diagram as three almost locked sets.',
+  },
+  {
+    slug: 'als-xy-wing',
+    name: 'ALS-XY-Wing',
+    level: 'Unfair',
+    summary: 'Three almost locked sets: C is linked to A and to B by two different restricted commons.',
+    body: [
+      'Take three almost locked sets A, B and C. C is linked to A by a restricted common digit X and to B by a different restricted common digit Y. A and B share a third digit Z.',
+      'If X is not in A, then A holds Z. If X is in A, then C loses X and holds Y, so B loses Y and holds Z. So one of A and B contains Z. Any cell that sees all Z candidates of both A and B cannot be Z.',
+    ],
+  },
+  {
+    slug: 'als-chain',
+    name: 'ALS-Chain',
+    level: 'Unfair',
+    summary: 'A chain of almost locked sets linked by restricted commons.',
+    body: [
+      'Link almost locked sets in a row, each pair connected by a restricted common digit, and consecutive links using different digits. At the two ends of the chain, look for a digit Z that both end sets contain and that is not used in the links.',
+      'If the first set does not contain Z, the chain forces the last set to hold it. So at least one end set contains Z, and every cell that sees all Z candidates of both ends cannot be Z. ALS-XZ and ALS-XY-Wing are the chains of two and three sets.',
+    ],
+  },
+  {
+    slug: 'death-blossom',
+    name: 'Death Blossom',
+    level: 'Unfair',
+    summary: 'A cell whose every candidate has its own almost locked set.',
+    body: [
+      'Take a cell (the stem) with candidates a, b, c. For each of them find an almost locked set that contains that digit, where every candidate of the digit in the set sees the stem cell. Whatever digit the stem takes, the matching set loses that digit and becomes locked.',
+      'Now look for a digit Z (not one of the stem\'s digits) that every one of the sets contains. Whichever set is locked holds Z, so any cell that sees all Z candidates in all the sets cannot be Z.',
+    ],
+  },
+  {
+    slug: 'rectangles-bug',
+    name: 'Hidden and Avoidable Rectangles, BUG+1',
+    level: 'Hard',
+    summary: 'More uniqueness techniques: the puzzle has only one solution, so some patterns cannot occur.',
+    body: [
+      'A Hidden Rectangle is a Unique Rectangle in which one corner holds only the two rectangle digits. If one of the digits appears only inside the rectangle in the row and column of the opposite corner, the other digit can be removed from that opposite corner.',
+      'An Avoidable Rectangle uses solved cells instead of cells with two candidates. A cell you solved yourself (not a given) could be swapped, so a rectangle of two such cells with the matching digits cannot be completed to a deadly pattern. Type 1: three corners fit, and the fourth cannot take the digit that would complete the pattern.',
+      'BUG+1 (bivalue universal grave plus one): if every unsolved cell had two candidates and every digit appeared exactly twice in each unit, the puzzle would have several solutions. If all unsolved cells have two candidates except one with three, the digit that appears three times in its row, column and box has to go in that cell, so its other two candidates can be removed.',
+    ],
+    tip: 'All of these only work when the puzzle has exactly one solution. The app marks such hints, and puzzles you import are checked for a unique solution first.',
+  },
+  {
+    slug: 'kraken-fish',
+    name: 'Kraken Fish',
+    level: 'Extreme',
+    summary: 'A finned fish where chains, not the fin geometry, prove the elimination.',
+    body: [
+      'In a finned fish either the plain fish exists, or one of the fins is true. A Kraken fish uses chains to deal with the fins. Type 1: a candidate of the digit that the plain fish would eliminate, but which does not see the fins. If a chain from every fin leads to that candidate being false, it can be removed in every case.',
+      'Type 2: for a cover unit, find chains from all the base candidates in it (and from every fin) that lead to one and the same candidate being false. In an ordinary fish exactly one of those base candidates is true, so that candidate is false whichever it is. Type 2 may eliminate any digit, not only the fish digit. The search is slow, and Kraken fish are among the hardest techniques HoDoKu looks for.',
+    ],
+  },
+  {
+    slug: 'templates',
+    name: 'Templates (for computers)',
+    level: 'Extreme',
+    summary: 'All ways to place one digit in the whole grid, checked against what is known.',
+    body: [
+      'A template is one way to place a digit once in every row, column and box: there are 46,656 of them. For each digit, discard the templates that use a cell where the digit is not allowed or that miss a cell where it is already placed. If every remaining template of a digit contains a cell, the digit goes there (Template Set). If no remaining template contains a cell, the digit can be removed from it (Template Delete).',
+      'The solver can also drop templates that overlap a cell which another digit needs for all its templates, and repeat. This is a computer-sized technique that people rarely use by hand. In HoDoKu it is a last resort before trial and error, and it is switched off by default.',
+    ],
+  },
+  {
     slug: 'forcing-chains',
     name: 'Forcing Chains and Nets',
     level: 'Extreme',

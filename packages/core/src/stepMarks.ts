@@ -71,16 +71,8 @@ export function describeStep(step: SolutionStep, before: Sudoku2): StepMarks {
         }
       }
     }
-  } else if (step.chains.length > 0) {
-    for (const chain of step.chains) {
-      const nodes: StepMark[] = [];
-      for (let i = chain.start; i <= chain.end; i++) {
-        nodes.push({ cell: chain.getCellIndex(i), digit: chain.getCandidate(i), strong: chain.isStrong(i) });
-      }
-      chains.push(nodes);
-      key.push(...nodes);
-    }
-  } else if (step.baseEntities.length > 0) {
+  } else if (step.chains.length > 0 || step.baseEntities.length > 0) {
+    // Kraken fish have both: the fish and the chains that prove its eliminations
     const d = step.values[0];
     for (const e of step.baseEntities) {
       const cells = unitCells(e.type, e.number);
@@ -89,6 +81,14 @@ export function describeStep(step: SolutionStep, before: Sudoku2): StepMarks {
     }
     for (const e of step.coverEntities) tint.push({ cells: unitCells(e.type, e.number), tone: 'b' });
     for (const f of [...step.fins, ...step.endoFins]) fins.push({ cell: f.index, digit: f.value });
+    for (const chain of step.chains) {
+      const nodes: StepMark[] = [];
+      for (let i = chain.start; i <= chain.end; i++) {
+        nodes.push({ cell: chain.getCellIndex(i), digit: chain.getCandidate(i), strong: chain.isStrong(i) });
+      }
+      chains.push(nodes);
+      key.push(...nodes);
+    }
   } else if (step.alses.length > 0) {
     step.alses.forEach((als, i) => {
       tint.push({ cells: als.indices, tone: i % 2 === 0 ? 'a' : 'b' });
