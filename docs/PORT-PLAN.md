@@ -180,7 +180,8 @@ original, with a configurable colour per digit (off by default).
 
 The side panel has a fourth tab, "Path": it lists the solver's remaining steps from the current board
 (technique, action, difficulty) with <em>Next step</em> and <em>Solve up to</em> (apply every step up to a
-chosen difficulty), built on a new worker `path` request.
+chosen difficulty), built on a new worker `path` request. A "Cell zoom" setting adds an enlarged view of
+the selected cell (its value or candidates) under the board.
 
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
 tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense (loaded only after consent,

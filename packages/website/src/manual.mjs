@@ -15,7 +15,7 @@ export const MANUAL = [
 <h2>The screen</h2>
 <ul>
 <li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Import</em>, <em>Copy</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>
-<li><strong>Board:</strong> Givens are set in the serif face. Your own digits are blue. With <em>ColorKu</em> on (see <em>Settings</em>), digits and candidates are shown as coloured balls instead.</li>
+<li><strong>Board:</strong> Givens are set in the serif face. Your own digits are blue. With <em>ColorKu</em> on (see <em>Settings</em>), digits and candidates are shown as coloured balls instead. <em>Cell zoom</em> (also under <em>Settings</em>) adds an enlarged view of the selected cell under the board.</li>
 <li><strong>Digit pad</strong> below the board, with <em>Value</em>, <em>Notes</em> and <em>Filter</em> modes. The small number on each key is how many of that digit are still missing.</li>
 <li><strong>Side panel</strong> with <em>Hint</em>, <em>All steps</em> and <em>Summary</em> tabs. On a phone this is a sheet at the bottom that you drag up and down.</li>
 </ul>
@@ -179,6 +179,7 @@ export const MANUAL = [
 <dt>Show candidates</dt><dd>Display the computed candidates in every empty cell.</dd>
 <dt>Mark mistakes</dt><dd>Show values that disagree with the solution in red.</dd>
 <dt>ColorKu</dt><dd>Draw placed digits and candidates as coloured balls instead of numerals, as in the original. The nine colours can be changed, and the default set restored, in the same dialog.</dd>
+<dt>Cell zoom</dt><dd>Show an enlarged view of the selected cell under the board, with its value or its candidates; handy on small screens.</dd>
 <dt>Auto-fill last digit</dt><dd>Off by default. When a row, column or box is down to one empty cell, that cell is filled in for you after your move. It counts as a normal, undoable move, not as a hint.</dd>
 <dt>Hints use</dt><dd>The hardest class of technique a hint may use. Also available in the side panel.</dd>
 <dt>Techniques a hint may use</dt><dd>The individual techniques a hint is allowed to use, grouped by difficulty. Untick any you would rather solve yourself; the choice is remembered. <em>Hints use</em> still caps them from above, and <em>Enable all techniques</em> puts everything back.</dd>
