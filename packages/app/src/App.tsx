@@ -9,6 +9,7 @@ import { DigitPad } from './components/DigitPad';
 import { HintView } from './components/HintView';
 import { ImportDialog } from './components/ImportDialog';
 import { PathView } from './components/PathView';
+import { PuzzlesDialog } from './components/PuzzlesDialog';
 import { SolvedDialog } from './components/SolvedDialog';
 import { SettingsSheet } from './components/SettingsSheet';
 import { SidePanel } from './components/SidePanel';
@@ -38,11 +39,35 @@ import {
 } from './game';
 import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintLevel, type HintResult } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
+import {
+  addCapped,
+  loadJson,
+  newId,
+  removeById,
+  saveJson,
+  snapshotGame,
+  HISTORY_CAP,
+  HISTORY_KEY,
+  LIBRARY_CAP,
+  LIBRARY_KEY,
+  SAVEPOINTS_CAP,
+  SAVEPOINTS_KEY,
+  type HistoryEntry,
+  type LibraryEntry,
+  type SavePoint,
+  type Store,
+} from './store';
 import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, PALETTE, type Mode, type Settings, type Tab } from './ui';
 
 const SAVE_KEY = 'hodoku-revisited:game';
 const SETTINGS_KEY = 'hodoku-revisited:settings';
 const TIME_KEY = 'hodoku-revisited:time';
+
+/** localStorage in the shape the store helpers want; they swallow the failures (private mode, quota). */
+const localStorageStore: Store = {
+  get: (key) => localStorage.getItem(key),
+  set: (key, value) => localStorage.setItem(key, value),
+};
 
 /** Stable fallback so the "no technique disabled" case keeps the same array reference across renders. */
 const NO_TECHNIQUES: string[] = [];
@@ -99,6 +124,10 @@ export function App() {
   const [importError, setImportError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [commandsOpen, setCommandsOpen] = useState(false);
+  const [puzzlesOpen, setPuzzlesOpen] = useState(false);
+  const [library, setLibrary] = useState<LibraryEntry[]>(() => loadJson(localStorageStore, LIBRARY_KEY, []));
+  const [history, setHistory] = useState<HistoryEntry[]>(() => loadJson(localStorageStore, HISTORY_KEY, []));
+  const [saves, setSaves] = useState<SavePoint[]>(() => loadJson(localStorageStore, SAVEPOINTS_KEY, []));
   const [seconds, setSeconds] = useState(() => {
     const t = load<{ givens: string; seconds: number }>(TIME_KEY);
     const g = load<GameState>(SAVE_KEY);
@@ -112,12 +141,17 @@ export function App() {
   }, [mode]);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
+  const secondsRef = useRef(seconds);
+  secondsRef.current = seconds;
   const solver = useRef(new SolverClient());
 
   useEffect(() => {
     if (game) save(SAVE_KEY, game);
   }, [game]);
   useEffect(() => save(SETTINGS_KEY, settings), [settings]);
+  useEffect(() => saveJson(localStorageStore, LIBRARY_KEY, library), [library]);
+  useEffect(() => saveJson(localStorageStore, HISTORY_KEY, history), [history]);
+  useEffect(() => saveJson(localStorageStore, SAVEPOINTS_KEY, saves), [saves]);
   useEffect(() => {
     const root = document.documentElement;
     if (settings.theme === 'system') root.removeAttribute('data-theme');
@@ -133,7 +167,17 @@ export function App() {
   const [solvedOpen, setSolvedOpen] = useState(false);
   const wasSolved = useRef(solved);
   useEffect(() => {
-    if (solved && !wasSolved.current) setSolvedOpen(true);
+    if (solved && !wasSolved.current) {
+      setSolvedOpen(true);
+      // the newest matching history entry is marked solved, with the time it took
+      setHistory((h) => {
+        const i = h.findIndex((e) => e.puzzle === game?.givens);
+        if (i === -1 || h[i].solved) return h;
+        const next = h.slice();
+        next[i] = { ...next[i], solved: true, seconds: secondsRef.current };
+        return next;
+      });
+    }
     if (!solved) setSolvedOpen(false);
     wasSolved.current = solved;
   }, [solved]);
@@ -182,6 +226,12 @@ export function App() {
     setMessage(null);
     setSeconds(0);
     save(TIME_KEY, { givens: g.givens, seconds: 0 });
+    // record the puzzle; the newest entry is not repeated when the same puzzle is started again
+    setHistory((h) =>
+      h[0]?.puzzle === g.givens
+        ? h
+        : addCapped(h, { id: newId(), puzzle: g.givens, level: g.level, score: g.score, seconds: 0, solved: false, at: Date.now() }, HISTORY_CAP),
+    );
   }, []);
 
   const startNew = useCallback(
@@ -391,6 +441,60 @@ export function App() {
     }
   }, [game]);
 
+  /** Load a puzzle from the library or the history: rate it, then start a fresh game from it. */
+  const openPuzzle = useCallback(
+    (puzzle: string) => {
+      setPuzzlesOpen(false);
+      setBusy('Checking puzzle...');
+      solver.current
+        .analyze(puzzle)
+        .then((info) => startGame(newGame(info)))
+        .catch((e: Error) => {
+          if (!isCancelled(e)) setMessage(e.message);
+        })
+        .finally(() => setBusy(null));
+    },
+    [startGame],
+  );
+
+  const saveToLibrary = useCallback(
+    (name: string) => {
+      if (!game) return;
+      setLibrary((l) => addCapped(l, { id: newId(), name, puzzle: game.givens, at: Date.now() }, LIBRARY_CAP));
+    },
+    [game],
+  );
+
+  const createSave = useCallback(
+    (name: string) => {
+      if (!game) return;
+      setSaves((s) => addCapped(s, { id: newId(), name, at: Date.now(), seconds, game: snapshotGame(game) }, SAVEPOINTS_CAP));
+    },
+    [game, seconds],
+  );
+
+  /** Restore a save point: a fresh game state, so undo cannot cross the restore. */
+  const restoreSave = useCallback(
+    (id: string) => {
+      const sp = saves.find((s) => s.id === id);
+      if (!sp) return;
+      const restored = { ...sp.game, past: [], future: [] } as GameState;
+      setGame(restored);
+      wasSolved.current = isSolved(restored);
+      setSeconds(sp.seconds);
+      save(TIME_KEY, { givens: sp.game.givens, seconds: sp.seconds });
+      clearPanel();
+      setSelected(null);
+      setPuzzlesOpen(false);
+    },
+    [saves, clearPanel],
+  );
+
+  const deleteLibrary = useCallback((id: string) => setLibrary((l) => removeById(l, id)), []);
+  const deleteHistory = useCallback((id: string) => setHistory((h) => removeById(h, id)), []);
+  const clearHistory = useCallback(() => setHistory([]), []);
+  const deleteSave = useCallback((id: string) => setSaves((s) => removeById(s, id)), []);
+
   const eraseSelected = useCallback(() => {
     if (selected === null) return;
     // in Colour mode Erase clears the colour of the selected cell
@@ -432,6 +536,7 @@ export function App() {
       { label: `ColorKu: ${settings.colorKu ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, colorKu: !s.colorKu })) },
       { label: `Cell zoom: ${settings.cellZoom ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, cellZoom: !s.cellZoom })) },
       { label: 'Import puzzle', run: () => setImporting(true) },
+      { label: 'Open puzzles…', run: () => setPuzzlesOpen(true) },
       { label: 'Copy puzzle', run: () => void copyPuzzle() },
       { label: 'Print', run: () => window.print() },
       { label: 'Settings', run: () => setSettingsOpen(true) },
@@ -447,7 +552,7 @@ export function App() {
         setCommandsOpen((o) => !o);
         return;
       }
-      if (importing || settingsOpen || commandsOpen || e.ctrlKey || e.metaKey) return;
+      if (importing || settingsOpen || commandsOpen || puzzlesOpen || e.ctrlKey || e.metaKey) return;
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.altKey && e.code.startsWith('Digit') && e.code !== 'Digit0') {
@@ -481,7 +586,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [input, selected, update, importing, settingsOpen, commandsOpen, askHint, applyHint, applyPath, hint, eraseSelected, tab]);
+  }, [input, selected, update, importing, settingsOpen, commandsOpen, puzzlesOpen, askHint, applyHint, applyPath, hint, eraseSelected, tab]);
 
   const panel = (
     <SidePanel
@@ -554,6 +659,7 @@ export function App() {
         onNew={(l) => void startNew(l)}
         onCancel={() => (solver.current.cancel(), setBusy(null))}
         onImport={() => (setImportError(null), setImporting(true))}
+        onPuzzles={() => setPuzzlesOpen(true)}
         onCopy={() => void copyPuzzle()}
         onPrint={() => window.print()}
         onUndo={() => update(undo)}
@@ -640,6 +746,24 @@ export function App() {
           onResetNotes={() => update(fillCands)}
           onClearNotes={() => update(clearNotes)}
           onClose={() => setSettingsOpen(false)}
+        />
+      )}
+      {puzzlesOpen && (
+        <PuzzlesDialog
+          library={library}
+          history={history}
+          saves={saves}
+          hasGame={!!game}
+          suggestedName={game ? `${LEVEL_NAMES[game.level]} ${game.score}` : ''}
+          onSaveCurrent={saveToLibrary}
+          onOpen={openPuzzle}
+          onDeleteLibrary={deleteLibrary}
+          onDeleteHistory={deleteHistory}
+          onClearHistory={clearHistory}
+          onCreateSave={createSave}
+          onRestoreSave={restoreSave}
+          onDeleteSave={deleteSave}
+          onClose={() => setPuzzlesOpen(false)}
         />
       )}
       {solvedOpen && game && (

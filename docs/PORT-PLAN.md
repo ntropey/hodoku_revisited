@@ -172,11 +172,15 @@ layout with a side panel (Hint / All steps / Summary), a bottom sheet on screens
 mode (Filter segment, Alt+digit, long press), timer, command search (Ctrl/Cmd+K), theme override, `?p=` (open a
 puzzle) and `?level=` (new puzzle) links. The Summary tab's "Techniques used" comes from `analyze()`, which now
 returns the grouped solve path. Website: restyled with the same tokens, technique index rail grouped in 13
-categories, Before/After toggle and "Open in app" on every diagram, and a nine-chapter manual (`src/manual.mjs`,
+categories, Before/After toggle and "Open in app" on every diagram, and a twelve-chapter manual (`src/manual.mjs`,
 must be kept in step with the app's behaviour). A new Setting, "Auto-fill last digit", fills the last
 empty cell of a row, column or box after a move (off by default; a normal, undoable move, not a hint).
 A "ColorKu" setting draws placed digits and candidates as coloured balls instead of numerals, as in the
 original, with a configurable colour per digit (off by default).
+A "Puzzles" dialog adds three lists kept in `localStorage`: a library of named puzzles (save the current
+puzzle, open or delete an entry), a history of the puzzles played (level, score, time and whether it was
+solved, newest first) and named save points (a snapshot of the current game, restored without crossing the
+undo history).
 
 The side panel has a fourth tab, "Path": it lists the solver's remaining steps from the current board
 (technique, action, difficulty) with <em>Next step</em> and <em>Solve up to</em> (apply every step up to a

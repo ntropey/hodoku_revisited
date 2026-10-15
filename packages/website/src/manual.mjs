@@ -80,6 +80,19 @@ export const MANUAL = [
 <p>Your colours are saved with the game and covered by undo, and <em>Clear colours</em> wipes them all in one step.</p>`,
   },
   {
+    slug: 'your-puzzles',
+    title: 'Your puzzles',
+    summary: 'The library, the history, and named save points.',
+    body: `
+<p>The <em>Puzzles</em> button in the top bar opens three lists of your own puzzles. All of them live in this browser only; nothing is sent anywhere.</p>
+<h2>Library</h2>
+<p>Type a name and choose <em>Save current</em> to keep the puzzle you are playing. Each entry shows its name and the date you saved it, with <em>Open</em> to load it again and <em>Delete</em> to remove it. Only the puzzle itself is stored: opening it rates it again and starts a fresh game, so the timer and your notes start empty.</p>
+<h2>History</h2>
+<p>Every puzzle you start is listed here, newest first, with its difficulty, score and the time you spent on it. A tick marks the puzzles you finished. <em>Open</em> plays one again and <em>Delete</em> removes a single entry; <em>Clear history</em> empties the list. The list is capped, so the oldest entries drop off by themselves.</p>
+<h2>Save points</h2>
+<p>A save point is a named snapshot of the game <em>as it is now</em>: the values, your pencil marks and your colours at the moment you saved it. Choose <em>Save current position</em> to make one, then <em>Restore</em> to return to it later. Restoring does not cross the undo history, so <em>Undo</em> stays on the restored position. Unlike the autosave, which always follows your latest move, a save point stays where you left it.</p>`,
+  },
+  {
     slug: 'hints',
     title: 'Hints',
     summary: 'What a hint shows, and how much it may give away.',
