@@ -34,7 +34,7 @@ Two framing notes:
 | Manual colouring of **candidates** | ✅ Options → *Color candidates* (*Choose Color for Candidates*) | ✅ **done** — Colour mode → Candidates |
 | Configure the palette | ✅ `ConfigColorPanel` | ~ fixed six-colour palette; the ColorKu colours are configurable |
 | Draw the solver's pattern (key/cover/fin/removed/placed, chain links) | ✅ | ✅ |
-| Show deviations (your candidates vs the solver's) | ✅ `showDeviations` | ❌ |
+| Show deviations (your candidates vs the solver's) | ✅ `showDeviations` | ✅ **done** — Settings → Show deviations; a dot marks the cells |
 | Cell zoom (enlarged active cell) | ✅ `CellZoomPanel` | ✅ **done** — Settings → Cell zoom |
 | Show wrong values | ✅ | ✅ (Mark mistakes) |
 | Show candidates | ✅ | ✅ |
@@ -51,7 +51,7 @@ in the port too, with its own palette (Colour mode).
 | Solution path, stepped (Next step / All easy steps / Solve up to) | ✅ `SolutionPanel` | ✅ **done** — the **Path** tab |
 | Summary (techniques used, counts, score) | ✅ `SummaryPanel` | ✅ **done** — the **Summary** tab |
 | All possible steps | ✅ | ✅ (All steps) |
-| Set all hidden singles | ✅ | ❌ |
+| Set all hidden singles | ✅ | ✅ **done** — *Fill all hidden singles* |
 
 ## Puzzle management
 
@@ -60,6 +60,8 @@ in the port too, with its own palette (Colour mode).
 | Puzzle library (save/load named puzzles, categories, *Copy library*) | ✅ | ✅ **done** — Puzzles dialog → Library (the port still reads the library format on import) |
 | History of played puzzles | ✅ `HistoryDialog` | ✅ **done** — Puzzles dialog → History |
 | Named save points (create / restore) | ✅ `RestoreSavePointDialog` | ✅ **done** — Puzzles dialog → Saves |
+| Restart game | ✅ *Restart game* / *Reset game* | ✅ **done** — command *Restart game*; the port has one action where the original split *Restart game* and *Reset game* |
+| Set givens (freeze the placed digits as clues) | ✅ `SetGivensDialog` | ✅ **done** — command *Set givens* |
 | Load / save puzzle to a file, Save as | ✅ | ❌ (import/paste and copy only) |
 | Load / save configuration | ✅ | ~ settings in `localStorage` |
 
@@ -107,9 +109,12 @@ a **precomputed puzzle bank** for instant starts, technique guides with solver-v
 ## Status of the gaps
 
 Done since this comparison was first made: **ColorKu** (with per-digit colours), the **solution-path
-trainer** (Path tab), **cell zoom**, **manual colouring** of cells and candidates, puzzle management
-(a **library**, a **history** and named **save points**, in the Puzzles dialog), and the two
+trainer** (Path tab), **cell zoom**, **manual colouring** of cells and candidates, **show deviations**,
+the **puzzle tools** (*Restart game*, *Set givens* and *Fill all hidden singles*), puzzle management
+(a **library**, a **history** and named **save points**, in the Puzzles dialog), the copy formats
+(**givens**, **puzzle with candidates**, **library line** and **formatted grid**), and the two
 outputs, **print solution** and **PNG**.
 
 Still open, roughly by value: extended print; the *with step* format; generator
-patterns/symmetry in the app; backdoor search; and game modes with training configuration.
+patterns/symmetry in the app; backdoor search; and game modes with training configuration. The
+original's separate *Reset game* is not a distinct action in the port; *Restart game* covers it.

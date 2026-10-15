@@ -62,7 +62,10 @@ export const MANUAL = [
 <p>With the pad in <em>Filter</em> mode (<kbd>F</kbd>), tapping a digit highlights every cell that holds it or still has it as a candidate, and shows only that digit in those cells. Switching back to Value or Notes turns the filter off. It is the fastest way to see where a digit can go in each row, column and box. Tap the same digit again to clear the filter.</p>
 <p>Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>9</kbd> toggles the filter from the keyboard; on a touch screen, press and hold a digit key for half a second.</p>
 <h2>Mark mistakes</h2>
-<p>With <em>Settings → Mark mistakes</em> on, a value that disagrees with the puzzle's solution is shown in red. It is off by default, because finding the error is often part of the puzzle.</p>`,
+<p>With <em>Settings → Mark mistakes</em> on, a value that disagrees with the puzzle's solution is shown in red. It is off by default, because finding the error is often part of the puzzle.</p>
+<h2>Board tools</h2>
+<p>Three commands in the search (<kbd>Ctrl</kbd>+<kbd>K</kbd>) work on the whole board. <em>Restart game</em> starts the same puzzle again: your digits, notes and colours are cleared and the undo history is dropped, but the puzzle, its rating and your timer stay. <em>Set givens</em> turns every digit you have placed into a given, so it can no longer be erased and it prints as a given; use it to keep a position as the starting point. <em>Fill all hidden singles</em> places, in one undoable move, every digit that is the only candidate for its row, column or box.</p>
+<p>With <em>Settings → Show deviations</em> on, a cell whose candidate marks differ from what the placed values allow gets a small dot in its corner.</p>`,
   },
   {
     slug: 'colour',
@@ -209,6 +212,7 @@ export const MANUAL = [
 <dt>Mark mistakes</dt><dd>Show values that disagree with the solution in red.</dd>
 <dt>ColorKu</dt><dd>Draw placed digits and candidates as coloured balls instead of numerals, as in the original. The nine colours can be changed, and the default set restored, in the same dialog.</dd>
 <dt>Cell zoom</dt><dd>Show an enlarged view of the selected cell under the board, with its value or its candidates; handy on small screens.</dd>
+<dt>Show deviations</dt><dd>Mark the cells where your candidate marks differ from what the placed values allow, with a small dot in the corner.</dd>
 <dt>Auto-fill last digit</dt><dd>Off by default. When a row, column or box is down to one empty cell, that cell is filled in for you after your move. It counts as a normal, undoable move, not as a hint.</dd>
 <dt>Hints use</dt><dd>The hardest class of technique a hint may use. Also available in the side panel.</dd>
 <dt>Techniques a hint may use</dt><dd>The individual techniques a hint is allowed to use, grouped by difficulty. Untick any you would rather solve yourself; the choice is remembered. <em>Hints use</em> still caps them from above, and <em>Enable all techniques</em> puts everything back.</dd>

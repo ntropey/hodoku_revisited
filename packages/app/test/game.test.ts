@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_CANDS, autoFillLastDigit, candColorAt, cellColorAt, clearColors, clearNotes, notesOf, paintCand, paintCell, toggleNote, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells, type GameState } from '../src/game';
+import { ALL_CANDS, autoFillLastDigit, candColorAt, cellColorAt, clearColors, clearNotes, deviations, fillHiddenSingles, hiddenSingles, isGiven, notesOf, paintCand, paintCell, restart, setGivens, toggleNote, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells, type GameState } from '../src/game';
 import { allHints, analyze, hint } from '../src/solverApi';
 
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -272,5 +272,106 @@ describe('pencil marks', () => {
     delete g.notes;
     expect(notesOf(g)).toHaveLength(81);
     expect(toggleNote(g, g.values.indexOf(0), 2).notes).toBeDefined();
+  });
+});
+
+/** An empty board with every candidate present in every cell. */
+const emptyBoard = (): GameState => ({
+  givens: '.'.repeat(81),
+  values: new Array<number>(81).fill(0),
+  cands: new Array<number>(81).fill(ALL_CANDS),
+  solution: new Array<number>(81).fill(0),
+  level: 1,
+  score: 0,
+  past: [],
+  future: [],
+});
+
+describe('restart', () => {
+  it('resets values, notes, colours and hints, and drops the undo history', () => {
+    const i = info();
+    const fresh = newGame(i);
+    expect(restart(fresh)).toBe(fresh); // nothing to reset
+
+    const cell = fresh.values.indexOf(0);
+    let g = setValue(fresh, cell, i.solution[cell]);
+    const noteCell = g.values.indexOf(0);
+    g = toggleNote(g, noteCell, 5);
+    g = paintCell(g, cell, 2);
+    g = { ...g, hints: 3 };
+
+    const r = restart(g);
+    expect(r.givens).toBe(g.givens);
+    expect(r.solution).toEqual(g.solution);
+    expect(r.values).toEqual([...g.givens].map((c) => (c === '.' || c === '0' ? 0 : Number(c))));
+    expect(r.values[cell]).toBe(0);
+    expect(notesOf(r).every((n) => n === 0)).toBe(true);
+    expect(r.cellColors).toBeUndefined();
+    expect(r.candColors).toBeUndefined();
+    expect(r.hints).toBe(0);
+    expect(r.cands).toEqual(fillCands(r).cands);
+
+    const back = restart(r);
+    expect(back).toBe(r); // already at the start
+    expect(r.past).toEqual([]);
+    expect(r.future).toEqual([]);
+  });
+});
+
+describe('set givens', () => {
+  it('freezes every placed digit as a given, and is a no-op when nothing changes', () => {
+    const i = info();
+    let g = newGame(i);
+    const cell = g.values.indexOf(0);
+    g = setValue(g, cell, i.solution[cell]);
+    const s = setGivens(g);
+    expect(s.givens).toHaveLength(81);
+    expect(s.givens).toBe(s.values.map((v) => (v === 0 ? '.' : String(v))).join(''));
+    expect(s.givens[cell]).toBe(String(i.solution[cell]));
+    expect(isGiven(s, cell)).toBe(true);
+    const empty = s.values.indexOf(0);
+    expect(s.givens[empty]).toBe('.');
+    expect(setGivens(s)).toBe(s);
+    expect(setGivens(newGame(i)).givens).toBe(i.puzzle);
+  });
+});
+
+describe('hidden singles', () => {
+  it('finds a hidden single and fills it in one undoable move', () => {
+    const g0 = emptyBoard();
+    const cands = g0.cands.slice();
+    for (let c = 1; c < 9; c++) cands[c] &= ~(1 << 1); // digit 1 only in cell 0 of row 0
+    const g: GameState = { ...g0, cands };
+
+    expect(hiddenSingles(g.values, g.cands)).toEqual([{ cell: 0, digit: 1 }]);
+    // a blocked cell is skipped
+    const blocked = new Array<boolean>(81).fill(false);
+    blocked[0] = true;
+    expect(hiddenSingles(g.values, g.cands, blocked)).toEqual([]);
+
+    const out = fillHiddenSingles(g);
+    expect(out.values[0]).toBe(1);
+    expect(out.cands[0]).toBe(0);
+    expect(out.cands[9] & (1 << 1)).toBe(0); // a peer loses the digit
+    expect(g.cands[9] & (1 << 1)).not.toBe(0);
+    expect(out.past.length).toBe(1); // one step, not one per cell
+    expect(undo(out).values[0]).toBe(0);
+    expect(undo(out).cands).toEqual(g.cands);
+  });
+
+  it('returns the same game when there is no hidden single', () => {
+    const g = emptyBoard();
+    expect(hiddenSingles(g.values, g.cands)).toEqual([]);
+    expect(fillHiddenSingles(g)).toBe(g);
+  });
+});
+
+describe('deviations', () => {
+  it('reports cells whose candidates differ from what the values allow', () => {
+    const g = newGame(info());
+    expect(deviations(g)).toEqual([]);
+    const cell = g.values.indexOf(0);
+    const d = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((x) => (g.cands[cell] & (1 << x)) !== 0)!;
+    expect(deviations(removeCands(g, [{ cell, digit: d }]))).toEqual([cell]);
   });
 });

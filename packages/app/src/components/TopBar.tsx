@@ -19,6 +19,8 @@ interface Props {
   onExportPng: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  onRestart: () => void;
+  canRestart: boolean;
   onSettings: () => void;
   onCommands: () => void;
 }
@@ -135,6 +137,7 @@ export function TopBar(p: Props) {
             ))}
             <button role="menuitem" onClick={() => (close(), p.onImport())}>Import</button>
             <button role="menuitem" onClick={() => (close(), p.onPuzzles())}>Puzzles</button>
+            <button role="menuitem" disabled={!p.canRestart} onClick={() => (close(), p.onRestart())}>Restart game</button>
             <button role="menuitem" onClick={() => (close(), p.onCopy('givens'))}>Copy givens</button>
             <button role="menuitem" onClick={() => (close(), p.onCopy('pm'))}>Copy puzzle with candidates</button>
             <button role="menuitem" onClick={() => (close(), p.onCopy('library'))}>Copy library line</button>

@@ -265,3 +265,103 @@ export function autoFillLastDigit(g: GameState): GameState {
     if (!filled) return next;
   }
 }
+
+/** The givens of a state as values (0 where the given is `.` or `0`). */
+function givensValues(g: GameState): number[] {
+  return [...g.givens].map((c) => (c === '.' || c === '0' ? 0 : Number(c)));
+}
+
+/**
+ * Start the same puzzle again: your values, notes, colours and hint counter back to the start.
+ * The givens, solution, level, score, path and bank index are kept. Like the original's
+ * "Restart Game", the undo history is dropped, so Undo/Redo does not reach across the restart.
+ * Returns `g` unchanged when the board is already at the start.
+ */
+export function restart(g: GameState): GameState {
+  const values = givensValues(g);
+  const atStart =
+    values.every((v, i) => v === g.values[i]) &&
+    notesOf(g).every((n) => n === 0) &&
+    !g.cellColors &&
+    !g.candColors &&
+    (g.hints ?? 0) === 0;
+  if (atStart) return g;
+  return {
+    ...g,
+    values,
+    cands: validCands(values),
+    notes: undefined,
+    cellColors: undefined,
+    candColors: undefined,
+    hints: 0,
+    past: [],
+    future: [],
+  };
+}
+
+/** Make every placed digit a given: it can no longer be erased, and it prints as a given. */
+export function setGivens(g: GameState): GameState {
+  const givens = g.values.map((v) => (v === 0 ? '.' : String(v))).join('');
+  return givens === g.givens ? g : pushState(g, { givens });
+}
+
+/**
+ * Every hidden single right now: a candidate that is the only one for its digit in a row, column or box.
+ * `blocked` is optional; a `true` entry means that cell is skipped (useful for callers that want to
+ * ignore cells, e.g. a selected one). Cells that already hold a value are never reported, and the same
+ * cell/digit is not reported twice even when it is hidden in two units at once.
+ */
+export function hiddenSingles(values: readonly number[], cands: readonly number[], blocked?: readonly boolean[]): { cell: number; digit: number }[] {
+  const out: { cell: number; digit: number }[] = [];
+  const seen = new Set<number>();
+  for (const unit of tables.ALL_UNITS) {
+    for (let d = 1; d <= 9; d++) {
+      let found = -1;
+      let count = 0;
+      for (const c of unit) {
+        if (values[c] !== 0 || blocked?.[c]) continue;
+        if ((cands[c] & (1 << d)) !== 0) {
+          found = c;
+          if (++count > 1) break;
+        }
+      }
+      if (count === 1 && !seen.has(found * 10 + d)) {
+        seen.add(found * 10 + d);
+        out.push({ cell: found, digit: d });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Place every hidden single at once, as one undoable move. Each placement clears the candidates of the
+ * placed cell and of its peers, exactly as `setValue` does. Returns `g` when there is no hidden single.
+ */
+export function fillHiddenSingles(g: GameState): GameState {
+  const singles = hiddenSingles(g.values, g.cands);
+  if (singles.length === 0) return g;
+  const values = g.values.slice();
+  const cands = g.cands.slice();
+  const notes = notesOf(g).slice();
+  for (const { cell, digit } of singles) {
+    values[cell] = digit;
+    cands[cell] = 0;
+    notes[cell] = 0;
+    for (const p of PEERS[cell]) {
+      cands[p] &= ~(1 << digit);
+      notes[p] &= ~(1 << digit);
+    }
+  }
+  return push(g, values, cands, notes);
+}
+
+/** Cells where your candidate marks differ from what the placed values allow (Options → Show deviations). */
+export function deviations(g: GameState): number[] {
+  const valid = validCands(g.values);
+  const out: number[] = [];
+  g.values.forEach((v, i) => {
+    if (v === 0 && g.cands[i] !== valid[i]) out.push(i);
+  });
+  return out;
+}

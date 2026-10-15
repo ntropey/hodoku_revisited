@@ -20,18 +20,24 @@ import { TopBar } from './components/TopBar';
 import {
   erase,
   fillCands,
+  fillHiddenSingles,
+  hiddenSingles,
   isGiven,
   isSolved,
   newGame,
+  notesOf,
   redo,
   remaining,
   removeCands,
+  restart,
+  setGivens,
   setValue,
   toggleCand,
   toggleNote,
   clearNotes,
   clearNotesAt,
   clearColors,
+  deviations,
   paintCand,
   paintCell,
   autoFillLastDigit,
@@ -315,6 +321,17 @@ export function App() {
   const left = useMemo(() => (game ? remaining(game) : []), [game]);
   const filled = game ? game.values.filter((v) => v !== 0).length : 0;
 
+  // puzzle tools: work out up front whether each command would do anything, so none is offered as a no-op
+  const hasOwnValues = useMemo(() => !!game && game.values.some((v, i) => v !== 0 && !isGiven(game, i)), [game]);
+  const hasProgress = useMemo(
+    () =>
+      !!game &&
+      (game.values.some((v, i) => v !== 0 && !isGiven(game, i)) || notesOf(game).some((n) => n !== 0) || !!game.cellColors || !!game.candColors || (game.hints ?? 0) > 0),
+    [game],
+  );
+  const hasHiddenSingle = useMemo(() => !!game && hiddenSingles(game.values, game.cands).length > 0, [game]);
+  const deviate = useMemo(() => (game && settings.showDeviations ? new Set(deviations(game)) : undefined), [game, settings.showDeviations]);
+
   const askHint = useCallback(async () => {
     if (!game) return;
     setTab('hint');
@@ -577,6 +594,9 @@ export function App() {
       { label: 'Apply step', hint: 'Enter', run: () => (tab === 'path' ? applyPath(1) : applyHint()), disabled: tab === 'path' ? !(pathSteps && pathDone < pathSteps.length) : !hint },
       { label: 'Undo', hint: 'Z', run: () => update(undo), disabled: !game?.past.length },
       { label: 'Redo', hint: 'Y', run: () => update(redo), disabled: !game?.future.length },
+      { label: 'Restart game', run: () => update(restart), disabled: !hasProgress },
+      { label: 'Set givens', run: () => update(setGivens), disabled: !hasOwnValues },
+      { label: 'Fill all hidden singles', run: () => update(fillHiddenSingles), disabled: !hasHiddenSingle },
       { label: 'Erase cell', run: eraseSelected, disabled: selected === null },
       { label: 'Value mode', run: () => setMode('value') },
       { label: 'Notes mode', hint: 'N', run: () => setMode('notes') },
@@ -603,7 +623,7 @@ export function App() {
       { label: 'Settings', run: () => setSettingsOpen(true) },
       ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
     ],
-    [askAllSteps, askHint, applyHint, applyPath, copyPuzzle, eraseSelected, exportPng, filterDigit, game, hint, pathDone, pathSteps, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, settings.cellZoom, solved, startNew, tab, update],
+    [askAllSteps, askHint, applyHint, applyPath, copyPuzzle, eraseSelected, exportPng, filterDigit, game, hasHiddenSingle, hasOwnValues, hasProgress, hint, pathDone, pathSteps, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, settings.cellZoom, solved, startNew, tab, update],
   );
 
   useEffect(() => {
@@ -727,6 +747,8 @@ export function App() {
         onExportPng={() => void exportPng()}
         onUndo={() => update(undo)}
         onRedo={() => update(redo)}
+        onRestart={() => update(restart)}
+        canRestart={hasProgress}
         onSettings={() => setSettingsOpen(true)}
         onCommands={() => setCommandsOpen(true)}
       />
@@ -741,6 +763,7 @@ export function App() {
               hint={boardHint}
               wrong={wrong}
               filter={filterDigit}
+              deviate={deviate}
               colorKu={settings.colorKu}
               colors={colorKuColors}
               cellColors={game.cellColors}
