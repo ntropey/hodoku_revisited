@@ -25,6 +25,7 @@ import {
   toggleNote,
   clearNotes,
   clearNotesAt,
+  autoFillLastDigit,
   undo,
   wrongCells,
   type GameState,
@@ -138,8 +139,13 @@ export function App() {
   }, []);
 
   const update = useCallback(
-    (fn: (g: GameState) => GameState) => {
-      setGame((g) => (g ? fn(g) : g));
+    (fn: (g: GameState) => GameState, autoFill = false) => {
+      setGame((g) => {
+        if (!g) return g;
+        const next = fn(g);
+        // "auto-fill last digit": after a placement, fill any unit that is down to its last empty cell
+        return autoFill && next !== g && settingsRef.current.autoFill ? autoFillLastDigit(next) : next;
+      });
       clearPanel();
     },
     [clearPanel],
@@ -209,7 +215,7 @@ export function App() {
       if (selected === null) return;
       // pencil marks are what you see: the solver's candidates when they are shown, otherwise your own notes
       if (mode === 'notes' && game.values[selected] === 0) update((g) => (settingsRef.current.showCands ? toggleCand(g, selected, d) : toggleNote(g, selected, d)));
-      else update((g) => setValue(g, selected, d));
+      else update((g) => setValue(g, selected, d), true);
     },
     [game, selected, mode, update],
   );
@@ -269,7 +275,7 @@ export function App() {
       for (const p of hint.marks.place) next = setValue(next, p.cell, p.digit);
       if (hint.marks.elim.length > 0) next = removeCands(next, hint.marks.elim);
       return { ...next, hints: (g.hints ?? 0) + 1 };
-    });
+    }, true);
   }, [hint, update]);
 
   const doImport = async () => {
@@ -320,13 +326,14 @@ export function App() {
       { label: 'Reset candidates', run: () => update(fillCands) },
       { label: `${settings.showCands ? 'Hide' : 'Show'} all candidates`, run: () => setSettings((s) => ({ ...s, showCands: !s.showCands })) },
       { label: `Mark mistakes: ${settings.checkMistakes ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, checkMistakes: !s.checkMistakes })) },
+      { label: `Auto-fill last digit: ${settings.autoFill ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, autoFill: !s.autoFill })) },
       { label: 'Import puzzle', run: () => setImporting(true) },
       { label: 'Copy puzzle', run: () => void copyPuzzle() },
       { label: 'Print', run: () => window.print() },
       { label: 'Settings', run: () => setSettingsOpen(true) },
       ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
     ],
-    [askAllSteps, askHint, applyHint, copyPuzzle, eraseSelected, filterDigit, game, hint, selected, settings.checkMistakes, settings.showCands, solved, startNew, update],
+    [askAllSteps, askHint, applyHint, copyPuzzle, eraseSelected, filterDigit, game, hint, selected, settings.checkMistakes, settings.showCands, settings.autoFill, solved, startNew, update],
   );
 
   useEffect(() => {

@@ -171,3 +171,45 @@ export function remaining(g: GameState): number[] {
   for (const v of g.values) if (v !== 0) left[v]--;
   return left;
 }
+
+/** The one empty cell of a unit and the single digit missing from it, or null if nothing is forced. */
+function lastDigitOf(unit: readonly number[], values: readonly number[]): { cell: number; digit: number } | null {
+  let empty = -1;
+  let seen = 0;
+  for (const c of unit) {
+    const v = values[c];
+    if (v === 0) {
+      if (empty !== -1) return null; // more than one empty cell
+      empty = c;
+    } else seen |= 1 << v;
+  }
+  if (empty === -1) return null; // the unit is full
+  let missing = 0;
+  let digit = 0;
+  for (let d = 1; d <= 9; d++)
+    if ((seen & (1 << d)) === 0) {
+      missing++;
+      digit = d;
+    }
+  // if the unit already holds a duplicate, more than one digit is missing: nothing is forced
+  return missing === 1 ? { cell: empty, digit } : null;
+}
+
+/**
+ * Fill every cell that is the last empty one of a row, column or box ("auto-fill last digit").
+ * Each fill goes through `setValue`, so it is an ordinary, undoable move; repeats until nothing is forced.
+ */
+export function autoFillLastDigit(g: GameState): GameState {
+  let next = g;
+  for (;;) {
+    let filled = false;
+    for (const unit of tables.ALL_UNITS) {
+      const forced = lastDigitOf(unit, next.values);
+      if (forced) {
+        next = setValue(next, forced.cell, forced.digit);
+        filled = true;
+      }
+    }
+    if (!filled) return next;
+  }
+}

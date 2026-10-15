@@ -164,6 +164,7 @@ export const MANUAL = [
 <dl>
 <dt>Show candidates</dt><dd>Display the computed candidates in every empty cell.</dd>
 <dt>Mark mistakes</dt><dd>Show values that disagree with the solution in red.</dd>
+<dt>Auto-fill last digit</dt><dd>Off by default. When a row, column or box is down to one empty cell, that cell is filled in for you after your move. It counts as a normal, undoable move, not as a hint.</dd>
 <dt>Hints use</dt><dd>The hardest class of technique a hint may use. Also available in the side panel.</dd>
 <dt>New puzzle level</dt><dd>The difficulty used by the plain <em>New puzzle</em> button.</dd>
 <dt>Theme</dt><dd>Follow the system, or force light or dark.</dd>

@@ -29,7 +29,7 @@ Monorepo with pnpm workspaces, TypeScript strict mode, Vitest for tests.
 | `generator/*` | `core/generator/*` | See `LICENSE-AUDIT.md` item 5. |
 | `sudoku/Options`, `StepConfig`, `DifficultyLevel`, `GameMode` | `core/config/*` | Replace Java Preferences with JSON settings. |
 | Swing panels/dialogs (~50 files) | `app/` React components | Redesign, don't transliterate. |
-| `*.properties` (en/de) | `app/i18n/*.json` | Keep English and German. |
+| `*.properties` (en/de) | `app/i18n/*.json` | English only for now. Add a real i18n layer when we go multi-lingual; no single-language translation. |
 
 ## Verification strategy
 
@@ -147,8 +147,9 @@ Trainer update: "All steps" lists every available step by technique (find all st
 AIC notation, give a one-sentence reason and link to the guide page; Print button (givens only). `describeStep`
 in core turns any step into drawable data and is shared with the website diagrams.
 
-Not yet: a "Show solution path" trainer, settings for which
-techniques the hints may use, print, German translation, PNG icons for older browsers.
+Not yet: settings that choose which individual techniques a hint may use. (The solution path,
+print and the PNG icons are done: the Summary tab calls `analyze()`, the top bar has Print, and
+`make-png-icons.mjs` writes the PNG icons.)
 
 ## Status (M5, first version)
 
@@ -171,15 +172,16 @@ mode (Filter segment, Alt+digit, long press), timer, command search (Ctrl/Cmd+K)
 puzzle) and `?level=` (new puzzle) links. The Summary tab's "Techniques used" comes from `analyze()`, which now
 returns the grouped solve path. Website: restyled with the same tokens, technique index rail grouped in 13
 categories, Before/After toggle and "Open in app" on every diagram, and a nine-chapter manual (`src/manual.mjs`,
-must be kept in step with the app's behaviour).
+must be kept in step with the app's behaviour). A new Setting, "Auto-fill last digit", fills the last
+empty cell of a row, column or box after a move (off by default; a normal, undoable move, not a hint).
 
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
 tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense script and `ads.txt` are on
 the site pages, not in the app; the privacy page discloses advertising.
 
-Not yet: a German version, a custom domain, ads. Ads need a consent banner (EU/UK) and a privacy page
-update first; the privacy page currently promises no tracking, so change it in the same commit
-that adds ads.
+Not yet: a consent banner (EU/UK) for the ads. The AdSense script, `ads.txt` and the privacy
+disclosure are already in place; the banner is the remaining piece for EU/UK compliance. The
+custom domain is done (`CNAME` is written by the site build).
 
 ## Business notes (GPL)
 
@@ -192,8 +194,7 @@ EU/UK visitors; check its policy for installed PWAs before relying on it.
 
 ## Backlog
 
-- Setting "Auto-fill last digit": when a row, column or box has one empty cell left, fill it in automatically
-  (off by default; undoable; counts as a normal move, not a hint).
 - Siamese and dual fish variants, ALS nodes in tabling chains (core).
-- German translation.
+- Multi-lingual support (i18n): extract the UI strings and add locales together. A single extra
+  language (e.g. German) was dropped on purpose; do the whole thing when we get to it.
 - Website diagrams: add non-colour cues for key/fin candidates, as in the app.
