@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_CANDS, autoFillLastDigit, clearNotes, notesOf, toggleNote, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells, type GameState } from '../src/game';
+import { ALL_CANDS, autoFillLastDigit, candColorAt, cellColorAt, clearColors, clearNotes, notesOf, paintCand, paintCell, toggleNote, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells, type GameState } from '../src/game';
 import { allHints, analyze, hint } from '../src/solverApi';
 
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -15,6 +15,31 @@ describe('analyze', () => {
   it('rejects puzzles without a unique solution', () => {
     expect(() => analyze('.'.repeat(81))).toThrow();
     expect(() => analyze('12')).toThrow();
+  });
+});
+
+describe('colouring', () => {
+  it('paints cells and candidates, keeps them across moves, undoes and clears', () => {
+    const i = info();
+    const g0 = newGame(i);
+    const cell = g0.values.indexOf(0);
+    let g = paintCell(g0, cell, 2);
+    expect(cellColorAt(g, cell)).toBe(2);
+    expect(g.past.length).toBe(1);
+    expect(paintCell(g, cell, 2)).toBe(g); // no change, no snapshot
+    g = setValue(g, cell, i.solution[cell]);
+    expect(cellColorAt(g, cell)).toBe(2); // a move keeps the colour
+    g = undo(g);
+    expect(g.values[cell]).toBe(0);
+    expect(cellColorAt(g, cell)).toBe(2);
+    g = undo(g);
+    expect(cellColorAt(g, cell)).toBe(0);
+    let h = paintCand(g0, cell, 1, 3);
+    expect(candColorAt(h, cell, 1)).toBe(3);
+    expect(candColorAt(h, cell, 2)).toBe(0);
+    h = clearColors(h);
+    expect(candColorAt(h, cell, 1)).toBe(0);
+    expect(h.cellColors).toBeUndefined();
   });
 });
 

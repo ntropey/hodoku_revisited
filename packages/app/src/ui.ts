@@ -1,6 +1,6 @@
 import type { HintLevel } from './protocol';
 
-export type Mode = 'value' | 'notes' | 'filter';
+export type Mode = 'value' | 'notes' | 'filter' | 'color';
 export type Theme = 'system' | 'light' | 'dark';
 export type Tab = 'hint' | 'steps' | 'path' | 'summary';
 
@@ -27,6 +27,9 @@ export interface Settings {
 
 /** The default ColorKu palette: one distinct colour per digit. */
 export const DEFAULT_COLORKU_COLORS = ['#e03131', '#f08c00', '#fab005', '#2f9e44', '#0c8599', '#1971c2', '#6741d9', '#c2255c', '#868e96'];
+
+/** The palette for colouring cells and candidates yourself; semi-transparent so the board shows through. */
+export const PALETTE = ['#e0313180', '#f08c0080', '#2f9e4480', '#1971c280', '#6741d980', '#c2255c80'];
 
 export const DEFAULT_SETTINGS: Settings = {
   showCands: false,

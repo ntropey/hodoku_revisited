@@ -30,17 +30,17 @@ Two framing notes:
 | Feature | Original | Port |
 |---|---|---|
 | ColorKu (digits/candidates as coloured balls) | ✅ `showColorKu`, `ColorKuImage`, `ConfigColorkuPanel` | ✅ **done** — Settings → ColorKu, per-digit colours |
-| Manual colouring of **cells** | ✅ Options → *Color cells*, palette (screenshot 3: *Choose Color for Cell*) | ❌ |
-| Manual colouring of **candidates** | ✅ Options → *Color candidates* (*Choose Color for Candidates*) | ❌ |
-| Configure the palette | ✅ `ConfigColorPanel` | ✅ **done** for ColorKu; ❌ for the manual palette |
+| Manual colouring of **cells** | ✅ Options → *Color cells*, palette (screenshot 3: *Choose Color for Cell*) | ✅ **done** — Colour mode → Cells |
+| Manual colouring of **candidates** | ✅ Options → *Color candidates* (*Choose Color for Candidates*) | ✅ **done** — Colour mode → Candidates |
+| Configure the palette | ✅ `ConfigColorPanel` | ~ fixed six-colour palette; the ColorKu colours are configurable |
 | Draw the solver's pattern (key/cover/fin/removed/placed, chain links) | ✅ | ✅ |
 | Show deviations (your candidates vs the solver's) | ✅ `showDeviations` | ❌ |
 | Cell zoom (enlarged active cell) | ✅ `CellZoomPanel` | ✅ **done** — Settings → Cell zoom |
 | Show wrong values | ✅ | ✅ (Mark mistakes) |
 | Show candidates | ✅ | ✅ |
 
-The port colours **hints**; the original also let you colour the board **yourself**. Manual colouring
-is the remaining colour gap.
+The port colours **hints**; the original also let you colour the board **yourself**. That is now possible
+in the port too, with its own palette (Colour mode).
 
 ## Trainer and modes
 
@@ -106,8 +106,8 @@ a **precomputed puzzle bank** for instant starts, technique guides with solver-v
 ## Status of the gaps
 
 Done since this comparison was first made: **ColorKu** (with per-digit colours), the **solution-path
-trainer** (Path tab), and **cell zoom**.
+trainer** (Path tab), **cell zoom**, and **manual colouring** of cells and candidates.
 
-Still open, roughly by value: manual cell/candidate colouring with a palette; a puzzle library and
-history; named save points; extended print / print solution / PNG; the remaining copy formats;
-generator patterns/symmetry in the app; backdoor search; and game modes with training configuration.
+Still open, roughly by value: a puzzle library and history; named save points; extended print / print
+solution / PNG; the remaining copy formats; generator patterns/symmetry in the app; backdoor search;
+and game modes with training configuration.
