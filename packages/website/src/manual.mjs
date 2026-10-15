@@ -14,7 +14,7 @@ export const MANUAL = [
 <p>Open <a href="../play/">the solver</a>. The first time, it deals you an Easy puzzle. Your game is saved in the browser after every move, so you can close the tab and continue later.</p>
 <h2>The screen</h2>
 <ul>
-<li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Mode</em> (Playing, Learning or Practising), <em>Import</em>, <em>Copy</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>
+<li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Mode</em> (Playing, Learning or Practising), <em>Import</em>, <em>Copy</em>, <em>Save</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>
 <li><strong>Board:</strong> Givens are set in the serif face. Your own digits are blue. With <em>ColorKu</em> on (see <em>Settings</em>), digits and candidates are shown as coloured balls instead. <em>Cell zoom</em> (also under <em>Settings</em>) adds an enlarged view of the selected cell under the board.</li>
 <li><strong>Digit pad</strong> below the board, with <em>Value</em>, <em>Notes</em>, <em>Filter</em> and <em>Colour</em> modes. The small number on each key is how many of that digit are still missing.</li>
 <li><strong>Side panel</strong> with <em>Hint</em>, <em>All steps</em> and <em>Summary</em> tabs. On a phone this is a sheet at the bottom that you drag up and down.</li>
@@ -33,7 +33,7 @@ export const MANUAL = [
     title: 'Entering puzzles',
     summary: 'Import a puzzle from a newspaper, a website or a file.',
     body: `
-<p>Choose <em>Import</em> and paste the puzzle as text. The app works out the format by itself. It accepts:</p>
+<p>Choose <em>Import</em> and paste the puzzle as text, or pick <em>Open a file</em> to read it from a <code>.txt</code>, <code>.sdk</code>, <code>.ss</code> or <code>.hkl</code> file. The app works out the format by itself. It accepts:</p>
 <ul>
 <li>81 characters in one line, with <code>.</code> or <code>0</code> for an empty cell. A trailing <code># comment</code> is ignored.</li>
 <li>Nine lines of nine characters, with or without grid borders (<code>|</code>, <code>-</code>, <code>+</code>).</li>
@@ -43,7 +43,7 @@ export const MANUAL = [
 </ul>
 <p>Anything with fewer or more than 81 cells is rejected with a message. The puzzle also has to have exactly one solution; if it has none or several, the app says so and does not load it.</p>
 <h2>Sharing a puzzle</h2>
-<p><em>Copy</em> offers four formats: the 81-character line of the <em>givens</em>, the <em>puzzle with candidates</em> (a candidate/PM grid), a HoDoKu <em>library line</em>, and a <em>formatted grid</em>. Paste the givens anywhere, or into <em>Import</em> on another device. A link of the form <code>/play/?p=&lt;81 characters&gt;</code> opens that puzzle directly. The technique guides use this for their <em>Open in app</em> buttons.</p>
+<p><em>Copy</em> offers four formats: the 81-character line of the <em>givens</em>, the <em>puzzle with candidates</em> (a candidate/PM grid), a HoDoKu <em>library line</em>, and a <em>formatted grid</em>. <em>Save</em> writes the same four formats to a file, which the browser downloads. Paste the givens anywhere, or into <em>Import</em> on another device. A link of the form <code>/play/?p=&lt;81 characters&gt;</code> opens that puzzle directly. The technique guides use this for their <em>Open in app</em> buttons.</p>
 <h2>Printing</h2>
 <p><em>Print</em> prints the board with the givens only, without candidates or the side panel; <em>Print solution</em> prints the board and the solved grid after it. <em>Export PNG</em> saves the board as a <code>.png</code> image file.</p>
 <p><em>Extended print</em> builds a book of puzzles. Add up to five sections; for each, choose how many puzzles (0 to 30), the level, the mode (Playing, Learning or Practising) and whether to print the candidates. A Learning section uses the techniques from the Training dialog. Then pick a layout: one, two or four puzzles per page, portrait or landscape. <em>Print the rating</em> writes the level and score under each puzzle. <em>Booklet</em> is offered for the landscape layouts only; it imposes the pages so that printing them double-sided and folding in the middle makes a booklet.</p>`,
