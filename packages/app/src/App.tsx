@@ -225,21 +225,32 @@ export function App() {
     }
   }, [game, hintLevel]);
 
-  const askAllSteps = useCallback(async () => {
-    if (!game) return;
-    setTab('steps');
-    setSnap((s) => (s === 'peek' ? 'half' : s));
-    setBusy('Looking for all steps...');
-    setHint(null);
-    try {
-      setAllSteps(await solver.current.allHints(game.values, game.cands, hintLevel));
-      setMessage(null);
-    } catch (e) {
-      setMessage((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  }, [game, hintLevel]);
+  const askAllSteps = useCallback(
+    async (auto = false) => {
+      if (!game) return;
+      setTab('steps');
+      if (!auto) setSnap((s) => (s === 'peek' ? 'half' : s));
+      setBusy('Looking for all steps...');
+      try {
+        const data = await solver.current.allHints(game.values, game.cands, hintLevel);
+        setAllSteps(data);
+        // the top step is shown on the board right away
+        setHint(data.results[0] ?? null);
+        setMessage(null);
+      } catch (e) {
+        setAllSteps({ results: [], total: {} });
+        setMessage((e as Error).message);
+      } finally {
+        setBusy(null);
+      }
+    },
+    [game, hintLevel],
+  );
+
+  // the All steps tab is always filled: opening it, making a move or changing "Hints use" refreshes the list
+  useEffect(() => {
+    if (tab === 'steps' && game && !solved && allSteps === null && busy === null) void askAllSteps(true);
+  }, [tab, game, solved, allSteps, busy, askAllSteps]);
 
   const applyHint = useCallback(() => {
     if (!hint) return;
@@ -345,7 +356,19 @@ export function App() {
   }, [input, selected, update, importing, settingsOpen, commandsOpen, askHint, applyHint, hint, eraseSelected]);
 
   const panel = (
-    <SidePanel tab={tab} onTab={setTab} hintLevel={hintLevel} onHintLevel={(l) => setSettings((s) => ({ ...s, hintLevel: l }))}>
+    <SidePanel
+      tab={tab}
+      onTab={(t) => {
+        setTab(t);
+        setSnap((sn) => (sn === 'peek' ? 'half' : sn));
+      }}
+      hintLevel={hintLevel}
+      onHintLevel={(l) => {
+        setSettings((s) => ({ ...s, hintLevel: l }));
+        setAllSteps(null);
+        setHint(null);
+      }}
+    >
       {tab === 'hint' && (
         <HintView
           hint={hint}

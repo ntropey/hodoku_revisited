@@ -47,7 +47,7 @@ button, select {
   min-height: 40px; padding: 0 14px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
   transition: background-color 120ms, color 120ms, border-color 120ms;
 }
-button:not(.cell):hover:not(:disabled) { background: var(--surface-2); }
+@media (hover: hover) { button:not(.cell):hover:not(:disabled) { background: var(--surface-2); } }
 button:disabled { opacity: 0.45; cursor: default; }
 button.primary { background: var(--accent); color: var(--card); border-color: var(--accent); font-weight: 500; }
 button.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); }
