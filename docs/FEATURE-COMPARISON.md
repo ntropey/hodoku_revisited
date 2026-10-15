@@ -69,8 +69,8 @@ in the port too, with its own palette (Colour mode).
 |---|---|---|
 | Print the board | ✅ | ✅ (givens only) |
 | Extended print (booklets, several puzzles per page) | ✅ `ExtendedPrintDialog` | ❌ |
-| Print the solution | ✅ `PrintSolutionDialog` | ❌ |
-| Save as image (PNG) | ✅ `WriteAsPNGDialog` | ❌ |
+| Print the solution | ✅ `PrintSolutionDialog` | ✅ **done** — *Print solution* (the board, then the solved grid) |
+| Save as image (PNG) | ✅ `WriteAsPNGDialog` | ✅ **done** — *Export PNG* |
 | Copy clues / filled | ✅ | ✅ **done** — the Copy menu (givens) |
 | Copy PM grid, library, SimpleSudoku (formatted grid) | ✅ | ✅ **done** — the Copy menu (puzzle with candidates, library line, formatted grid) |
 | Copy PM grid with step | ✅ | ❌ (the *with step* format is also a known core gap) |
@@ -107,8 +107,9 @@ a **precomputed puzzle bank** for instant starts, technique guides with solver-v
 ## Status of the gaps
 
 Done since this comparison was first made: **ColorKu** (with per-digit colours), the **solution-path
-trainer** (Path tab), **cell zoom**, **manual colouring** of cells and candidates, and puzzle management
-(a **library**, a **history** and named **save points**, in the Puzzles dialog).
+trainer** (Path tab), **cell zoom**, **manual colouring** of cells and candidates, puzzle management
+(a **library**, a **history** and named **save points**, in the Puzzles dialog), and the two
+outputs, **print solution** and **PNG**.
 
-Still open, roughly by value: extended print / print solution / PNG; the *with step* format; generator
+Still open, roughly by value: extended print; the *with step* format; generator
 patterns/symmetry in the app; backdoor search; and game modes with training configuration.

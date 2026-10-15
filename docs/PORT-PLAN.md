@@ -150,7 +150,8 @@ in core turns any step into drawable data and is shared with the website diagram
 Settings can choose which individual techniques a hint may use (`Settings → Techniques a hint may
 use`; untick one and neither a hint nor "All steps" uses it, while "Hints use" still caps the
 level). The solution path, print and the PNG icons are done too: the Summary tab calls `analyze()`,
-the top bar has Print, and `make-png-icons.mjs` writes the PNG icons.
+the top bar has Print, and `make-png-icons.mjs` writes the PNG icons. The top bar also prints the
+solved grid after the board (*Print solution*) and exports the board as a `.png` image (*Export PNG*).
 
 ## Status (M5, first version)
 
