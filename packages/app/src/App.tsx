@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { defaultSolverSteps } from '@hodoku/core';
+import { defaultSolverSteps, SOLUTION_TYPE_INFO } from '@hodoku/core';
 import { Board } from './Board';
 import { boardSvg, downloadSvg } from './boardImage';
 import { AllSteps } from './components/AllSteps';
@@ -17,6 +17,7 @@ import { SettingsSheet } from './components/SettingsSheet';
 import { SidePanel } from './components/SidePanel';
 import { Summary } from './components/Summary';
 import { TopBar } from './components/TopBar';
+import { TrainingDialog } from './components/TrainingDialog';
 import {
   erase,
   fillCands,
@@ -45,7 +46,7 @@ import {
   wrongCells,
   type GameState,
 } from './game';
-import { HINT_LEVEL_NAMES, LEVEL_NAMES, type CopyFormat, type HintLevel, type HintResult } from './protocol';
+import { HINT_LEVEL_NAMES, LEVEL_NAMES, type CopyFormat, type HintLevel, type HintResult, type PuzzleInfo } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
 import {
   addCapped,
@@ -82,6 +83,9 @@ const NO_TECHNIQUES: string[] = [];
 
 /** How hard each technique is (0 singles ... 5 extreme), for "Solve up to". */
 const STEP_LEVEL = new Map<string, number>(defaultSolverSteps().map((c) => [c.type, c.level]));
+
+/** The readable name of a technique, for the training status line. */
+const TECHNIQUE_NAMES = new Map<string, string>(defaultSolverSteps().map((c) => [c.type, SOLUTION_TYPE_INFO[c.type].stepName]));
 
 function load<T>(key: string): T | null {
   try {
@@ -133,6 +137,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [commandsOpen, setCommandsOpen] = useState(false);
   const [puzzlesOpen, setPuzzlesOpen] = useState(false);
+  const [trainingOpen, setTrainingOpen] = useState(false);
   const [printSolution, setPrintSolution] = useState(false);
   const [library, setLibrary] = useState<LibraryEntry[]>(() => loadJson(localStorageStore, LIBRARY_KEY, []));
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadJson(localStorageStore, HISTORY_KEY, []));
@@ -180,6 +185,7 @@ export function App() {
   const hintLevel = settings.hintLevel ?? 5;
   const disabledTechniques = settings.disabledTechniques ?? NO_TECHNIQUES;
   const colorKuColors = settings.colorKuColors ?? DEFAULT_COLORKU_COLORS;
+  const trainingNames = (settings.trainingTechniques ?? []).map((t) => TECHNIQUE_NAMES.get(t) ?? t).join(', ');
 
   // the completion dialog opens when this session solves the puzzle, not when a finished game is reloaded
   const [solvedOpen, setSolvedOpen] = useState(false);
@@ -256,17 +262,35 @@ export function App() {
     async (level: number) => {
       solver.current.cancel();
       setSettings((s) => ({ ...s, level }));
-      setBusy(`Getting a ${LEVEL_NAMES[level]} puzzle...`);
       setMessage(null);
+      const mode = settingsRef.current.gameMode;
+      const techniques = settingsRef.current.trainingTechniques ?? [];
+      const seen = settingsRef.current.seen?.[level] ?? [];
+      // the bank index bookkeeping is the same for a plain and a training puzzle
+      const remember = (info: PuzzleInfo) => {
+        if (info.bankIndex === undefined) return;
+        const seenNow = settingsRef.current.seen ?? {};
+        // once every puzzle of the level was played the bank picks from all of them again
+        const played = [...new Set([...(seenNow[level] ?? []), info.bankIndex])];
+        setSettings((s) => ({ ...s, seen: { ...seenNow, [level]: played } }));
+      };
+      const names = techniques.map((t) => TECHNIQUE_NAMES.get(t) ?? t).join(', ');
       try {
-        const info = await solver.current.fromBank(level, settingsRef.current.seen?.[level] ?? []);
-        if (info.bankIndex !== undefined) {
-          const seen = settingsRef.current.seen ?? {};
-          // once every puzzle of the level was played the bank picks from all of them again
-          const played = [...new Set([...(seen[level] ?? []), info.bankIndex])];
-          setSettings((s) => ({ ...s, seen: { ...seen, [level]: played } }));
+        if (mode !== 'playing' && techniques.length > 0) {
+          setBusy(`Looking for a ${names} puzzle...`);
+          const info = await solver.current.train(level, techniques, mode === 'learning', seen);
+          if (info === null) {
+            setMessage(`No puzzle needing ${names} was found. Try another level or technique.`);
+            return;
+          }
+          remember(info);
+          startGame(newGame(info));
+        } else {
+          setBusy(`Getting a ${LEVEL_NAMES[level]} puzzle...`);
+          const info = await solver.current.fromBank(level, seen);
+          remember(info);
+          startGame(newGame(info));
         }
-        startGame(newGame(info));
       } catch (e) {
         if (!isCancelled(e)) setMessage((e as Error).message);
       } finally {
@@ -588,6 +612,10 @@ export function App() {
   const commands: Command[] = useMemo(
     () => [
       ...[1, 2, 3, 4, 5].map((l) => ({ label: `New puzzle: ${LEVEL_NAMES[l]}`, run: () => void startNew(l) })),
+      { label: 'Playing mode', run: () => setSettings((s) => ({ ...s, gameMode: 'playing' })) },
+      { label: 'Learning mode…', run: () => setTrainingOpen(true) },
+      { label: 'Practising mode…', run: () => setTrainingOpen(true) },
+      { label: 'Training techniques…', run: () => setTrainingOpen(true) },
       { label: 'Get a hint', hint: 'H', run: () => void askHint(), disabled: !game || solved },
       { label: 'Find all steps', run: () => void askAllSteps(), disabled: !game || solved },
       { label: 'Show the solution path', run: () => { setTab('path'); setSnap((s) => (s === 'peek' ? 'half' : s)); }, disabled: !game },
@@ -633,7 +661,7 @@ export function App() {
         setCommandsOpen((o) => !o);
         return;
       }
-      if (importing || settingsOpen || commandsOpen || puzzlesOpen || e.ctrlKey || e.metaKey) return;
+      if (importing || settingsOpen || commandsOpen || puzzlesOpen || trainingOpen || e.ctrlKey || e.metaKey) return;
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.altKey && e.code.startsWith('Digit') && e.code !== 'Digit0') {
@@ -667,7 +695,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [input, selected, update, importing, settingsOpen, commandsOpen, puzzlesOpen, askHint, applyHint, applyPath, hint, eraseSelected, tab]);
+  }, [input, selected, update, importing, settingsOpen, commandsOpen, puzzlesOpen, trainingOpen, askHint, applyHint, applyPath, hint, eraseSelected, tab]);
 
   const panel = (
     <SidePanel
@@ -737,6 +765,9 @@ export function App() {
         busy={!!busy}
         canUndo={!!game?.past.length}
         canRedo={!!game?.future.length}
+        mode={settings.gameMode}
+        onMode={(m) => setSettings((s) => ({ ...s, gameMode: m }))}
+        onTraining={() => setTrainingOpen(true)}
         onNew={(l) => void startNew(l)}
         onCancel={() => (solver.current.cancel(), setBusy(null))}
         onImport={() => (setImportError(null), setImporting(true))}
@@ -803,7 +834,7 @@ export function App() {
               {busy ?? (selected !== null ? `r${Math.floor(selected / 9) + 1}c${(selected % 9) + 1}${selCands.length ? ` · candidates ${selCands.join(' ')}` : ''}` : (message ?? 'Select a cell'))}
             </span>
             <span className="dim">
-              Mark mistakes {settings.checkMistakes ? 'on' : 'off'} · show candidates {settings.showCands ? 'on' : 'off'}{mode === 'notes' ? ' · notes mode' : ''}{mode === 'color' ? ` · colour mode (${paintTarget === 'cell' ? 'cells' : 'candidates'})` : ''} · autosaved
+              Mark mistakes {settings.checkMistakes ? 'on' : 'off'} · show candidates {settings.showCands ? 'on' : 'off'}{mode === 'notes' ? ' · notes mode' : ''}{mode === 'color' ? ` · colour mode (${paintTarget === 'cell' ? 'cells' : 'candidates'})` : ''}{settings.gameMode !== 'playing' ? ` · ${settings.gameMode} mode${trainingNames ? ` · training: ${trainingNames}` : ''}` : ''} · autosaved
             </span>
           </div>
         </section>
@@ -853,6 +884,7 @@ export function App() {
           onClose={() => setPuzzlesOpen(false)}
         />
       )}
+      {trainingOpen && <TrainingDialog settings={settings} onChange={setSettings} onClose={() => setTrainingOpen(false)} />}
       {solvedOpen && game && (
         <SolvedDialog
           seconds={seconds}

@@ -104,6 +104,18 @@ describe('game', () => {
     expect(wrongCells(afterWrong)).toEqual([cell]);
     expect(remaining(afterWrong)[d]).toBe(before);
   });
+
+  it('uses info.board for the values and candidates when a training board is given', () => {
+    const i = info();
+    const values = i.solution.slice();
+    const cands = new Array<number>(81).fill(0);
+    const g = newGame({ ...i, board: { values, cands } });
+    expect(g.values).toEqual(values);
+    expect(g.cands).toEqual(cands);
+    // the puzzle itself stays the givens; the solved cells are the player's own
+    expect(g.givens).toBe(i.puzzle);
+    expect(g.solution).toEqual(i.solution);
+  });
 });
 
 describe('hint', () => {

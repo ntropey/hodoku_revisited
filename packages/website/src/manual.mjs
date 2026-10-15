@@ -14,7 +14,7 @@ export const MANUAL = [
 <p>Open <a href="../play/">the solver</a>. The first time, it deals you an Easy puzzle. Your game is saved in the browser after every move, so you can close the tab and continue later.</p>
 <h2>The screen</h2>
 <ul>
-<li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Import</em>, <em>Copy</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>
+<li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Mode</em> (Playing, Learning or Practising), <em>Import</em>, <em>Copy</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>
 <li><strong>Board:</strong> Givens are set in the serif face. Your own digits are blue. With <em>ColorKu</em> on (see <em>Settings</em>), digits and candidates are shown as coloured balls instead. <em>Cell zoom</em> (also under <em>Settings</em>) adds an enlarged view of the selected cell under the board.</li>
 <li><strong>Digit pad</strong> below the board, with <em>Value</em>, <em>Notes</em>, <em>Filter</em> and <em>Colour</em> modes. The small number on each key is how many of that digit are still missing.</li>
 <li><strong>Side panel</strong> with <em>Hint</em>, <em>All steps</em> and <em>Summary</em> tabs. On a phone this is a sheet at the bottom that you drag up and down.</li>
@@ -114,6 +114,22 @@ export const MANUAL = [
 <p>Individual techniques can be switched off as well, under <em>Settings → Techniques a hint may use</em>. The level is the upper cap; unticking a technique narrows it further, so a hint never uses a technique you would rather spot yourself. With every technique ticked (the default) nothing changes.</p>
 <h2>All steps</h2>
 <p>The <em>All steps</em> tab lists every step available right now, grouped by technique with counts. Select the steps you want and choose <em>Apply selected</em>, or <em>Refresh</em> after you have changed the board. The <em>Path</em> tab goes further and walks the solver's whole route from here (see <a href="solution-path.html">Solution path</a>).</p>`,
+  },
+  {
+    slug: 'training',
+    title: 'Training modes',
+    summary: 'Playing, Learning and Practising, and how to pick the techniques you drill.',
+    body: `
+<p>The <em>Mode</em> menu in the top bar chooses how a new puzzle is dealt and whether the app helps you into it. There are three modes, as in the original HoDoKu.</p>
+<h2>Playing</h2>
+<p>The normal mode. A new puzzle is a fresh puzzle and nothing is solved for you. This is the default. Pick it from the <em>Mode</em> menu, or with the <em>Playing mode</em> command.</p>
+<h2>Learning</h2>
+<p>Choose one or more techniques to work on. Every newly created sudoku is guaranteed to need at least one of them, and the app solves the puzzle up to the point where that technique applies. You then take over from there, so you always meet the technique in a position where it is the next step.</p>
+<h2>Practising</h2>
+<p>The same guarantee: a new puzzle always needs one of your techniques. Here it is shown in its starting state, with nothing solved for you, so you can test yourself on the technique from the beginning.</p>
+<h2>Picking the techniques</h2>
+<p><em>Learning…</em> and <em>Practising…</em> in the <em>Mode</em> menu open the <strong>Training</strong> dialog. Tick the techniques you want to drill, grouped by difficulty. The same list is also under <em>Training techniques…</em> in the command search (<kbd>Ctrl</kbd>+<kbd>K</kbd>).</p>
+<p>Learning and Practising need at least one technique: until you tick one, their buttons are disabled. When no puzzle of the chosen level needs any of your techniques, the app says so and leaves the board as it is, so try another level or technique. The status line under the board shows the current mode and the techniques you are training.</p>`,
   },
   {
     slug: 'analyzer',

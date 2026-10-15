@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Sudoku2, SOLUTION_TYPE_INFO, parseSudoku, type SolutionType } from '@hodoku/core';
+import { Sudoku2, SOLUTION_TYPE_INFO, parseSudoku, seededRng, type SolutionType } from '@hodoku/core';
 import { isSolved, newGame, removeCands, setValue } from '../src/game';
-import { allHints, analyze, format, hint, path } from '../src/solverApi';
+import { allHints, analyze, format, hint, path, train } from '../src/solverApi';
 
 // Rater and hint are deterministic, so the same board always yields the same first technique.
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -76,5 +76,32 @@ describe('format', () => {
     const s = new Sudoku2();
     parseSudoku(s, format(game.values, game.cands, 'PM_GRID'), false);
     expect(Array.from(s.values)).toEqual(game.values);
+  });
+});
+
+describe('train', () => {
+  // the level-1 bank only contains puzzles that use Full House, Naked Single and Hidden Single,
+  // so Hidden Single is the technique a level-1 training puzzle can actually be found for
+  const TECHNIQUE = 'HIDDEN_SINGLE';
+
+  it('finds a bank puzzle whose solve path uses the technique, and null without one', () => {
+    const info = train(1, [TECHNIQUE], false, [], seededRng(1), 400);
+    expect(info).not.toBeNull();
+    expect(info!.path?.some((p) => p.type === TECHNIQUE)).toBe(true);
+    expect(info!.board).toBeUndefined();
+    expect(train(1, [], false, [])).toBeNull();
+  });
+
+  it('auto-solves the board as far as it goes without the technique', () => {
+    const info = train(1, [TECHNIQUE], true, [], seededRng(1), 400);
+    expect(info).not.toBeNull();
+    const board = info!.board!;
+    expect(board.values).toHaveLength(81);
+    expect(board.cands).toHaveLength(81);
+    // the full solver stops at one of the trained techniques (or the board is already solved)
+    const step = hint(board.values, board.cands, 5);
+    expect(step === null || step.type === TECHNIQUE).toBe(true);
+    // with the technique switched off no step is left: the board is stuck without it
+    expect(hint(board.values, board.cands, 5, [TECHNIQUE])).toBeNull();
   });
 });

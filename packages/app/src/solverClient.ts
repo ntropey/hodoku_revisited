@@ -77,6 +77,14 @@ export class SolverClient {
     return this.puzzle({ kind: 'bank', level, seen });
   }
 
+  /** A bank puzzle that needs at least one of `techniques`; null if none of the level has one. */
+  async train(level: number, techniques: string[], autoSolve: boolean, seen: number[]): Promise<PuzzleInfo | null> {
+    const r = await this.call({ kind: 'train', level, techniques, autoSolve, seen });
+    if (r.kind === 'error') throw new Error(r.message);
+    if (r.kind !== 'train') throw new Error('unexpected response');
+    return r.info;
+  }
+
   analyze(puzzle: string): Promise<PuzzleInfo> {
     return this.puzzle({ kind: 'analyze', puzzle });
   }

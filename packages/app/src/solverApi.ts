@@ -17,7 +17,7 @@ import {
   cellName,
   tables,
 } from '@hodoku/core';
-import { bankPuzzle, isomorph, pickBankIndex, type Rng } from './bank/bank';
+import { bankPuzzle, bankSize, isomorph, pickBankIndex, type Rng } from './bank/bank';
 import type { CopyFormat, HintLevel, HintResult, PathEntry, PuzzleInfo } from './protocol';
 import { techniqueInfo } from './techniqueInfo';
 
@@ -74,6 +74,66 @@ export function fromBank(level: number, seen: readonly number[], rng: Rng = Math
   let info = analyze(isomorph(original, rng));
   if (info.level !== level) info = analyze(original);
   return { ...info, bankIndex: index };
+}
+
+/** Fisher–Yates shuffle in place; returns the same array for convenience. */
+function shuffle<T>(a: T[], rng: Rng): T[] {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** The puzzle solved as far as the solver gets with `techniques` switched off. */
+function trainBoard(puzzle: string, techniques: string[]): { values: number[]; cands: number[] } {
+  const s = new Sudoku2();
+  s.setSudoku(puzzle);
+  const solver = new SudokuSolver();
+  solver.setSudoku(s);
+  const off = new Set(techniques);
+  const configs = defaultSolverSteps().map((c) => ({ ...c, enabled: c.enabled && !off.has(c.type) }));
+  for (;;) {
+    const step = solver.getHint(false, configs);
+    if (step === null || step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') break;
+    solver.doStep(s, step);
+  }
+  const cands = new Array<number>(81).fill(0);
+  for (let i = 0; i < 81; i++) {
+    if (s.values[i] !== 0) continue;
+    let mask = 0;
+    for (let d = 1; d <= 9; d++) if (s.isCandidate(i, d)) mask |= 1 << d;
+    cands[i] = mask;
+  }
+  return { values: Array.from(s.values), cands };
+}
+
+/**
+ * A bank puzzle of the level that needs at least one of `techniques` (a technique the standard
+ * solution uses). Examines puzzles in a random order, skipping `seen`, and stops after `maxTries`
+ * analyses; returns null when none was found. With `autoSolve` the board is solved as far as the
+ * solver can go **without** those techniques, which is the state Learning mode starts from.
+ */
+export function train(level: number, techniques: string[], autoSolve: boolean, seen: readonly number[], rng: Rng = Math.random, maxTries = 500): PuzzleInfo | null {
+  if (techniques.length === 0) return null;
+  const n = bankSize(level);
+  if (n === 0) return null;
+  const seenSet = new Set(seen);
+  const free: number[] = [];
+  const played: number[] = [];
+  for (let i = 0; i < n; i++) (seenSet.has(i) ? played : free).push(i);
+  const order = [...shuffle(free, rng), ...shuffle(played, rng)];
+  const wanted = new Set(techniques);
+  let tries = 0;
+  for (const index of order) {
+    if (tries >= maxTries) break;
+    tries++;
+    const puzzle = bankPuzzle(level, index);
+    const info = analyze(puzzle);
+    if (!info.path?.some((p) => wanted.has(p.type))) continue;
+    return { ...info, bankIndex: index, board: autoSolve ? trainBoard(puzzle, techniques) : undefined };
+  }
+  return null;
 }
 
 /** The board as the solver sees it: values, and only the candidates the player still has. */

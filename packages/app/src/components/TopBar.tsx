@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LEVEL_NAMES } from '../protocol';
-import { formatTime, type CopyWhat } from '../ui';
+import { formatTime, type CopyWhat, type GameMode } from '../ui';
 
 interface Props {
   badge: { level: number; score: number } | null;
@@ -9,6 +9,9 @@ interface Props {
   busy: boolean;
   canUndo: boolean;
   canRedo: boolean;
+  mode: GameMode;
+  onMode: (mode: GameMode) => void;
+  onTraining: () => void;
   onNew: (level: number) => void;
   onCancel: () => void;
   onImport: () => void;
@@ -58,6 +61,13 @@ export function Logo({ size = 28 }: { size?: number }) {
   return <img src="icon.svg" alt="" width={size} height={size} className="logo" />;
 }
 
+/** The label of the current game mode, from the original's Mode menu. */
+const MODE_LABELS: Record<GameMode, string> = {
+  playing: 'Playing',
+  learning: 'Learning',
+  practising: 'Practising',
+};
+
 export function TopBar(p: Props) {
   return (
     <header className="topbar">
@@ -84,6 +94,21 @@ export function TopBar(p: Props) {
               </button>
             ))
           }
+        </Menu>
+        <Menu label={`Mode: ${MODE_LABELS[p.mode]} ▾`}>
+          {(close) => (
+            <>
+              <button role="menuitem" onClick={() => (close(), p.onMode('playing'))}>
+                Playing
+              </button>
+              <button role="menuitem" onClick={() => (close(), p.onTraining())}>
+                Learning…
+              </button>
+              <button role="menuitem" onClick={() => (close(), p.onTraining())}>
+                Practising…
+              </button>
+            </>
+          )}
         </Menu>
         <button onClick={p.onImport}>Import</button>
         <button onClick={p.onPuzzles}>Puzzles</button>
@@ -135,6 +160,9 @@ export function TopBar(p: Props) {
                 New: {LEVEL_NAMES[l]}
               </button>
             ))}
+            <button role="menuitem" onClick={() => (close(), p.onMode('playing'))}>Playing mode</button>
+            <button role="menuitem" onClick={() => (close(), p.onTraining())}>Learning mode…</button>
+            <button role="menuitem" onClick={() => (close(), p.onTraining())}>Practising mode…</button>
             <button role="menuitem" onClick={() => (close(), p.onImport())}>Import</button>
             <button role="menuitem" onClick={() => (close(), p.onPuzzles())}>Puzzles</button>
             <button role="menuitem" disabled={!p.canRestart} onClick={() => (close(), p.onRestart())}>Restart game</button>

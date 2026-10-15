@@ -51,11 +51,11 @@ export function validCands(values: readonly number[]): number[] {
 }
 
 export function newGame(info: PuzzleInfo): GameState {
-  const values = [...info.puzzle].map((c) => (c === '.' || c === '0' ? 0 : Number(c)));
+  const values = info.board ? info.board.values.slice() : [...info.puzzle].map((c) => (c === '.' || c === '0' ? 0 : Number(c)));
   return {
     givens: info.puzzle,
     values,
-    cands: validCands(values),
+    cands: info.board ? info.board.cands.slice() : validCands(values),
     solution: info.solution,
     level: info.level,
     score: info.score,

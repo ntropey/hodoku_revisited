@@ -46,8 +46,8 @@ in the port too, with its own palette (Colour mode).
 
 | Feature | Original | Port |
 |---|---|---|
-| Game modes (Playing / Learning / Practising) | ✅ `GameMode` | ❌ (hints only) |
-| Training configuration (which techniques you drill) | ✅ `ConfigTrainingDialog`, `StepConfig.isEnabledTraining()` | ~ *Techniques a hint may use* is a static filter, not a mode |
+| Game modes (Playing / Learning / Practising) | ✅ `GameMode` | ✅ **done** — the **Mode** menu (Playing, Learning, Practising) with a Training dialog |
+| Training configuration (which techniques you drill) | ✅ `ConfigTrainingDialog`, `StepConfig.isEnabledTraining()` | ~ **done in part** — the training technique set the modes use exists (Training dialog); the per-technique solver/step/training config panels are still not exposed |
 | Solution path, stepped (Next step / All easy steps / Solve up to) | ✅ `SolutionPanel` | ✅ **done** — the **Path** tab |
 | Summary (techniques used, counts, score) | ✅ `SummaryPanel` | ✅ **done** — the **Summary** tab |
 | All possible steps | ✅ | ✅ (All steps) |
@@ -112,9 +112,11 @@ Done since this comparison was first made: **ColorKu** (with per-digit colours),
 trainer** (Path tab), **cell zoom**, **manual colouring** of cells and candidates, **show deviations**,
 the **puzzle tools** (*Restart game*, *Set givens* and *Fill all hidden singles*), puzzle management
 (a **library**, a **history** and named **save points**, in the Puzzles dialog), the copy formats
-(**givens**, **puzzle with candidates**, **library line** and **formatted grid**), and the two
-outputs, **print solution** and **PNG**.
+(**givens**, **puzzle with candidates**, **library line** and **formatted grid**), the two
+outputs, **print solution** and **PNG**, and the **game modes** (Playing / Learning / Practising,
+with a Training dialog for the techniques).
 
 Still open, roughly by value: extended print; the *with step* format; generator
-patterns/symmetry in the app; backdoor search; and game modes with training configuration. The
+patterns/symmetry in the app; backdoor search; and the per-technique solver/step/training config
+panels (the training technique set itself is in the Training dialog). The
 original's separate *Reset game* is not a distinct action in the port; *Restart game* covers it.
