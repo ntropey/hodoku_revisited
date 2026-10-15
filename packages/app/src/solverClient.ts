@@ -95,4 +95,12 @@ export class SolverClient {
     if (r.kind !== 'hint') throw new Error('unexpected response');
     return r.hint;
   }
+
+  /** The solver's remaining steps from this board, in order (the "solution path"). */
+  async path(values: number[], cands: number[]): Promise<HintResult[]> {
+    const r = await this.call({ kind: 'path', values, cands });
+    if (r.kind === 'error') throw new Error(r.message);
+    if (r.kind !== 'path') throw new Error('unexpected response');
+    return r.steps;
+  }
 }

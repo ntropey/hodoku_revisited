@@ -82,7 +82,7 @@ export const MANUAL = [
 <p>This setting limits how hard a hint may be: <em>Singles only</em>, <em>Up to Easy</em>, Medium, Hard, Unfair, or <em>Everything</em>. A puzzle that needs more than the limit allows gets the answer that no such step exists, which is a useful result in itself.</p>
 <p>Individual techniques can be switched off as well, under <em>Settings → Techniques a hint may use</em>. The level is the upper cap; unticking a technique narrows it further, so a hint never uses a technique you would rather spot yourself. With every technique ticked (the default) nothing changes.</p>
 <h2>All steps</h2>
-<p>The <em>All steps</em> tab lists every step available right now, grouped by technique with counts. Select the steps you want and choose <em>Apply selected</em>, or <em>Refresh</em> after you have changed the board.</p>`,
+<p>The <em>All steps</em> tab lists every step available right now, grouped by technique with counts. Select the steps you want and choose <em>Apply selected</em>, or <em>Refresh</em> after you have changed the board. The <em>Path</em> tab goes further and walks the solver's whole route from here (see <a href="solution-path.html">Solution path</a>).</p>`,
   },
   {
     slug: 'analyzer',
@@ -95,6 +95,19 @@ export const MANUAL = [
 <h2>Techniques used</h2>
 <p>The Summary tab lists the techniques on the solution path, with how often each one is used, hardest first. Each name links to its guide. The hardest technique is tagged.</p>
 <p>Paste any puzzle into <em>Import</em> to see its rating before you start. Nothing is sent anywhere: the analysis runs in your browser.</p>`,
+  },
+  {
+    slug: 'solution-path',
+    title: 'Solution path',
+    summary: "Walk the solver's own way through the puzzle, one step at a time.",
+    body: `
+<p>The <em>Path</em> tab lists the steps the solver would take from where you are now to the solution, in order, one row per step: the technique, what it does and how hard it is.</p>
+<h2>Stepping through</h2>
+<ul>
+<li><em>Next step</em> applies the first remaining step to the board, and counts as a hint. The board shows the step (its cells and candidates) before you apply it.</li>
+<li><em>Solve up to</em> applies every step up to a chosen difficulty in one go — pick <em>Up to Medium</em>, for example, and it stops before the first step that is harder.</li>
+</ul>
+<p>The path uses every technique the solver knows, so it is the solver's route and not the one you might take. That makes it useful both for watching how a hard puzzle falls and for practising: solve up to a level and finish the harder part yourself.</p>`,
   },
   {
     slug: 'generator-and-levels',

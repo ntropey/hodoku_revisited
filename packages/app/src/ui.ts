@@ -2,7 +2,7 @@ import type { HintLevel } from './protocol';
 
 export type Mode = 'value' | 'notes' | 'filter';
 export type Theme = 'system' | 'light' | 'dark';
-export type Tab = 'hint' | 'steps' | 'summary';
+export type Tab = 'hint' | 'steps' | 'path' | 'summary';
 
 export interface Settings {
   showCands: boolean;

@@ -12,6 +12,7 @@ interface Props {
 const TABS: [Tab, string][] = [
   ['hint', 'Hint'],
   ['steps', 'All steps'],
+  ['path', 'Path'],
   ['summary', 'Summary'],
 ];
 

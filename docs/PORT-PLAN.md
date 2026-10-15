@@ -178,6 +178,10 @@ empty cell of a row, column or box after a move (off by default; a normal, undoa
 A "ColorKu" setting draws placed digits and candidates as coloured balls instead of numerals, as in the
 original, with a configurable colour per digit (off by default).
 
+The side panel has a fourth tab, "Path": it lists the solver's remaining steps from the current board
+(technique, action, difficulty) with <em>Next step</em> and <em>Solve up to</em> (apply every step up to a
+chosen difficulty), built on a new worker `path` request.
+
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
 tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense (loaded only after consent,
 see below) and `ads.txt` are on the site pages, not in the app; the privacy page discloses advertising.

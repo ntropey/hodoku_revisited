@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { defaultSolverSteps } from '@hodoku/core';
 import { Board } from './Board';
 import { AllSteps } from './components/AllSteps';
 import { BottomSheet, type Snap } from './components/BottomSheet';
@@ -6,6 +7,7 @@ import { CommandMenu, type Command } from './components/CommandMenu';
 import { DigitPad } from './components/DigitPad';
 import { HintView } from './components/HintView';
 import { ImportDialog } from './components/ImportDialog';
+import { PathView } from './components/PathView';
 import { SolvedDialog } from './components/SolvedDialog';
 import { SettingsSheet } from './components/SettingsSheet';
 import { SidePanel } from './components/SidePanel';
@@ -30,7 +32,7 @@ import {
   wrongCells,
   type GameState,
 } from './game';
-import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintResult } from './protocol';
+import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintLevel, type HintResult } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
 import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, type Mode, type Settings, type Tab } from './ui';
 
@@ -40,6 +42,9 @@ const TIME_KEY = 'hodoku-revisited:time';
 
 /** Stable fallback so the "no technique disabled" case keeps the same array reference across renders. */
 const NO_TECHNIQUES: string[] = [];
+
+/** How hard each technique is (0 singles ... 5 extreme), for "Solve up to". */
+const STEP_LEVEL = new Map<string, number>(defaultSolverSteps().map((c) => [c.type, c.level]));
 
 function load<T>(key: string): T | null {
   try {
@@ -77,6 +82,8 @@ export function App() {
   const [filterDigit, setFilterDigit] = useState(0);
   const [hint, setHint] = useState<HintResult | null>(null);
   const [allSteps, setAllSteps] = useState<{ results: HintResult[]; total: Record<string, number> } | null>(null);
+  const [pathSteps, setPathSteps] = useState<HintResult[] | null>(null);
+  const [pathDone, setPathDone] = useState(0);
   const [tab, setTab] = useState<Tab>('hint');
   const [snap, setSnap] = useState<Snap>('peek');
   const [busy, setBusy] = useState<string | null>(null);
@@ -140,6 +147,8 @@ export function App() {
   const clearPanel = useCallback(() => {
     setHint(null);
     setAllSteps(null);
+    setPathSteps(null);
+    setPathDone(0);
     setMessage(null);
   }, []);
 
@@ -162,6 +171,8 @@ export function App() {
     setFilterDigit(0);
     setHint(null);
     setAllSteps(null);
+    setPathSteps(null);
+    setPathDone(0);
     setMessage(null);
     setSeconds(0);
     save(TIME_KEY, { givens: g.givens, seconds: 0 });
@@ -270,6 +281,22 @@ export function App() {
     [game, hintLevel, disabledTechniques],
   );
 
+  /** The solver's remaining steps from the current board (the "solution path"). */
+  const askPath = useCallback(async () => {
+    if (!game) return;
+    setBusy('Finding the solution path...');
+    setMessage(null);
+    try {
+      setPathSteps(await solver.current.path(game.values, game.cands));
+      setPathDone(0);
+    } catch (e) {
+      if (!isCancelled(e)) setMessage((e as Error).message);
+      setPathSteps([]);
+    } finally {
+      setBusy(null);
+    }
+  }, [game]);
+
   // changing which techniques a hint may use throws away the current hint and the All steps list,
   // exactly like changing "Hints use" does; the steps tab then refreshes itself
   useEffect(() => {
@@ -282,6 +309,11 @@ export function App() {
     if (tab === 'steps' && game && !solved && allSteps === null && busy === null) void askAllSteps(true);
   }, [tab, game, solved, allSteps, busy, askAllSteps]);
 
+  // the Path tab is filled the first time it is opened (a move clears the path again)
+  useEffect(() => {
+    if (tab === 'path' && game && pathSteps === null && busy === null) void askPath();
+  }, [tab, game, pathSteps, busy, askPath]);
+
   const applyHint = useCallback(() => {
     if (!hint) return;
     update((g) => {
@@ -291,6 +323,38 @@ export function App() {
       return { ...next, hints: (g.hints ?? 0) + 1 };
     }, true);
   }, [hint, update]);
+
+  // apply the next `count` steps of the (cached) solution path; this does not clear the path, it advances it
+  const applyPath = useCallback(
+    (count: number) => {
+      if (!game || !pathSteps) return;
+      const n = Math.min(count, pathSteps.length - pathDone);
+      if (n <= 0) return;
+      let next = game;
+      for (let k = 0; k < n; k++) {
+        const h = pathSteps[pathDone + k];
+        for (const p of h.marks.place) next = setValue(next, p.cell, p.digit);
+        if (h.marks.elim.length > 0) next = removeCands(next, h.marks.elim);
+      }
+      setGame({ ...next, hints: (game.hints ?? 0) + n });
+      setPathDone(pathDone + n);
+    },
+    [game, pathSteps, pathDone],
+  );
+
+  /** Apply every leading step whose technique is no harder than `level` ("Solve up to"). */
+  const applyUpTo = useCallback(
+    (level: HintLevel) => {
+      if (!pathSteps) return;
+      let n = 0;
+      for (let k = pathDone; k < pathSteps.length; k++) {
+        if ((STEP_LEVEL.get(pathSteps[k].type) ?? 5) <= level) n++;
+        else break;
+      }
+      applyPath(n);
+    },
+    [pathSteps, pathDone, applyPath],
+  );
 
   const doImport = async () => {
     setBusy('Checking puzzle...');
@@ -328,7 +392,8 @@ export function App() {
       ...[1, 2, 3, 4, 5].map((l) => ({ label: `New puzzle: ${LEVEL_NAMES[l]}`, run: () => void startNew(l) })),
       { label: 'Get a hint', hint: 'H', run: () => void askHint(), disabled: !game || solved },
       { label: 'Find all steps', run: () => void askAllSteps(), disabled: !game || solved },
-      { label: 'Apply step', hint: 'Enter', run: applyHint, disabled: !hint },
+      { label: 'Show the solution path', run: () => { setTab('path'); setSnap((s) => (s === 'peek' ? 'half' : s)); }, disabled: !game },
+      { label: 'Apply step', hint: 'Enter', run: () => (tab === 'path' ? applyPath(1) : applyHint()), disabled: tab === 'path' ? !(pathSteps && pathDone < pathSteps.length) : !hint },
       { label: 'Undo', hint: 'Z', run: () => update(undo), disabled: !game?.past.length },
       { label: 'Redo', hint: 'Y', run: () => update(redo), disabled: !game?.future.length },
       { label: 'Erase cell', run: eraseSelected, disabled: selected === null },
@@ -348,7 +413,7 @@ export function App() {
       { label: 'Settings', run: () => setSettingsOpen(true) },
       ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
     ],
-    [askAllSteps, askHint, applyHint, copyPuzzle, eraseSelected, filterDigit, game, hint, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, solved, startNew, update],
+    [askAllSteps, askHint, applyHint, applyPath, copyPuzzle, eraseSelected, filterDigit, game, hint, pathDone, pathSteps, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, solved, startNew, tab, update],
   );
 
   useEffect(() => {
@@ -373,8 +438,10 @@ export function App() {
       else if (e.key === 'n') setMode((m) => (m === 'notes' ? 'value' : 'notes'));
       else if (e.key === 'f') setMode((m) => (m === 'filter' ? 'value' : 'filter'));
       else if (e.key === 'h') void askHint();
-      else if (e.key === 'Enter' && hint) applyHint();
-      else if (e.key === 'Escape') {
+      else if (e.key === 'Enter') {
+        if (tab === 'path') applyPath(1);
+        else if (hint) applyHint();
+      } else if (e.key === 'Escape') {
         setHint(null);
         setFilterDigit(0);
       } else if (e.key === 'z') update(undo);
@@ -389,7 +456,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [input, selected, update, importing, settingsOpen, commandsOpen, askHint, applyHint, hint, eraseSelected]);
+  }, [input, selected, update, importing, settingsOpen, commandsOpen, askHint, applyHint, applyPath, hint, eraseSelected, tab]);
 
   const panel = (
     <SidePanel
@@ -429,11 +496,24 @@ export function App() {
           onApply={applyHint}
         />
       )}
+      {tab === 'path' && (
+        <PathView
+          steps={pathSteps}
+          done={pathDone}
+          busy={busy}
+          disabled={!game}
+          onNext={() => applyPath(1)}
+          onSolveUpTo={applyUpTo}
+          onRefresh={() => void askPath()}
+        />
+      )}
       {tab === 'summary' && <Summary game={game} />}
     </SidePanel>
   );
 
   const selCands = selected !== null && game && game.values[selected] === 0 ? [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((d) => (game.cands[selected] & (1 << d)) !== 0) : [];
+  // on the Path tab the board previews the next step of the solution path
+  const boardHint = tab === 'path' ? (pathSteps?.[pathDone] ?? null) : hint;
 
   return (
     <div className="shell">
@@ -462,7 +542,7 @@ export function App() {
               game={game}
               selected={selected}
               showCands={settings.showCands}
-              hint={hint}
+              hint={boardHint}
               wrong={wrong}
               filter={filterDigit}
               colorKu={settings.colorKu}
