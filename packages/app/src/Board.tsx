@@ -65,7 +65,7 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSe
               key={i}
               className={cls.join(' ')}
               role="gridcell"
-              aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${v}` : candidateLabel(game.cands[i])}`}
+              aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${isGiven(game, i) ? 'given ' : ''}${v}` : showHere ? candidateLabel(game.cands[i]) : ', empty'}`}
               onClick={() => onSelect(i)}
             >
               {v !== 0 ? (

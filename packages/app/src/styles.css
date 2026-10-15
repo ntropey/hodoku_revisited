@@ -215,18 +215,18 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
   .sheet .panel { border: 0; border-radius: 0; max-height: none; flex: 1; min-height: 0; }
   .sheet.snap-peek .hintuse { display: none; }
   .sheet.snap-peek .panelbody { padding-top: 8px; }
+  .topbar { padding: 6px 10px; gap: 6px; }
+  .wide { display: none !important; }
+  .menu.narrow { display: block; }
   .progress.wide, .timer.wide { display: none; }
   .pad { gap: 4px; }
   .key { min-height: 56px; }
   button, select { min-height: 44px; }
 }
 @media (min-width: 600px) and (max-width: 959px) {
-  .timer.wide { display: inline; }
+  .timer.wide { display: inline !important; }
 }
 @media (max-width: 599px) {
-  .topbar { padding: 6px 10px; gap: 6px; }
-  .wide { display: none !important; }
-  .menu.narrow { display: block; }
   .wordmark small { display: none; }
   .padbar .segmented button { min-width: 60px; }
   .statusline .dim { display: none; }
