@@ -12,6 +12,7 @@ interface Props {
   onNew: (level: number) => void;
   onCancel: () => void;
   onImport: () => void;
+  onPuzzles: () => void;
   onCopy: () => void;
   onPrint: () => void;
   onUndo: () => void;
@@ -81,6 +82,7 @@ export function TopBar(p: Props) {
           }
         </Menu>
         <button onClick={p.onImport}>Import</button>
+        <button onClick={p.onPuzzles}>Puzzles</button>
         <button onClick={p.onCopy}>Copy</button>
         <button onClick={p.onPrint}>Print</button>
       </div>
@@ -121,6 +123,7 @@ export function TopBar(p: Props) {
               </button>
             ))}
             <button role="menuitem" onClick={() => (close(), p.onImport())}>Import</button>
+            <button role="menuitem" onClick={() => (close(), p.onPuzzles())}>Puzzles</button>
             <button role="menuitem" onClick={() => (close(), p.onCopy())}>Copy</button>
             <button role="menuitem" onClick={() => (close(), p.onPrint())}>Print</button>
             <button role="menuitem" onClick={() => (close(), p.onCommands())}>Commands</button>

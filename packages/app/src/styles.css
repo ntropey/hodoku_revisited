@@ -253,6 +253,18 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .colorku-colors .kurow label { display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
 .colorku-colors input[type='color'] { width: 100%; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 4px; background: var(--card); cursor: pointer; }
 
+/* your puzzles dialog: library, history and save points */
+.puzzles .tabs { margin: 4px 0 12px; }
+.puzzles .tabs button { min-height: 40px; }
+.puzzles .nameinput { flex: 1; min-width: 0; min-height: 40px; padding: 0 10px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
+.puzzles .note { margin: 12px 0 0; }
+.puzzles .puzzlelist { list-style: none; margin: 12px 0 0; padding: 0; max-height: 44vh; overflow: auto; }
+.puzzles .puzzlelist li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.puzzles .puzzleinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.puzzles .puzzleinfo strong { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.puzzles .puzzleinfo small { font-family: var(--font-mono); font-size: 12px; }
+.puzzles .puzzlelist button { min-height: 34px; padding: 0 12px; }
+
 /* cell zoom: an enlarged view of the selected cell, under the board */
 .zoom { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
 .zoom .zoomcell { flex: none; width: 72px; height: 72px; display: grid; place-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }

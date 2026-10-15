@@ -57,9 +57,9 @@ in the port too, with its own palette (Colour mode).
 
 | Feature | Original | Port |
 |---|---|---|
-| Puzzle library (save/load named puzzles, categories, *Copy library*) | ✅ | ❌ (the port reads the library format on import, but has no library) |
-| History of played puzzles | ✅ `HistoryDialog` | ❌ |
-| Named save points (create / restore) | ✅ `RestoreSavePointDialog` | ~ autosave only |
+| Puzzle library (save/load named puzzles, categories, *Copy library*) | ✅ | ✅ **done** — Puzzles dialog → Library (the port still reads the library format on import) |
+| History of played puzzles | ✅ `HistoryDialog` | ✅ **done** — Puzzles dialog → History |
+| Named save points (create / restore) | ✅ `RestoreSavePointDialog` | ✅ **done** — Puzzles dialog → Saves |
 | Load / save puzzle to a file, Save as | ✅ | ❌ (import/paste and copy only) |
 | Load / save configuration | ✅ | ~ settings in `localStorage` |
 
@@ -106,8 +106,8 @@ a **precomputed puzzle bank** for instant starts, technique guides with solver-v
 ## Status of the gaps
 
 Done since this comparison was first made: **ColorKu** (with per-digit colours), the **solution-path
-trainer** (Path tab), **cell zoom**, and **manual colouring** of cells and candidates.
+trainer** (Path tab), **cell zoom**, **manual colouring** of cells and candidates, and puzzle management
+(a **library**, a **history** and named **save points**, in the Puzzles dialog).
 
-Still open, roughly by value: a puzzle library and history; named save points; extended print / print
-solution / PNG; the remaining copy formats; generator patterns/symmetry in the app; backdoor search;
-and game modes with training configuration.
+Still open, roughly by value: extended print / print solution / PNG; the remaining copy formats; generator
+patterns/symmetry in the app; backdoor search; and game modes with training configuration.
