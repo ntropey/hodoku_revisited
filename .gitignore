@@ -4,5 +4,5 @@ coverage/
 *.log
 .DS_Store
 hodoku.hcfg
-scripts/gen-bank.mjs
+packages/app/scripts/gen-bank.mjs
 packages/website/scripts/gen-examples.mjs

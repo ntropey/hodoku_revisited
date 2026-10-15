@@ -164,11 +164,15 @@ export function wrongCells(g: GameState): number[] {
   return out;
 }
 
-/** How many times each digit is still needed (9 minus placed). */
+/** How many times each digit is still needed (9 minus correctly placed). */
 export function remaining(g: GameState): number[] {
   const left = new Array<number>(10).fill(9);
   left[0] = 0;
-  for (const v of g.values) if (v !== 0) left[v]--;
+  // only a placement that matches the solution counts. A wrong value would otherwise complete a digit
+  // while its correct cell is still empty, and the DigitPad would disable the key for it.
+  g.values.forEach((v, i) => {
+    if (v !== 0 && v === g.solution[i]) left[v]--;
+  });
   return left;
 }
 

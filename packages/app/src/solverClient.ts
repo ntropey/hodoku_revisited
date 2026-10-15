@@ -2,6 +2,19 @@ import type { HintLevel, HintResult, PuzzleInfo, WorkerRequest, WorkerResponse }
 
 type Distribute<T> = T extends unknown ? Omit<T, 'id'> : never;
 
+/** Rejection of a call that was killed by `cancel()`; callers normally ignore it. */
+export class CancelledError extends Error {
+  constructor() {
+    super('cancelled');
+    this.name = 'CancelledError';
+  }
+}
+
+/** True when `e` is the rejection produced by `SolverClient.cancel()`. */
+export function isCancelled(e: unknown): boolean {
+  return e instanceof CancelledError;
+}
+
 /** Talks to the solver worker. `cancel()` kills a long running job (e.g. generating a hard puzzle). */
 export class SolverClient {
   private worker: Worker | null = null;
@@ -18,8 +31,19 @@ export class SolverClient {
         p.resolve(e.data);
       }
     };
+    // the worker failed to load or threw: reject everything in flight and drop it, so a later call retries
+    w.onerror = () => this.fail('The solver failed to start.');
+    w.onmessageerror = () => this.fail('The solver returned an unreadable response.');
     this.worker = w;
     return w;
+  }
+
+  /** Reject every pending call and discard the worker. */
+  private fail(message: string): void {
+    this.worker?.terminate();
+    this.worker = null;
+    for (const p of this.pending.values()) p.reject(new Error(message));
+    this.pending.clear();
   }
 
   private call(req: Distribute<WorkerRequest>): Promise<WorkerResponse> {
@@ -33,7 +57,7 @@ export class SolverClient {
   cancel(): void {
     this.worker?.terminate();
     this.worker = null;
-    for (const p of this.pending.values()) p.reject(new Error('cancelled'));
+    for (const p of this.pending.values()) p.reject(new CancelledError());
     this.pending.clear();
   }
 

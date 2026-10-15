@@ -66,6 +66,19 @@ describe('game', () => {
     });
     expect(isSolved(g)).toBe(true);
   });
+
+  it('counts only placements that match the solution toward a digit being complete', () => {
+    const i = info();
+    const g = newGame(i);
+    const cell = g.values.indexOf(0);
+    const d = i.solution[cell];
+    const before = remaining(g)[d];
+    expect(remaining(setValue(g, cell, d))[d]).toBe(before - 1);
+    const wrongDigit = (d % 9) + 1;
+    const afterWrong = setValue(g, cell, wrongDigit);
+    expect(wrongCells(afterWrong)).toEqual([cell]);
+    expect(remaining(afterWrong)[d]).toBe(before);
+  });
 });
 
 describe('hint', () => {
