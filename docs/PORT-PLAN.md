@@ -152,6 +152,13 @@ use`; untick one and neither a hint nor "All steps" uses it, while "Hints use" s
 level). The solution path, print and the PNG icons are done too: the Summary tab calls `analyze()`,
 the top bar has Print, and `make-png-icons.mjs` writes the PNG icons. The top bar also prints the
 solved grid after the board (*Print solution*) and exports the board as a `.png` image (*Export PNG*).
+*Extended print* builds a book of puzzles: up to five sections, each with its own count (0-30), level,
+mode and candidate setting, one of five layouts (one, two or four puzzles per page, portrait or
+landscape), an optional rating line under each puzzle, and a booklet imposition for the landscape
+layouts. Three small deviations from the original: the port has no *all black* option (nothing on a
+printed puzzle is coloured), it has no manual-duplex half-print pause (the browser's own double-sided
+printing is used), and a Learning section prints a puzzle of the section's level, where the original
+forces Extreme.
 
 ## Status (M5, first version)
 

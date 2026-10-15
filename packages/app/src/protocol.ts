@@ -32,7 +32,8 @@ export type WorkerRequest =
   | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
   | { id: number; kind: 'allHints'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
   | { id: number; kind: 'path'; values: number[]; cands: number[] }
-  | { id: number; kind: 'format'; values: number[]; cands: number[]; mode: CopyFormat };
+  | { id: number; kind: 'format'; values: number[]; cands: number[]; mode: CopyFormat }
+  | { id: number; kind: 'book'; sections: PrintSection[]; techniques: string[] };
 
 /** One technique used on the way from the givens to the solution (the "solve path"). */
 export interface PathEntry {
@@ -58,6 +59,29 @@ export interface PuzzleInfo {
   board?: { values: number[]; cands: number[] };
 }
 
+/** One section of an extended print job: how many puzzles, of which level, in which mode. */
+export interface PrintSection {
+  level: number;
+  count: number;
+  mode: 'playing' | 'learning' | 'practising';
+  /** print the candidates the placed values still allow */
+  cands: boolean;
+}
+
+/** One puzzle of an extended print job, ready to draw. */
+export interface PrintSudoku {
+  /** 81 characters, '.' for empty cells: the givens */
+  givens: string;
+  /** the values to print (a Learning puzzle is solved up to its technique) */
+  values: number[];
+  /** candidate bitmasks, bit d = digit d, only what the values allow */
+  cands: number[];
+  level: number;
+  score: number;
+  /** from the section: whether to print the candidates */
+  showCands: boolean;
+}
+
 export type WorkerResponse =
   | { id: number; kind: 'puzzle'; info: PuzzleInfo }
   | { id: number; kind: 'train'; info: PuzzleInfo | null }
@@ -65,6 +89,7 @@ export type WorkerResponse =
   | { id: number; kind: 'allHints'; results: HintResult[]; total: Record<string, number> }
   | { id: number; kind: 'path'; steps: HintResult[] }
   | { id: number; kind: 'format'; text: string }
+  | { id: number; kind: 'book'; puzzles: PrintSudoku[] }
   | { id: number; kind: 'error'; message: string };
 
 export const LEVEL_NAMES = ['', 'Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'];

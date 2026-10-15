@@ -145,6 +145,8 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .overlay line.weak { stroke-dasharray: 0.12 0.1; }
 /* the solution grid is print-only; see @media print for its layout */
 .solutiongrid { display: none; }
+/* the extended print book is print-only; see @media print for the page layout */
+.bookprint { display: none; }
 
 /* digit row */
 .padwrap { margin-top: 12px; }
@@ -242,6 +244,11 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .field { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .field input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
 .field:has(input[type='checkbox']) { justify-content: flex-start; }
+/* extended print: the five sections of the book, each on its own line */
+.modal-card.extendedprint { width: min(680px, 100%); }
+.printsection { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.printsection-n { min-width: 72px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.printsection .field { padding: 0; border-bottom: 0; }
 .cmd { padding: 8px; }
 .cmd > input { width: 100%; height: 44px; padding: 0 12px; background: transparent; border: 0; border-bottom: 1px solid var(--line); font-size: 16px; }
 .cmd ul { list-style: none; margin: 6px 0 0; padding: 0; max-height: 50vh; overflow: auto; }
@@ -355,4 +362,22 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
   .solutiongrid > div:nth-child(n+19):nth-child(-n+27), .solutiongrid > div:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid #000; }
   .solutiongrid > div:nth-child(n+73) { border-bottom: 0; }
   .solutiongrid .given { font-weight: 700; font-family: var(--font-display); }
+
+  /* the extended print book: the current board is hidden and the imposed pages are shown instead */
+  body.printing-book .boardWrap,
+  body.printing-book .zoom,
+  body.printing-book .solutiongrid { display: none !important; }
+  body.printing-book .boardcol { width: auto; margin: 0; }
+  body.printing-book .bookprint { display: block; }
+  .bookpage { display: grid; gap: 6mm; overflow: hidden; }
+  .bookpage + .bookpage { break-before: page; }
+  .bookpage.slots-0 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+  .bookpage.slots-1 { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  .bookpage.slots-2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .bookpage.slots-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+  .bookpage.slots-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .bookcell { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .booksudoku { flex: 1; min-height: 0; }
+  .booksudoku svg { display: block; width: 100%; height: 100%; }
+  .bookrating { margin-top: 2mm; font: 9pt system-ui, sans-serif; color: #000; text-align: center; }
 }

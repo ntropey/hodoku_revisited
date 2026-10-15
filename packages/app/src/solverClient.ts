@@ -1,4 +1,4 @@
-import type { CopyFormat, HintLevel, HintResult, PuzzleInfo, WorkerRequest, WorkerResponse } from './protocol';
+import type { CopyFormat, HintLevel, HintResult, PrintSection, PrintSudoku, PuzzleInfo, WorkerRequest, WorkerResponse } from './protocol';
 
 type Distribute<T> = T extends unknown ? Omit<T, 'id'> : never;
 
@@ -118,5 +118,13 @@ export class SolverClient {
     if (r.kind === 'error') throw new Error(r.message);
     if (r.kind !== 'format') throw new Error('unexpected response');
     return r.text;
+  }
+
+  /** The puzzles of an extended print job, in section order. */
+  async book(sections: PrintSection[], techniques: string[]): Promise<PrintSudoku[]> {
+    const r = await this.call({ kind: 'book', sections, techniques });
+    if (r.kind === 'error') throw new Error(r.message);
+    if (r.kind !== 'book') throw new Error('unexpected response');
+    return r.puzzles;
   }
 }

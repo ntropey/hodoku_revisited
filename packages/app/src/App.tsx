@@ -3,10 +3,12 @@ import { defaultSolverSteps, SOLUTION_TYPE_INFO } from '@hodoku/core';
 import { Board } from './Board';
 import { boardSvg, downloadSvg } from './boardImage';
 import { AllSteps } from './components/AllSteps';
+import { BookPrint } from './components/BookPrint';
 import { BottomSheet, type Snap } from './components/BottomSheet';
 import { CellZoom } from './components/CellZoom';
 import { CommandMenu, type Command } from './components/CommandMenu';
 import { DigitPad } from './components/DigitPad';
+import { ExtendedPrintDialog } from './components/ExtendedPrintDialog';
 import { HintView } from './components/HintView';
 import { ImportDialog } from './components/ImportDialog';
 import { PathView } from './components/PathView';
@@ -46,7 +48,8 @@ import {
   wrongCells,
   type GameState,
 } from './game';
-import { HINT_LEVEL_NAMES, LEVEL_NAMES, type CopyFormat, type HintLevel, type HintResult, type PuzzleInfo } from './protocol';
+import { imposePages } from './extendedPrint';
+import { HINT_LEVEL_NAMES, LEVEL_NAMES, type CopyFormat, type HintLevel, type HintResult, type PrintSection, type PrintSudoku, type PuzzleInfo } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
 import {
   addCapped,
@@ -139,6 +142,8 @@ export function App() {
   const [puzzlesOpen, setPuzzlesOpen] = useState(false);
   const [trainingOpen, setTrainingOpen] = useState(false);
   const [printSolution, setPrintSolution] = useState(false);
+  const [extendedPrintOpen, setExtendedPrintOpen] = useState(false);
+  const [bookPages, setBookPages] = useState<{ pages: (PrintSudoku | null)[][]; layout: number; rating: boolean } | null>(null);
   const [library, setLibrary] = useState<LibraryEntry[]>(() => loadJson(localStorageStore, LIBRARY_KEY, []));
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadJson(localStorageStore, HISTORY_KEY, []));
   const [saves, setSaves] = useState<SavePoint[]>(() => loadJson(localStorageStore, SAVEPOINTS_KEY, []));
@@ -180,6 +185,22 @@ export function App() {
     window.print();
     return () => window.removeEventListener('afterprint', done);
   }, [printSolution]);
+
+  // print an imposed book: hide the normal page while the browser prints, then drop the book again
+  useEffect(() => {
+    if (!bookPages) return;
+    document.body.classList.add('printing-book');
+    const done = () => {
+      document.body.classList.remove('printing-book');
+      setBookPages(null);
+    };
+    window.addEventListener('afterprint', done);
+    window.print();
+    return () => {
+      window.removeEventListener('afterprint', done);
+      document.body.classList.remove('printing-book');
+    };
+  }, [bookPages]);
 
   const solved = game ? isSolved(game) : false;
   const hintLevel = settings.hintLevel ?? 5;
@@ -538,6 +559,27 @@ export function App() {
     }
   }, [game]);
 
+  /** Build a book of puzzles for extended print: generate every section, impose the pages, then print. */
+  const printBook = useCallback(async (sections: PrintSection[], layout: number, rating: boolean, booklet: boolean) => {
+    setExtendedPrintOpen(false);
+    setPrintSolution(false);
+    setMessage(null);
+    setBusy('Preparing the print job...');
+    try {
+      const puzzles = await solver.current.book(sections, settingsRef.current.trainingTechniques ?? []);
+      if (puzzles.length === 0) {
+        setMessage('No puzzles to print.');
+        return;
+      }
+      const pages = imposePages(puzzles.length, layout, booklet).map((page) => page.map((i) => puzzles[i] ?? null));
+      setBookPages({ pages, layout, rating });
+    } catch (e) {
+      if (!isCancelled(e)) setMessage((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }, []);
+
   /** Load a puzzle from the library or the history: rate it, then start a fresh game from it. */
   const openPuzzle = useCallback(
     (puzzle: string) => {
@@ -647,6 +689,7 @@ export function App() {
       { label: 'Copy formatted grid', run: () => void copyPuzzle('formatted') },
       { label: 'Print', run: () => window.print() },
       { label: 'Print solution', run: () => setPrintSolution(true) },
+      { label: 'Extended print…', run: () => setExtendedPrintOpen(true) },
       { label: 'Export PNG', run: () => void exportPng() },
       { label: 'Settings', run: () => setSettingsOpen(true) },
       ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
@@ -661,7 +704,7 @@ export function App() {
         setCommandsOpen((o) => !o);
         return;
       }
-      if (importing || settingsOpen || commandsOpen || puzzlesOpen || trainingOpen || e.ctrlKey || e.metaKey) return;
+      if (importing || settingsOpen || commandsOpen || puzzlesOpen || trainingOpen || extendedPrintOpen || e.ctrlKey || e.metaKey) return;
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.altKey && e.code.startsWith('Digit') && e.code !== 'Digit0') {
@@ -695,7 +738,7 @@ export function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [input, selected, update, importing, settingsOpen, commandsOpen, puzzlesOpen, trainingOpen, askHint, applyHint, applyPath, hint, eraseSelected, tab]);
+  }, [input, selected, update, importing, settingsOpen, commandsOpen, puzzlesOpen, trainingOpen, extendedPrintOpen, askHint, applyHint, applyPath, hint, eraseSelected, tab]);
 
   const panel = (
     <SidePanel
@@ -775,6 +818,7 @@ export function App() {
         onCopy={(what) => void copyPuzzle(what)}
         onPrint={() => window.print()}
         onPrintSolution={() => setPrintSolution(true)}
+        onExtendedPrint={() => setExtendedPrintOpen(true)}
         onExportPng={() => void exportPng()}
         onUndo={() => update(undo)}
         onRedo={() => update(redo)}
@@ -807,6 +851,7 @@ export function App() {
             />
           )}
           {printSolution && game && <PrintSolution game={game} />}
+          {bookPages && <BookPrint pages={bookPages.pages} layout={bookPages.layout} rating={bookPages.rating} />}
           {settings.cellZoom && game && (
             <CellZoom game={game} selected={selected} showCands={showCandsNow} colorKu={settings.colorKu} colors={colorKuColors} />
           )}
@@ -885,6 +930,14 @@ export function App() {
         />
       )}
       {trainingOpen && <TrainingDialog settings={settings} onChange={setSettings} onClose={() => setTrainingOpen(false)} />}
+      {extendedPrintOpen && (
+        <ExtendedPrintDialog
+          settings={settings}
+          busy={!!busy}
+          onPrint={(sections, layout, rating, booklet) => void printBook(sections, layout, rating, booklet)}
+          onClose={() => setExtendedPrintOpen(false)}
+        />
+      )}
       {solvedOpen && game && (
         <SolvedDialog
           seconds={seconds}

@@ -70,7 +70,7 @@ in the port too, with its own palette (Colour mode).
 | Feature | Original | Port |
 |---|---|---|
 | Print the board | ✅ | ✅ (givens only) |
-| Extended print (booklets, several puzzles per page) | ✅ `ExtendedPrintDialog` | ❌ |
+| Extended print (booklets, several puzzles per page) | ✅ `ExtendedPrintDialog` | ✅ **done** — *Extended print*: up to five sections of puzzles (level, mode, candidates), five layouts, a rating line and booklet imposition on the landscape layouts |
 | Print the solution | ✅ `PrintSolutionDialog` | ✅ **done** — *Print solution* (the board, then the solved grid) |
 | Save as image (PNG) | ✅ `WriteAsPNGDialog` | ✅ **done** — *Export PNG* |
 | Copy clues / filled | ✅ | ✅ **done** — the Copy menu (givens) |
@@ -113,10 +113,11 @@ trainer** (Path tab), **cell zoom**, **manual colouring** of cells and candidate
 the **puzzle tools** (*Restart game*, *Set givens* and *Fill all hidden singles*), puzzle management
 (a **library**, a **history** and named **save points**, in the Puzzles dialog), the copy formats
 (**givens**, **puzzle with candidates**, **library line** and **formatted grid**), the two
-outputs, **print solution** and **PNG**, and the **game modes** (Playing / Learning / Practising,
+outputs, **print solution** and **PNG**, **extended print** (a book of up to five sections, five
+layouts, a rating line and booklet imposition), and the **game modes** (Playing / Learning / Practising,
 with a Training dialog for the techniques).
 
-Still open, roughly by value: extended print; the *with step* format; generator
+Still open, roughly by value: the *with step* format; generator
 patterns/symmetry in the app; backdoor search; and the per-technique solver/step/training config
 panels (the training technique set itself is in the Training dialog). The
 original's separate *Reset game* is not a distinct action in the port; *Restart game* covers it.
