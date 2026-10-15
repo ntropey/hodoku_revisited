@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells } from '../src/game';
+import { clearNotes, notesOf, toggleNote, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells } from '../src/game';
 import { allHints, analyze, hint } from '../src/solverApi';
 
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -154,5 +154,36 @@ describe('all steps', () => {
     const g = newGame(analyze(PUZZLE));
     const { results } = allHints(g.values, g.cands, 0, 50);
     for (const r of results) expect(['FULL_HOUSE', 'NAKED_SINGLE', 'HIDDEN_SINGLE']).toContain(r.type);
+  });
+});
+
+describe('pencil marks', () => {
+  it('are kept apart from the solver candidates, undoable, and cleaned up when a value is placed', () => {
+    const i = info();
+    let g = newGame(i);
+    const cell = g.values.indexOf(0);
+    const candsBefore = g.cands.slice();
+    g = toggleNote(g, cell, 4);
+    g = toggleNote(g, cell, 7);
+    expect(notesOf(g)[cell]).toBe((1 << 4) | (1 << 7));
+    expect(g.cands).toEqual(candsBefore);
+    g = toggleNote(g, cell, 4);
+    expect(notesOf(g)[cell]).toBe(1 << 7);
+    const peer = g.values.findIndex((v, k) => v === 0 && k !== cell && (k % 9 === cell % 9 || Math.floor(k / 9) === Math.floor(cell / 9)));
+    g = toggleNote(g, peer, 3);
+    g = setValue(g, cell, 3 === i.solution[cell] ? 3 : i.solution[cell]);
+    expect(notesOf(g)[cell]).toBe(0);
+    g = undo(g);
+    expect(notesOf(g)[cell]).toBe(1 << 7);
+    g = clearNotes(g);
+    expect(notesOf(g).every((n) => n === 0)).toBe(true);
+    g = undo(g);
+    expect(notesOf(g)[cell]).toBe(1 << 7);
+  });
+  it('old saved games without notes still work', () => {
+    const g = { ...newGame(info()) };
+    delete g.notes;
+    expect(notesOf(g)).toHaveLength(81);
+    expect(toggleNote(g, g.values.indexOf(0), 2).notes).toBeDefined();
   });
 });

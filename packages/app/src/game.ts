@@ -11,6 +11,7 @@ export const ALL_CANDS = 0b1111111110;
 interface Snapshot {
   values: number[];
   cands: number[];
+  notes: number[];
 }
 
 export interface GameState {
@@ -19,6 +20,8 @@ export interface GameState {
   values: number[];
   /** candidate bitmasks per cell, bit d set = digit d is still possible */
   cands: number[];
+  /** the player's own pencil marks (bit d = digit d); separate from `cands`, which the solver uses. Missing in older saves. */
+  notes?: number[];
   solution: number[];
   level: number;
   score: number;
@@ -55,15 +58,16 @@ export function newGame(info: PuzzleInfo): GameState {
   };
 }
 
+export const notesOf = (g: GameState): number[] => g.notes ?? new Array<number>(81).fill(0);
 export const isGiven = (g: GameState, i: number): boolean => g.givens[i] !== '.' && g.givens[i] !== '0';
 export const isSolved = (g: GameState): boolean => g.values.every((v, i) => v === g.solution[i]);
 
 function snapshot(g: GameState): Snapshot {
-  return { values: g.values.slice(), cands: g.cands.slice() };
+  return { values: g.values.slice(), cands: g.cands.slice(), notes: notesOf(g).slice() };
 }
 
-function push(g: GameState, values: number[], cands: number[]): GameState {
-  return { ...g, values, cands, past: [...g.past, snapshot(g)].slice(-200), future: [] };
+function push(g: GameState, values: number[], cands: number[], notes: number[] = notesOf(g)): GameState {
+  return { ...g, values, cands, notes, past: [...g.past, snapshot(g)].slice(-200), future: [] };
 }
 
 /** Place a digit. Removes the digit from the candidates of all peers. */
@@ -73,8 +77,13 @@ export function setValue(g: GameState, i: number, d: number): GameState {
   const cands = g.cands.slice();
   values[i] = d;
   cands[i] = 0;
-  for (const p of PEERS[i]) cands[p] &= ~(1 << d);
-  return push(g, values, cands);
+  const notes = notesOf(g).slice();
+  notes[i] = 0;
+  for (const p of PEERS[i]) {
+    cands[p] &= ~(1 << d);
+    notes[p] &= ~(1 << d);
+  }
+  return push(g, values, cands, notes);
 }
 
 /** Remove a placed digit. Candidates of the cell and its peers are recalculated. */
@@ -99,6 +108,27 @@ function withCands(cands: number[], i: number, mask: number): number[] {
 export function toggleCand(g: GameState, i: number, d: number): GameState {
   if (g.values[i] !== 0) return g;
   return push(g, g.values.slice(), withCands(g.cands, i, g.cands[i] ^ (1 << d)));
+}
+
+/** Turn one pencil mark on or off. */
+export function toggleNote(g: GameState, i: number, d: number): GameState {
+  if (g.values[i] !== 0) return g;
+  const notes = notesOf(g).slice();
+  notes[i] ^= 1 << d;
+  return push(g, g.values.slice(), g.cands.slice(), notes);
+}
+
+/** Remove the pencil marks of one cell. */
+export function clearNotesAt(g: GameState, i: number): GameState {
+  if (notesOf(g)[i] === 0) return g;
+  const notes = notesOf(g).slice();
+  notes[i] = 0;
+  return push(g, g.values.slice(), g.cands.slice(), notes);
+}
+
+/** Remove all pencil marks. */
+export function clearNotes(g: GameState): GameState {
+  return notesOf(g).every((n) => n === 0) ? g : push(g, g.values.slice(), g.cands.slice(), new Array<number>(81).fill(0));
 }
 
 /** Remove candidates (used when a hint is applied). */

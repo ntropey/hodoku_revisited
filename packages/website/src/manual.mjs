@@ -52,13 +52,14 @@ export const MANUAL = [
     title: 'Candidates and filters',
     summary: 'Notes, automatic candidates and the digit filter.',
     body: `
-<h2>Notes</h2>
-<p>Switch the pad to <em>Notes</em> (or press <kbd>N</kbd>) to toggle a candidate in the selected cell instead of entering a value. Candidates are drawn in a fixed 3 by 3 pattern, so a given digit always sits in the same place within the cell.</p>
+<h2>Notes (pencil marks)</h2>
+<p>Switch the pad to <em>Notes</em> (or press <kbd>N</kbd>), select a cell and tap digits to write small pencil marks in it. Tap a digit again to remove it. <em>Erase</em> clears the marks of that cell. The marks are yours: type as many or as few as you like, for example only the digits of a Snyder notation. They stay visible without turning anything else on, and they are saved with the game and covered by undo.</p>
+<p>Marks are drawn in a fixed 3 by 3 pattern, so a digit always sits in the same place within the cell. When you place a value, that digit is removed from the pencil marks of its row, column and box.</p>
+<p><em>Settings → Clear pencil marks</em> wipes all your marks, so you can start a fresh set.</p>
 <h2>Show candidates</h2>
-<p><em>Settings → Show candidates</em> displays the candidates the solver computes for every empty cell: all digits that no peer in the row, column or box already has. When this is off, only the cells involved in a hint show their candidates.</p>
-<p>When you place a value, the app removes that digit from the notes of its peers.</p>
+<p><em>Settings → Show candidates</em> displays the candidates the solver keeps for every empty cell: all digits that no peer in the row, column or box already has. This replaces your pencil marks on screen while it is on, and Notes mode then edits those candidates instead, so you can remove the ones you have ruled out. <em>Settings → Reset candidates</em> restores them to everything the placed values allow. Hints work from these candidates, not from your pencil marks.</p>
 <h2>The digit filter</h2>
-<p>With the pad in <em>Filter</em> mode (<kbd>F</kbd>), tapping a digit highlights every cell that holds it or still has it as a candidate. It is the fastest way to see where a digit can go in each row, column and box. Tap the same digit again to clear the filter.</p>
+<p>With the pad in <em>Filter</em> mode (<kbd>F</kbd>), tapping a digit highlights every cell that holds it or still has it as a candidate, and shows only that digit in those cells. Switching back to Value or Notes turns the filter off. It is the fastest way to see where a digit can go in each row, column and box. Tap the same digit again to clear the filter.</p>
 <p>Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>9</kbd> toggles the filter from the keyboard; on a touch screen, press and hold a digit key for half a second.</p>
 <h2>Mark mistakes</h2>
 <p>With <em>Settings → Mark mistakes</em> on, a value that disagrees with the puzzle's solution is shown in red. It is off by default, because finding the error is often part of the puzzle.</p>`,
@@ -166,7 +167,7 @@ export const MANUAL = [
 <dt>Hints use</dt><dd>The hardest class of technique a hint may use. Also available in the side panel.</dd>
 <dt>New puzzle level</dt><dd>The difficulty used by the plain <em>New puzzle</em> button.</dd>
 <dt>Theme</dt><dd>Follow the system, or force light or dark.</dd>
-<dt>Reset notes</dt><dd>Clear all your notes and start over from the computed candidates.</dd>
+<dt>Clear pencil marks</dt><dd>Remove all the notes you wrote.</dd>\n<dt>Reset candidates</dt><dd>Restore the solver's candidates to everything the placed values allow.</dd>
 <dt>About and license</dt><dd>Where the project comes from, and the GPL text.</dd>
 </dl>
 <p>All data stays on your device. See <a href="../privacy.html">Privacy</a>.</p>`,

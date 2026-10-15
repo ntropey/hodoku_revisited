@@ -5,10 +5,11 @@ interface Props {
   settings: Settings;
   onChange: (s: Settings) => void;
   onResetNotes: () => void;
+  onClearNotes: () => void;
   onClose: () => void;
 }
 
-export function SettingsSheet({ settings, onChange, onResetNotes, onClose }: Props) {
+export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, onClose }: Props) {
   return (
     <div className="modal" role="dialog" aria-label="Settings" aria-modal="true">
       <div className="modal-card">
@@ -50,7 +51,8 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClose }: Pro
           </select>
         </label>
         <div className="row">
-          <button onClick={onResetNotes}>Reset notes</button>
+          <button onClick={onClearNotes}>Clear pencil marks</button>
+          <button onClick={onResetNotes}>Reset candidates</button>
           <span className="spacer" />
           <button className="primary" onClick={onClose}>
             Done

@@ -22,6 +22,9 @@ import {
   removeCands,
   setValue,
   toggleCand,
+  toggleNote,
+  clearNotes,
+  clearNotesAt,
   undo,
   wrongCells,
   type GameState,
@@ -84,6 +87,12 @@ export function App() {
     const g = load<GameState>(SAVE_KEY);
     return t && g && t.givens === g.givens ? t.seconds : 0;
   });
+  // leaving Filter mode switches the filter off
+  const prevMode = useRef(mode);
+  useEffect(() => {
+    if (prevMode.current === 'filter' && mode !== 'filter') setFilterDigit(0);
+    prevMode.current = mode;
+  }, [mode]);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const solver = useRef(new SolverClient());
@@ -198,7 +207,8 @@ export function App() {
         return;
       }
       if (selected === null) return;
-      if (mode === 'notes' && game.values[selected] === 0) update((g) => toggleCand(g, selected, d));
+      // pencil marks are what you see: the solver's candidates when they are shown, otherwise your own notes
+      if (mode === 'notes' && game.values[selected] === 0) update((g) => (settingsRef.current.showCands ? toggleCand(g, selected, d) : toggleNote(g, selected, d)));
       else update((g) => setValue(g, selected, d));
     },
     [game, selected, mode, update],
@@ -287,8 +297,11 @@ export function App() {
   }, [game]);
 
   const eraseSelected = useCallback(() => {
-    if (selected !== null) update((g) => erase(g, selected));
-  }, [selected, update]);
+    if (selected === null) return;
+    // in Notes mode on an empty cell, Erase clears the pencil marks you typed
+    if (mode === 'notes' && !settingsRef.current.showCands && game?.values[selected] === 0) update((g) => clearNotesAt(g, selected));
+    else update((g) => erase(g, selected));
+  }, [selected, update, mode, game]);
 
   const commands: Command[] = useMemo(
     () => [
@@ -303,7 +316,8 @@ export function App() {
       { label: 'Notes mode', hint: 'N', run: () => setMode('notes') },
       { label: 'Filter mode', hint: 'F', run: () => setMode('filter') },
       { label: 'Clear digit filter', run: () => setFilterDigit(0), disabled: filterDigit === 0 },
-      { label: 'Reset notes', run: () => update(fillCands) },
+      { label: 'Clear pencil marks', run: () => update(clearNotes) },
+      { label: 'Reset candidates', run: () => update(fillCands) },
       { label: `${settings.showCands ? 'Hide' : 'Show'} all candidates`, run: () => setSettings((s) => ({ ...s, showCands: !s.showCands })) },
       { label: `Mark mistakes: ${settings.checkMistakes ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, checkMistakes: !s.checkMistakes })) },
       { label: 'Import puzzle', run: () => setImporting(true) },
@@ -448,7 +462,7 @@ export function App() {
               {busy ?? (selected !== null ? `r${Math.floor(selected / 9) + 1}c${(selected % 9) + 1}${selCands.length ? ` · candidates ${selCands.join(' ')}` : ''}` : (message ?? 'Select a cell'))}
             </span>
             <span className="dim">
-              Mark mistakes {settings.checkMistakes ? 'on' : 'off'} · show candidates {settings.showCands ? 'on' : 'off'} · autosaved
+              Mark mistakes {settings.checkMistakes ? 'on' : 'off'} · show candidates {settings.showCands ? 'on' : 'off'}{mode === 'notes' ? ' · notes mode' : ''} · autosaved
             </span>
           </div>
         </section>
@@ -476,6 +490,7 @@ export function App() {
           settings={settings}
           onChange={setSettings}
           onResetNotes={() => update(fillCands)}
+          onClearNotes={() => update(clearNotes)}
           onClose={() => setSettingsOpen(false)}
         />
       )}

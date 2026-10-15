@@ -1,4 +1,4 @@
-import { isGiven, type GameState } from './game';
+import { isGiven, notesOf, type GameState } from './game';
 import type { HintResult } from './protocol';
 import { PEERS } from './solverApi';
 
@@ -26,6 +26,7 @@ function candidateLabel(mask: number): string {
 }
 
 export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSelect }: Props) {
+  const notes = notesOf(game);
   const selValue = selected !== null ? game.values[selected] : 0;
   const peers = selected !== null ? new Set(PEERS[selected]) : new Set<number>();
   const m = hint?.marks;
@@ -59,13 +60,17 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSe
           if (placeMap.has(i)) cls.push('hint-place');
           if (i % 9 === 2 || i % 9 === 5) cls.push('rb');
           if (Math.floor(i / 9) === 2 || Math.floor(i / 9) === 5) cls.push('bb');
-          const showHere = showCands || involved.has(i) || filter !== 0;
+          // what a cell shows: the hint's cells and "show candidates" use the solver's candidates; while filtering only the
+          // filtered digit; otherwise the player's own pencil marks
+          const full = showCands || involved.has(i);
+          const mask = full ? game.cands[i] : filter !== 0 ? game.cands[i] & (1 << filter) : notes[i];
+          const showHere = mask !== 0 || full;
           return (
             <button
               key={i}
               className={cls.join(' ')}
               role="gridcell"
-              aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${isGiven(game, i) ? 'given ' : ''}${v}` : showHere ? candidateLabel(game.cands[i]) : ', empty'}`}
+              aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${isGiven(game, i) ? 'given ' : ''}${v}` : showHere ? candidateLabel(mask) : ', empty'}`}
               onClick={() => onSelect(i)}
             >
               {v !== 0 ? (
@@ -73,7 +78,7 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSe
               ) : showHere ? (
                 <span className="cands">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => {
-                    const on = (game.cands[i] & (1 << d)) !== 0;
+                    const on = (mask & (1 << d)) !== 0;
                     const k = key(i, d);
                     const c: string[] = [];
                     if (elimSet.has(k)) c.push('del');
