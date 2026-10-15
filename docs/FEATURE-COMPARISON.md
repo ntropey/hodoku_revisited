@@ -18,7 +18,7 @@ Two framing notes:
 | Menu | Items |
 |---|---|
 | File | New · Load puzzle · Save puzzle · Save puzzle as · Load config · Save config as · Page setup · Print · **Extended print** · **Save as image (PNG)** · Enter game · Edit game · Play game · Quit |
-| Edit | Undo · Redo · Copy clues · Copy filled · **Copy PM grid** · **Copy PM grid with step** · **Copy library** · Copy SimpleSudoku · Paste · Restart game · Reset game · Config |
+| Edit | Undo · Redo · Copy clues · Copy filled · Copy PM grid · **Copy PM grid with step** · Copy library · Copy SimpleSudoku · Paste · Restart game · Reset game · Config |
 | Mode | **Playing · Learning · Practising** |
 | Options | Show candidates · Show wrong values · **Show deviations** · Show ColorKu · Color cells · Color candidates · Level |
 | Puzzle | Hint · **Solution step** · **Backdoor search** · **History** · Create save point · Restore save point · Set givens · Set all hidden singles |
@@ -71,8 +71,9 @@ in the port too, with its own palette (Colour mode).
 | Extended print (booklets, several puzzles per page) | ✅ `ExtendedPrintDialog` | ❌ |
 | Print the solution | ✅ `PrintSolutionDialog` | ❌ |
 | Save as image (PNG) | ✅ `WriteAsPNGDialog` | ❌ |
-| Copy clues / filled | ✅ | ✅ (Copy) |
-| Copy PM grid, PM grid with step, library, SimpleSudoku | ✅ | ❌ (the *with step* format is also a known core gap) |
+| Copy clues / filled | ✅ | ✅ **done** — the Copy menu (givens) |
+| Copy PM grid, library, SimpleSudoku (formatted grid) | ✅ | ✅ **done** — the Copy menu (puzzle with candidates, library line, formatted grid) |
+| Copy PM grid with step | ✅ | ❌ (the *with step* format is also a known core gap) |
 
 ## Generation and configuration
 
@@ -109,5 +110,5 @@ Done since this comparison was first made: **ColorKu** (with per-digit colours),
 trainer** (Path tab), **cell zoom**, **manual colouring** of cells and candidates, and puzzle management
 (a **library**, a **history** and named **save points**, in the Puzzles dialog).
 
-Still open, roughly by value: extended print / print solution / PNG; the remaining copy formats; generator
+Still open, roughly by value: extended print / print solution / PNG; the *with step* format; generator
 patterns/symmetry in the app; backdoor search; and game modes with training configuration.

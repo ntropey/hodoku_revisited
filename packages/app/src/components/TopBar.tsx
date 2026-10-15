@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LEVEL_NAMES } from '../protocol';
-import { formatTime } from '../ui';
+import { formatTime, type CopyWhat } from '../ui';
 
 interface Props {
   badge: { level: number; score: number } | null;
@@ -13,7 +13,7 @@ interface Props {
   onCancel: () => void;
   onImport: () => void;
   onPuzzles: () => void;
-  onCopy: () => void;
+  onCopy: (what: CopyWhat) => void;
   onPrint: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -83,7 +83,16 @@ export function TopBar(p: Props) {
         </Menu>
         <button onClick={p.onImport}>Import</button>
         <button onClick={p.onPuzzles}>Puzzles</button>
-        <button onClick={p.onCopy}>Copy</button>
+        <Menu label="Copy">
+          {(close) => (
+            <>
+              <button role="menuitem" onClick={() => (close(), p.onCopy('givens'))}>Givens</button>
+              <button role="menuitem" onClick={() => (close(), p.onCopy('pm'))}>Puzzle with candidates</button>
+              <button role="menuitem" onClick={() => (close(), p.onCopy('library'))}>Library line</button>
+              <button role="menuitem" onClick={() => (close(), p.onCopy('formatted'))}>Formatted grid</button>
+            </>
+          )}
+        </Menu>
         <button onClick={p.onPrint}>Print</button>
       </div>
 
@@ -124,7 +133,10 @@ export function TopBar(p: Props) {
             ))}
             <button role="menuitem" onClick={() => (close(), p.onImport())}>Import</button>
             <button role="menuitem" onClick={() => (close(), p.onPuzzles())}>Puzzles</button>
-            <button role="menuitem" onClick={() => (close(), p.onCopy())}>Copy</button>
+            <button role="menuitem" onClick={() => (close(), p.onCopy('givens'))}>Copy givens</button>
+            <button role="menuitem" onClick={() => (close(), p.onCopy('pm'))}>Copy puzzle with candidates</button>
+            <button role="menuitem" onClick={() => (close(), p.onCopy('library'))}>Copy library line</button>
+            <button role="menuitem" onClick={() => (close(), p.onCopy('formatted'))}>Copy formatted grid</button>
             <button role="menuitem" onClick={() => (close(), p.onPrint())}>Print</button>
             <button role="menuitem" onClick={() => (close(), p.onCommands())}>Commands</button>
             <button role="menuitem" onClick={() => (close(), p.onSettings())}>Settings</button>

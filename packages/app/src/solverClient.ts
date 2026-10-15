@@ -1,4 +1,4 @@
-import type { HintLevel, HintResult, PuzzleInfo, WorkerRequest, WorkerResponse } from './protocol';
+import type { CopyFormat, HintLevel, HintResult, PuzzleInfo, WorkerRequest, WorkerResponse } from './protocol';
 
 type Distribute<T> = T extends unknown ? Omit<T, 'id'> : never;
 
@@ -102,5 +102,13 @@ export class SolverClient {
     if (r.kind === 'error') throw new Error(r.message);
     if (r.kind !== 'path') throw new Error('unexpected response');
     return r.steps;
+  }
+
+  /** The board as text in one of the formats the original could copy. */
+  async format(values: number[], cands: number[], mode: CopyFormat): Promise<string> {
+    const r = await this.call({ kind: 'format', values, cands, mode });
+    if (r.kind === 'error') throw new Error(r.message);
+    if (r.kind !== 'format') throw new Error('unexpected response');
+    return r.text;
   }
 }

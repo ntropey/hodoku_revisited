@@ -21,13 +21,17 @@ export interface HintResult {
 export type HintLevel = 0 | 1 | 2 | 3 | 4 | 5;
 export const HINT_LEVEL_NAMES = ['Singles only', 'Up to Easy', 'Up to Medium', 'Up to Hard', 'Up to Unfair', 'Everything'];
 
+/** The text formats the Copy menu can produce, see {@link formatSudoku}. */
+export type CopyFormat = 'PM_GRID' | 'LIBRARY' | 'VALUES_ONLY' | 'CLUES_ONLY_FORMATTED';
+
 export type WorkerRequest =
   | { id: number; kind: 'generate'; level: number }
   | { id: number; kind: 'bank'; level: number; seen: number[] }
   | { id: number; kind: 'analyze'; puzzle: string }
   | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
   | { id: number; kind: 'allHints'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
-  | { id: number; kind: 'path'; values: number[]; cands: number[] };
+  | { id: number; kind: 'path'; values: number[]; cands: number[] }
+  | { id: number; kind: 'format'; values: number[]; cands: number[]; mode: CopyFormat };
 
 /** One technique used on the way from the givens to the solution (the "solve path"). */
 export interface PathEntry {
@@ -56,6 +60,7 @@ export type WorkerResponse =
   | { id: number; kind: 'hint'; hint: HintResult | null }
   | { id: number; kind: 'allHints'; results: HintResult[]; total: Record<string, number> }
   | { id: number; kind: 'path'; steps: HintResult[] }
+  | { id: number; kind: 'format'; text: string }
   | { id: number; kind: 'error'; message: string };
 
 export const LEVEL_NAMES = ['', 'Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'];

@@ -1,6 +1,9 @@
 import type { HintLevel } from './protocol';
 
 export type Mode = 'value' | 'notes' | 'filter' | 'color';
+
+/** The things the Copy menu can put on the clipboard. */
+export type CopyWhat = 'givens' | 'pm' | 'library' | 'formatted';
 export type Theme = 'system' | 'light' | 'dark';
 export type Tab = 'hint' | 'steps' | 'path' | 'summary';
 
