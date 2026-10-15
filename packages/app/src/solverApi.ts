@@ -13,11 +13,12 @@ import {
   SudokuStepFinder,
   type SolutionStep,
   generatePuzzle,
+  formatSudoku,
   cellName,
   tables,
 } from '@hodoku/core';
 import { bankPuzzle, isomorph, pickBankIndex, type Rng } from './bank/bank';
-import type { HintLevel, HintResult, PathEntry, PuzzleInfo } from './protocol';
+import type { CopyFormat, HintLevel, HintResult, PathEntry, PuzzleInfo } from './protocol';
 import { techniqueInfo } from './techniqueInfo';
 
 /** Rate a puzzle and find its solution. Throws if it is invalid or has no unique solution. */
@@ -142,6 +143,11 @@ export function path(values: number[], cands: number[]): HintResult[] {
     solver.doStep(replay, step);
   }
   return steps;
+}
+
+/** One of the text formats the original could copy, for the current board (values and candidates). */
+export function format(values: number[], cands: number[], mode: CopyFormat): string {
+  return formatSudoku(boardToSudoku(values, cands), mode);
 }
 
 /**

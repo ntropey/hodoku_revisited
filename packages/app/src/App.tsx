@@ -37,7 +37,7 @@ import {
   wrongCells,
   type GameState,
 } from './game';
-import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintLevel, type HintResult } from './protocol';
+import { HINT_LEVEL_NAMES, LEVEL_NAMES, type CopyFormat, type HintLevel, type HintResult } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
 import {
   addCapped,
@@ -57,7 +57,7 @@ import {
   type SavePoint,
   type Store,
 } from './store';
-import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, PALETTE, type Mode, type Settings, type Tab } from './ui';
+import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, PALETTE, type CopyWhat, type Mode, type Settings, type Tab } from './ui';
 
 const SAVE_KEY = 'hodoku-revisited:game';
 const SETTINGS_KEY = 'hodoku-revisited:settings';
@@ -431,15 +431,39 @@ export function App() {
     }
   };
 
-  const copyPuzzle = useCallback(async () => {
-    if (!game) return;
-    try {
-      await navigator.clipboard.writeText(game.givens);
-      setMessage('Puzzle copied.');
-    } catch {
-      setMessage(game.givens);
-    }
-  }, [game]);
+  /** The Copy menu: put one of the text formats on the clipboard. Only the givens are made here. */
+  const copyPuzzle = useCallback(
+    async (what: CopyWhat) => {
+      if (!game) return;
+      const label: Record<CopyWhat, string> = {
+        givens: 'givens',
+        pm: 'puzzle with candidates',
+        library: 'library line',
+        formatted: 'formatted grid',
+      };
+      let text: string;
+      try {
+        if (what === 'givens') {
+          text = game.givens;
+        } else {
+          const mode: CopyFormat = what === 'pm' ? 'PM_GRID' : what === 'library' ? 'LIBRARY' : 'CLUES_ONLY_FORMATTED';
+          text = await solver.current.format(game.values, game.cands, mode);
+        }
+      } catch (e) {
+        if (!isCancelled(e)) setMessage((e as Error).message);
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        setMessage(`Copied the ${label[what]}.`);
+      } catch {
+        // the clipboard can be blocked (insecure context): fall back to the text itself, but it is
+        // only readable in the status line when it is short (the grid formats are many lines)
+        setMessage(text.length <= 81 ? text : 'Copy failed.');
+      }
+    },
+    [game],
+  );
 
   /** Load a puzzle from the library or the history: rate it, then start a fresh game from it. */
   const openPuzzle = useCallback(
@@ -537,7 +561,10 @@ export function App() {
       { label: `Cell zoom: ${settings.cellZoom ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, cellZoom: !s.cellZoom })) },
       { label: 'Import puzzle', run: () => setImporting(true) },
       { label: 'Open puzzles…', run: () => setPuzzlesOpen(true) },
-      { label: 'Copy puzzle', run: () => void copyPuzzle() },
+      { label: 'Copy givens', run: () => void copyPuzzle('givens') },
+      { label: 'Copy puzzle with candidates', run: () => void copyPuzzle('pm') },
+      { label: 'Copy library line', run: () => void copyPuzzle('library') },
+      { label: 'Copy formatted grid', run: () => void copyPuzzle('formatted') },
       { label: 'Print', run: () => window.print() },
       { label: 'Settings', run: () => setSettingsOpen(true) },
       ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
@@ -660,7 +687,7 @@ export function App() {
         onCancel={() => (solver.current.cancel(), setBusy(null))}
         onImport={() => (setImportError(null), setImporting(true))}
         onPuzzles={() => setPuzzlesOpen(true)}
-        onCopy={() => void copyPuzzle()}
+        onCopy={(what) => void copyPuzzle(what)}
         onPrint={() => window.print()}
         onUndo={() => update(undo)}
         onRedo={() => update(redo)}
