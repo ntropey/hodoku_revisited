@@ -12,6 +12,10 @@ describe('settings', () => {
     expect(PALETTE.length).toBeGreaterThan(0);
     expect(PALETTE.every((c) => /^#[0-9a-f]{8}$/i.test(c))).toBe(true);
   });
+  it('starts in Playing mode with no training techniques', () => {
+    expect(DEFAULT_SETTINGS.gameMode).toBe('playing');
+    expect(DEFAULT_SETTINGS.trainingTechniques).toEqual([]);
+  });
 });
 
 describe('colorKuColor', () => {

@@ -2,6 +2,9 @@ import type { HintLevel } from './protocol';
 
 export type Mode = 'value' | 'notes' | 'filter' | 'color';
 
+/** The original's three game modes: plain play, learning (auto-solve to the technique) and practising. */
+export type GameMode = 'playing' | 'learning' | 'practising';
+
 /** The things the Copy menu can put on the clipboard. */
 export type CopyWhat = 'givens' | 'pm' | 'library' | 'formatted';
 export type Theme = 'system' | 'light' | 'dark';
@@ -26,6 +29,10 @@ export interface Settings {
   /** mark the cells whose candidate marks differ from what the placed values allow */
   showDeviations: boolean;
   theme: Theme;
+  /** the original's game mode; 'playing' is the plain mode */
+  gameMode: GameMode;
+  /** techniques Training modes drill; a new puzzle is guaranteed to need at least one */
+  trainingTechniques: string[];
   /** bank indices already played, per level */
   seen?: Record<number, number[]>;
 }
@@ -48,6 +55,8 @@ export const DEFAULT_SETTINGS: Settings = {
   cellZoom: false,
   showDeviations: false,
   theme: 'system',
+  gameMode: 'playing',
+  trainingTechniques: [],
 };
 
 /** The ColorKu colour of a digit, falling back to the default palette (for old saves with a short list). */

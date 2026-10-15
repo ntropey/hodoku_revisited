@@ -1,5 +1,5 @@
-import { SOLUTION_TYPE_INFO, defaultSolverSteps } from '@hodoku/core';
 import { HINT_LEVEL_NAMES, LEVEL_NAMES } from '../protocol';
+import { TECHNIQUE_GROUPS } from '../techniqueGroups';
 import { DEFAULT_COLORKU_COLORS, type Settings, type Theme } from '../ui';
 
 interface Props {
@@ -9,18 +9,6 @@ interface Props {
   onClearNotes: () => void;
   onClose: () => void;
 }
-
-/** The techniques a hint may use, grouped by difficulty; INCOMPLETE and GIVE_UP are not real hints. */
-const TECHNIQUES: [number, { type: string; name: string }[]][] = (() => {
-  const byLevel = new Map<number, { type: string; name: string }[]>();
-  for (const c of defaultSolverSteps()) {
-    if (c.type === 'INCOMPLETE' || c.type === 'GIVE_UP') continue;
-    const list = byLevel.get(c.level) ?? [];
-    list.push({ type: c.type, name: SOLUTION_TYPE_INFO[c.type].stepName });
-    byLevel.set(c.level, list);
-  }
-  return [...byLevel.entries()].sort((a, b) => a[0] - b[0]);
-})();
 
 export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, onClose }: Props) {
   const disabled = new Set(settings.disabledTechniques);
@@ -91,7 +79,7 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
           <summary>Techniques a hint may use</summary>
           <p>Untick a technique to keep hints from using it. Every technique is on by default. The <em>Hints use</em> level above still caps how hard a hint may be.</p>
           <div className="techscroll">
-            {TECHNIQUES.map(([level, list]) => (
+            {TECHNIQUE_GROUPS.map(([level, list]) => (
               <div key={level}>
                 <h3>{LEVEL_NAMES[level]}</h3>
                 {list.map((t) => (

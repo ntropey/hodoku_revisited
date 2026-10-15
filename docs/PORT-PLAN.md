@@ -192,6 +192,13 @@ stored on the game, covered by undo, and cleared with one command. The command m
 game*, *Set givens* and *Fill all hidden singles*, and a *Show deviations* setting marks the cells whose
 candidates differ from what the placed values allow.
 
+Game modes (the original's Mode menu): a _Mode_ menu in the top bar and a command-menu entry pick
+Playing (the default), Learning or Practising. Learning and Practising drill a set of techniques chosen
+in a Training dialog (grouped by difficulty, shared with the hints list): a new puzzle is drawn from the
+bank only if its solve path uses at least one of them, and in Learning it is also solved up to the point
+where that technique applies (the board state comes back with the puzzle from the worker's `train`
+request; Practising starts from the givens). The status line shows the mode and the techniques.
+
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
 tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense (loaded only after consent,
 see below) and `ads.txt` are on the site pages, not in the app; the privacy page discloses advertising.

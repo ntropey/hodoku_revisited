@@ -27,6 +27,7 @@ export type CopyFormat = 'PM_GRID' | 'LIBRARY' | 'VALUES_ONLY' | 'CLUES_ONLY_FOR
 export type WorkerRequest =
   | { id: number; kind: 'generate'; level: number }
   | { id: number; kind: 'bank'; level: number; seen: number[] }
+  | { id: number; kind: 'train'; level: number; techniques: string[]; autoSolve: boolean; seen: number[] }
   | { id: number; kind: 'analyze'; puzzle: string }
   | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
   | { id: number; kind: 'allHints'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
@@ -53,10 +54,13 @@ export interface PuzzleInfo {
   path?: PathEntry[];
   /** Set for puzzles from the bank: its index in the level's list (to avoid repeats) */
   bankIndex?: number;
+  /** Set by a training puzzle in Learning mode: the board solved up to the trained technique. */
+  board?: { values: number[]; cands: number[] };
 }
 
 export type WorkerResponse =
   | { id: number; kind: 'puzzle'; info: PuzzleInfo }
+  | { id: number; kind: 'train'; info: PuzzleInfo | null }
   | { id: number; kind: 'hint'; hint: HintResult | null }
   | { id: number; kind: 'allHints'; results: HintResult[]; total: Record<string, number> }
   | { id: number; kind: 'path'; steps: HintResult[] }
