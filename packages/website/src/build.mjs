@@ -401,6 +401,9 @@ for (const [id, , w] of FONTS) cpSync(join(fontSrc, id, 'files', `${id}-latin-${
 if (existsSync(appDist)) cpSync(appDist, join(out, 'play'), { recursive: true });
 else console.warn('packages/app/dist not found: the site is built without /play/');
 
+// a custom domain (anything but github.io) gets a CNAME file so Pages keeps serving it
+if (siteUrl && siteUrl !== '/' && !new URL(siteUrl).hostname.endsWith('github.io')) writeFileSync(join(out, 'CNAME'), new URL(siteUrl).hostname + '\n');
+
 const gated = Boolean(process.env.SITE_PASSWORD);
 if (!gated && siteUrl !== '/') {
   const urls = pages.map(([p]) => p).filter((p) => p !== '404.html').map((p) => siteUrl + p.replace(/index\.html$/, ''));

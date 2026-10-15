@@ -44,7 +44,7 @@ jobs:
           SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
       - run: pnpm --filter @hodoku/website build
         env:
-          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          SITE_URL: https://hodokurevisited.com/
           SITE_PASSWORD: ${{ inputs.public && '' || secrets.SITE_PASSWORD }}
       - uses: actions/upload-pages-artifact@v3
         with:
