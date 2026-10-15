@@ -141,6 +141,8 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .overlay line { stroke: var(--accent); stroke-width: 0.045; stroke-linecap: round; opacity: 0.75; }
 .overlay line.weak { stroke-dasharray: 0.12 0.1; }
+/* the solution grid is print-only; see @media print for its layout */
+.solutiongrid { display: none; }
 
 /* digit row */
 .padwrap { margin-top: 12px; }
@@ -335,4 +337,19 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
   .cell .ku { display: none !important; }
   .cell .kuval { display: inline !important; }
   .cands { display: none; }
+  /* the solution grid prints after the board: 9 equal columns, thin cell borders, thick box borders */
+  .solutiongrid {
+    display: grid; grid-template-columns: repeat(9, 1fr); width: 16cm; margin: 12px auto 0;
+    border: 2px solid #000; break-inside: avoid;
+  }
+  .solutiongrid > div {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-right: 1px solid #999; border-bottom: 1px solid #999;
+    font-size: 13px; font-family: var(--font-ui); color: #000;
+  }
+  .solutiongrid > div:nth-child(9n+3), .solutiongrid > div:nth-child(9n+6) { border-right: 2px solid #000; }
+  .solutiongrid > div:nth-child(9n) { border-right: 0; }
+  .solutiongrid > div:nth-child(n+19):nth-child(-n+27), .solutiongrid > div:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid #000; }
+  .solutiongrid > div:nth-child(n+73) { border-bottom: 0; }
+  .solutiongrid .given { font-weight: 700; font-family: var(--font-display); }
 }

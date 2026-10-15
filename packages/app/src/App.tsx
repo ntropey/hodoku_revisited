@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defaultSolverSteps } from '@hodoku/core';
 import { Board } from './Board';
+import { boardSvg, downloadSvg } from './boardImage';
 import { AllSteps } from './components/AllSteps';
 import { BottomSheet, type Snap } from './components/BottomSheet';
 import { CellZoom } from './components/CellZoom';
@@ -9,6 +10,7 @@ import { DigitPad } from './components/DigitPad';
 import { HintView } from './components/HintView';
 import { ImportDialog } from './components/ImportDialog';
 import { PathView } from './components/PathView';
+import { PrintSolution } from './components/PrintSolution';
 import { PuzzlesDialog } from './components/PuzzlesDialog';
 import { SolvedDialog } from './components/SolvedDialog';
 import { SettingsSheet } from './components/SettingsSheet';
@@ -125,6 +127,7 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [commandsOpen, setCommandsOpen] = useState(false);
   const [puzzlesOpen, setPuzzlesOpen] = useState(false);
+  const [printSolution, setPrintSolution] = useState(false);
   const [library, setLibrary] = useState<LibraryEntry[]>(() => loadJson(localStorageStore, LIBRARY_KEY, []));
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadJson(localStorageStore, HISTORY_KEY, []));
   const [saves, setSaves] = useState<SavePoint[]>(() => loadJson(localStorageStore, SAVEPOINTS_KEY, []));
@@ -157,6 +160,15 @@ export function App() {
     if (settings.theme === 'system') root.removeAttribute('data-theme');
     else root.setAttribute('data-theme', settings.theme);
   }, [settings.theme]);
+
+  // print the board and the solution grid, then drop the grid again
+  useEffect(() => {
+    if (!printSolution) return;
+    const done = () => setPrintSolution(false);
+    window.addEventListener('afterprint', done);
+    window.print();
+    return () => window.removeEventListener('afterprint', done);
+  }, [printSolution]);
 
   const solved = game ? isSolved(game) : false;
   const hintLevel = settings.hintLevel ?? 5;
@@ -465,6 +477,26 @@ export function App() {
     [game],
   );
 
+  /** Export the current board as a PNG (board only: grid, values, candidates, colours). */
+  const exportPng = useCallback(async () => {
+    if (!game) return;
+    try {
+      const svg = boardSvg(game.values, game.cands, {
+        showCands: settingsRef.current.showCands,
+        colorKu: settingsRef.current.colorKu,
+        colorKuColors: settingsRef.current.colorKuColors,
+        cellColors: game.cellColors,
+        candColors: game.candColors,
+        palette: PALETTE,
+        givens: game.givens,
+      });
+      await downloadSvg(svg, 'hodoku.png');
+      setMessage('Saved hodoku.png.');
+    } catch (e) {
+      setMessage((e as Error).message);
+    }
+  }, [game]);
+
   /** Load a puzzle from the library or the history: rate it, then start a fresh game from it. */
   const openPuzzle = useCallback(
     (puzzle: string) => {
@@ -566,10 +598,12 @@ export function App() {
       { label: 'Copy library line', run: () => void copyPuzzle('library') },
       { label: 'Copy formatted grid', run: () => void copyPuzzle('formatted') },
       { label: 'Print', run: () => window.print() },
+      { label: 'Print solution', run: () => setPrintSolution(true) },
+      { label: 'Export PNG', run: () => void exportPng() },
       { label: 'Settings', run: () => setSettingsOpen(true) },
       ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
     ],
-    [askAllSteps, askHint, applyHint, applyPath, copyPuzzle, eraseSelected, filterDigit, game, hint, pathDone, pathSteps, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, settings.cellZoom, solved, startNew, tab, update],
+    [askAllSteps, askHint, applyHint, applyPath, copyPuzzle, eraseSelected, exportPng, filterDigit, game, hint, pathDone, pathSteps, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, settings.cellZoom, solved, startNew, tab, update],
   );
 
   useEffect(() => {
@@ -689,6 +723,8 @@ export function App() {
         onPuzzles={() => setPuzzlesOpen(true)}
         onCopy={(what) => void copyPuzzle(what)}
         onPrint={() => window.print()}
+        onPrintSolution={() => setPrintSolution(true)}
+        onExportPng={() => void exportPng()}
         onUndo={() => update(undo)}
         onRedo={() => update(redo)}
         onSettings={() => setSettingsOpen(true)}
@@ -716,6 +752,7 @@ export function App() {
               onSelect={setSelected}
             />
           )}
+          {printSolution && game && <PrintSolution game={game} />}
           {settings.cellZoom && game && (
             <CellZoom game={game} selected={selected} showCands={showCandsNow} colorKu={settings.colorKu} colors={colorKuColors} />
           )}
