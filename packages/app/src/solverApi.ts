@@ -227,7 +227,7 @@ export function hint(values: number[], cands: number[], level: HintLevel = 5, di
   const solver = new SudokuSolver();
   solver.setSudoku(s);
   const off = new Set(disabled);
-  const configs = defaultSolverSteps().map((c) => ({ ...c, enabled: c.enabled && c.level <= level && !off.has(c.type) }));
+  const configs = defaultSolverSteps().map((c) => ({ ...c, enabled: c.enabled && (level === 0 || c.level <= level) && !off.has(c.type) }));
   const step = solver.getHint(level === 0, configs);
   if (step === null || step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') return null;
   return toHintResult(step, before);

@@ -157,12 +157,9 @@ describe('puzzle bank', () => {
 describe('hint level', () => {
   it('singles only never returns a harder technique', () => {
     const g = newGame(analyze('1....7.9..3..2...8..96..5....53..9...1..8...26....4...3......1..4......7..7...3..'));
-    for (let k = 0; k < 40; k++) {
-      const h = hint(g.values, g.cands, 0);
-      if (h === null) break;
-      expect(['FULL_HOUSE', 'NAKED_SINGLE', 'HIDDEN_SINGLE']).toContain(h.type);
-      break;
-    }
+    const h = hint(g.values, g.cands, 0);
+    expect(h).not.toBeNull();
+    expect(['FULL_HOUSE', 'NAKED_SINGLE', 'HIDDEN_SINGLE']).toContain(h!.type);
   });
   it('a chain hint has notation', async () => {
     const data = (await import('../src/bank/bank.json')).default as Record<string, string[]>;
