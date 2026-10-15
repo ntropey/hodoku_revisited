@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { isGiven, notesOf, type GameState } from './game';
 import type { HintResult } from './protocol';
 import { PEERS } from './solverApi';
@@ -15,6 +16,16 @@ interface Props {
   colorKu?: boolean;
   /** ColorKu colour per digit 1-9 */
   colors?: readonly string[];
+  /** the player's own cell colours (palette index per cell, 0 = none) */
+  cellColors?: readonly number[];
+  /** the player's own candidate colours (palette index per `cell * 9 + digit - 1`) */
+  candColors?: readonly number[];
+  /** the palette the colour indices refer to */
+  palette?: readonly string[];
+  /** while colouring: what a click paints; null = normal play */
+  paintTarget?: 'cell' | 'cand' | null;
+  onPaintCell?: (i: number) => void;
+  onPaintCand?: (i: number, d: number) => void;
   onSelect: (i: number) => void;
 }
 
@@ -30,7 +41,7 @@ function candidateLabel(mask: number): string {
   return list.length ? `, candidates ${list.join(' ')}` : ', empty';
 }
 
-export function Board({ game, selected, showCands, hint, wrong, filter = 0, colorKu = false, colors, onSelect }: Props) {
+export function Board({ game, selected, showCands, hint, wrong, filter = 0, colorKu = false, colors, cellColors, candColors, palette, paintTarget = null, onPaintCell, onPaintCand, onSelect }: Props) {
   const notes = notesOf(game);
   const selValue = selected !== null ? game.values[selected] : 0;
   const peers = selected !== null ? new Set(PEERS[selected]) : new Set<number>();
@@ -66,6 +77,9 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, colo
               if (wrong.has(i)) cls.push('wrong');
               if (tinted.has(i)) cls.push(`tint-${tinted.get(i)}`);
               if (placeMap.has(i)) cls.push('hint-place');
+              const ucIdx = cellColors?.[i] ?? 0;
+              const uc = ucIdx > 0 ? palette?.[ucIdx - 1] : undefined;
+              if (uc) cls.push('tint-uc');
               if (i % 9 === 2 || i % 9 === 5) cls.push('rb');
               if (Math.floor(i / 9) === 2 || Math.floor(i / 9) === 5) cls.push('bb');
               // what a cell shows: the hint's cells and "show candidates" use the solver's candidates; while filtering only the
@@ -79,7 +93,8 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, colo
                   className={cls.join(' ')}
                   role="gridcell"
                   aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${isGiven(game, i) ? 'given ' : ''}${v}` : showHere ? candidateLabel(mask) : ', empty'}`}
-                  onClick={() => onSelect(i)}
+                  style={uc ? ({ '--uc': uc } as CSSProperties) : undefined}
+                  onClick={() => (paintTarget === 'cell' ? onPaintCell?.(i) : onSelect(i))}
                 >
                   {v !== 0 ? (
                     colorKu ? (
@@ -102,8 +117,16 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, colo
                         else if (keySet.has(k) || colorMap.has(k)) c.push('keyc');
                         if (colorMap.has(k)) c.push(`col-${colorMap.get(k)! % 2}`);
                         if (filter === d) c.push('fd');
+                        const ccIdx = candColors?.[i * 9 + (d - 1)] ?? 0;
+                        const cc = ccIdx > 0 ? palette?.[ccIdx - 1] : undefined;
+                        if (cc) c.push('painted');
                         return (
-                          <span key={d} className={c.join(' ')}>
+                          <span
+                            key={d}
+                            className={c.join(' ')}
+                            style={cc ? { background: cc } : undefined}
+                            onClick={paintTarget === 'cand' ? (e) => { e.stopPropagation(); onPaintCand?.(i, d); } : undefined}
+                          >
                             {on ? colorKu ? <span className="kudot" style={{ background: colorKuColor(colors, d) }} aria-hidden="true" /> : d : ''}
                           </span>
                         );

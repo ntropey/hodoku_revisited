@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { colorKuColor, DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS } from '../src/ui';
+import { colorKuColor, DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, PALETTE } from '../src/ui';
 
 describe('settings', () => {
   it('defaults ColorKu to off with a colour for every digit', () => {
@@ -7,6 +7,10 @@ describe('settings', () => {
     expect(DEFAULT_SETTINGS.cellZoom).toBe(false);
     expect(DEFAULT_SETTINGS.colorKuColors).toHaveLength(9);
     expect(DEFAULT_COLORKU_COLORS.every((c) => /^#[0-9a-f]{6}$/i.test(c))).toBe(true);
+  });
+  it('has a colouring palette of semi-transparent colours', () => {
+    expect(PALETTE.length).toBeGreaterThan(0);
+    expect(PALETTE.every((c) => /^#[0-9a-f]{8}$/i.test(c))).toBe(true);
   });
 });
 

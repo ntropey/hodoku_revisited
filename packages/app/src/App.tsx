@@ -28,6 +28,9 @@ import {
   toggleNote,
   clearNotes,
   clearNotesAt,
+  clearColors,
+  paintCand,
+  paintCell,
   autoFillLastDigit,
   undo,
   wrongCells,
@@ -35,7 +38,7 @@ import {
 } from './game';
 import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintLevel, type HintResult } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
-import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, type Mode, type Settings, type Tab } from './ui';
+import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, PALETTE, type Mode, type Settings, type Tab } from './ui';
 
 const SAVE_KEY = 'hodoku-revisited:game';
 const SETTINGS_KEY = 'hodoku-revisited:settings';
@@ -81,6 +84,8 @@ export function App() {
   const [selected, setSelected] = useState<number | null>(null);
   const [mode, setMode] = useState<Mode>('value');
   const [filterDigit, setFilterDigit] = useState(0);
+  const [paintColor, setPaintColor] = useState(1);
+  const [paintTarget, setPaintTarget] = useState<'cell' | 'cand'>('cell');
   const [hint, setHint] = useState<HintResult | null>(null);
   const [allSteps, setAllSteps] = useState<{ results: HintResult[]; total: Record<string, number> } | null>(null);
   const [pathSteps, setPathSteps] = useState<HintResult[] | null>(null);
@@ -229,6 +234,11 @@ export function App() {
       if (!game) return;
       if (mode === 'filter') {
         setFilterDigit((f) => (f === d ? 0 : d));
+        return;
+      }
+      if (mode === 'color') {
+        // the digit keys pick a palette colour while colouring
+        if (d >= 0 && d <= PALETTE.length) setPaintColor(d);
         return;
       }
       if (selected === null) return;
@@ -383,10 +393,20 @@ export function App() {
 
   const eraseSelected = useCallback(() => {
     if (selected === null) return;
+    // in Colour mode Erase clears the colour of the selected cell
+    if (mode === 'color') {
+      update((g) => paintCell(g, selected, 0));
+      return;
+    }
     // in Notes mode on an empty cell, Erase clears the pencil marks you typed
     if (mode === 'notes' && !settingsRef.current.showCands && game?.values[selected] === 0) update((g) => clearNotesAt(g, selected));
     else update((g) => erase(g, selected));
   }, [selected, update, mode, game]);
+
+  // colouring: while in Colour mode a click paints with the active colour
+  const paintTargetNow = mode === 'color' ? paintTarget : null;
+  const onPaintCell = useCallback((i: number) => update((g) => paintCell(g, i, paintColor)), [update, paintColor]);
+  const onPaintCand = useCallback((i: number, d: number) => update((g) => paintCand(g, i, d, paintColor)), [update, paintColor]);
 
   const commands: Command[] = useMemo(
     () => [
@@ -401,6 +421,8 @@ export function App() {
       { label: 'Value mode', run: () => setMode('value') },
       { label: 'Notes mode', hint: 'N', run: () => setMode('notes') },
       { label: 'Filter mode', hint: 'F', run: () => setMode('filter') },
+      { label: 'Colour mode', hint: 'C', run: () => setMode('color') },
+      { label: 'Clear colours', run: () => update(clearColors), disabled: !game?.cellColors && !game?.candColors },
       { label: 'Clear digit filter', run: () => setFilterDigit(0), disabled: filterDigit === 0 },
       { label: 'Clear pencil marks', run: () => update(clearNotes) },
       { label: 'Reset candidates', run: () => update(fillCands) },
@@ -439,6 +461,7 @@ export function App() {
       else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') eraseSelected();
       else if (e.key === 'n') setMode((m) => (m === 'notes' ? 'value' : 'notes'));
       else if (e.key === 'f') setMode((m) => (m === 'filter' ? 'value' : 'filter'));
+      else if (e.key === 'c') setMode((m) => (m === 'color' ? 'value' : 'color'));
       else if (e.key === 'h') void askHint();
       else if (e.key === 'Enter') {
         if (tab === 'path') applyPath(1);
@@ -516,6 +539,8 @@ export function App() {
   const selCands = selected !== null && game && game.values[selected] === 0 ? [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((d) => (game.cands[selected] & (1 << d)) !== 0) : [];
   // on the Path tab the board previews the next step of the solution path
   const boardHint = tab === 'path' ? (pathSteps?.[pathDone] ?? null) : hint;
+  // colouring candidates needs to see them, so colour mode turns them on for that target
+  const showCandsNow = settings.showCands || (mode === 'color' && paintTarget === 'cand');
 
   return (
     <div className="shell">
@@ -543,17 +568,23 @@ export function App() {
             <Board
               game={game}
               selected={selected}
-              showCands={settings.showCands}
+              showCands={showCandsNow}
               hint={boardHint}
               wrong={wrong}
               filter={filterDigit}
               colorKu={settings.colorKu}
               colors={colorKuColors}
+              cellColors={game.cellColors}
+              candColors={game.candColors}
+              palette={PALETTE}
+              paintTarget={paintTargetNow}
+              onPaintCell={onPaintCell}
+              onPaintCand={onPaintCand}
               onSelect={setSelected}
             />
           )}
           {settings.cellZoom && game && (
-            <CellZoom game={game} selected={selected} showCands={settings.showCands} colorKu={settings.colorKu} colors={colorKuColors} />
+            <CellZoom game={game} selected={selected} showCands={showCandsNow} colorKu={settings.colorKu} colors={colorKuColors} />
           )}
           <DigitPad
             mode={mode}
@@ -564,6 +595,12 @@ export function App() {
             canErase={selected !== null && !!game && !isGiven(game, selected)}
             colorKu={settings.colorKu}
             colors={colorKuColors}
+            palette={PALETTE}
+            paintColor={paintColor}
+            paintTarget={paintTarget}
+            onPaintColor={setPaintColor}
+            onPaintTarget={setPaintTarget}
+            onClearColors={() => update(clearColors)}
             onDigit={input}
             onFilter={(d) => setFilterDigit((f) => (f === d ? 0 : d))}
             onErase={eraseSelected}
@@ -573,7 +610,7 @@ export function App() {
               {busy ?? (selected !== null ? `r${Math.floor(selected / 9) + 1}c${(selected % 9) + 1}${selCands.length ? ` · candidates ${selCands.join(' ')}` : ''}` : (message ?? 'Select a cell'))}
             </span>
             <span className="dim">
-              Mark mistakes {settings.checkMistakes ? 'on' : 'off'} · show candidates {settings.showCands ? 'on' : 'off'}{mode === 'notes' ? ' · notes mode' : ''} · autosaved
+              Mark mistakes {settings.checkMistakes ? 'on' : 'off'} · show candidates {settings.showCands ? 'on' : 'off'}{mode === 'notes' ? ' · notes mode' : ''}{mode === 'color' ? ` · colour mode (${paintTarget === 'cell' ? 'cells' : 'candidates'})` : ''} · autosaved
             </span>
           </div>
         </section>

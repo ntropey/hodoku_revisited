@@ -16,7 +16,7 @@ export const MANUAL = [
 <ul>
 <li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Import</em>, <em>Copy</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>
 <li><strong>Board:</strong> Givens are set in the serif face. Your own digits are blue. With <em>ColorKu</em> on (see <em>Settings</em>), digits and candidates are shown as coloured balls instead. <em>Cell zoom</em> (also under <em>Settings</em>) adds an enlarged view of the selected cell under the board.</li>
-<li><strong>Digit pad</strong> below the board, with <em>Value</em>, <em>Notes</em> and <em>Filter</em> modes. The small number on each key is how many of that digit are still missing.</li>
+<li><strong>Digit pad</strong> below the board, with <em>Value</em>, <em>Notes</em>, <em>Filter</em> and <em>Colour</em> modes. The small number on each key is how many of that digit are still missing.</li>
 <li><strong>Side panel</strong> with <em>Hint</em>, <em>All steps</em> and <em>Summary</em> tabs. On a phone this is a sheet at the bottom that you drag up and down.</li>
 </ul>
 <h2>Your first moves</h2>
@@ -63,6 +63,21 @@ export const MANUAL = [
 <p>Shortcuts: <kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>9</kbd> toggles the filter from the keyboard; on a touch screen, press and hold a digit key for half a second.</p>
 <h2>Mark mistakes</h2>
 <p>With <em>Settings → Mark mistakes</em> on, a value that disagrees with the puzzle's solution is shown in red. It is off by default, because finding the error is often part of the puzzle.</p>`,
+  },
+  {
+    slug: 'colour',
+    title: 'Colour on the board',
+    summary: 'Paint cells and candidates with your own palette.',
+    body: `
+<p>The pad has a fourth mode, <em>Colour</em> (<kbd>C</kbd>). It is for marking the board up yourself, to keep track of a chain or a pattern you are working on by hand. It is separate from the colours a hint draws, which you cannot change.</p>
+<h2>Painting</h2>
+<ul>
+<li>Pick a colour from the palette, then choose whether you are painting <em>Cells</em> or <em>Candidates</em>.</li>
+<li>With <em>Cells</em>, tap a cell to give it the colour. Choose the <em>×</em> swatch (no colour) to clear a cell, or select it and press <kbd>0</kbd> or <kbd>Backspace</kbd>.</li>
+<li>With <em>Candidates</em>, the candidates are shown in every empty cell; tap one to colour that candidate only.</li>
+<li>The digit keys <kbd>1</kbd> to <kbd>6</kbd> pick a palette colour from the keyboard, and <kbd>0</kbd> selects the eraser.</li>
+</ul>
+<p>Your colours are saved with the game and covered by undo, and <em>Clear colours</em> wipes them all in one step.</p>`,
   },
   {
     slug: 'hints',
@@ -159,6 +174,7 @@ export const MANUAL = [
 <tr><td><kbd>Backspace</kbd>, <kbd>Delete</kbd>, <kbd>0</kbd></td><td>Erase the selected cell</td></tr>
 <tr><td><kbd>N</kbd></td><td>Switch between Value and Notes</td></tr>
 <tr><td><kbd>F</kbd></td><td>Switch between Value and Filter</td></tr>
+<tr><td><kbd>C</kbd></td><td>Switch between Value and Colour</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>9</kbd></td><td>Filter on that digit (again to clear)</td></tr>
 <tr><td><kbd>H</kbd></td><td>Get a hint</td></tr>
 <tr><td><kbd>Enter</kbd></td><td>Apply the hint that is showing</td></tr>

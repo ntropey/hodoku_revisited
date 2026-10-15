@@ -12,6 +12,9 @@ interface Snapshot {
   values: number[];
   cands: number[];
   notes: number[];
+  /** cell/candidate colours (missing in older saves) */
+  cellColors?: number[];
+  candColors?: number[];
 }
 
 export interface GameState {
@@ -22,6 +25,10 @@ export interface GameState {
   cands: number[];
   /** the player's own pencil marks (bit d = digit d); separate from `cands`, which the solver uses. Missing in older saves. */
   notes?: number[];
+  /** the player's own colours: one palette index per cell (0 = none). Missing in older saves. */
+  cellColors?: number[];
+  /** the player's own colours: one palette index per cell/digit (index `cell * 9 + digit - 1`, 0 = none). */
+  candColors?: number[];
   solution: number[];
   level: number;
   score: number;
@@ -63,12 +70,53 @@ export const isGiven = (g: GameState, i: number): boolean => g.givens[i] !== '.'
 export const isSolved = (g: GameState): boolean => g.values.every((v, i) => v === g.solution[i]);
 
 function snapshot(g: GameState): Snapshot {
-  return { values: g.values.slice(), cands: g.cands.slice(), notes: notesOf(g).slice() };
+  return {
+    values: g.values.slice(),
+    cands: g.cands.slice(),
+    notes: notesOf(g).slice(),
+    cellColors: g.cellColors?.slice(),
+    candColors: g.candColors?.slice(),
+  };
 }
 
 function push(g: GameState, values: number[], cands: number[], notes: number[] = notesOf(g)): GameState {
+  // spreading `g` also carries the colours over, so a normal move never drops them
   return { ...g, values, cands, notes, past: [...g.past, snapshot(g)].slice(-200), future: [] };
 }
+
+/** A change that touches only the colours; values and candidates are kept as they are. */
+function pushState(g: GameState, patch: Partial<GameState>): GameState {
+  return { ...g, ...patch, past: [...g.past, snapshot(g)].slice(-200), future: [] };
+}
+
+const candIndex = (cell: number, digit: number) => cell * 9 + (digit - 1);
+
+/** Colour a cell (0 clears it); the colour is an index into the app's palette. */
+export function paintCell(g: GameState, i: number, color: number): GameState {
+  if ((g.cellColors?.[i] ?? 0) === color) return g;
+  const cellColors = g.cellColors ? g.cellColors.slice() : new Array<number>(81).fill(0);
+  cellColors[i] = color;
+  return pushState(g, { cellColors });
+}
+
+/** Colour one candidate of a cell (0 clears it). */
+export function paintCand(g: GameState, i: number, d: number, color: number): GameState {
+  const idx = candIndex(i, d);
+  if ((g.candColors?.[idx] ?? 0) === color) return g;
+  const candColors = g.candColors ? g.candColors.slice() : new Array<number>(81 * 9).fill(0);
+  candColors[idx] = color;
+  return pushState(g, { candColors });
+}
+
+/** Remove every colour from the board. */
+export function clearColors(g: GameState): GameState {
+  return g.cellColors || g.candColors ? pushState(g, { cellColors: undefined, candColors: undefined }) : g;
+}
+
+/** The colour index of a cell (0 = none). */
+export const cellColorAt = (g: GameState, i: number): number => g.cellColors?.[i] ?? 0;
+/** The colour index of a candidate (0 = none). */
+export const candColorAt = (g: GameState, i: number, d: number): number => g.candColors?.[candIndex(i, d)] ?? 0;
 
 /** Place a digit. Removes the digit from the candidates of all peers. */
 export function setValue(g: GameState, i: number, d: number): GameState {
