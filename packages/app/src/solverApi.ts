@@ -125,6 +125,26 @@ export function hint(values: number[], cands: number[], level: HintLevel = 5, di
 }
 
 /**
+ * The solver's own way from the given board to the solution: every step it would take, in order, ready
+ * to draw. The marks of each step are computed against the board just before it, so the first step fits
+ * the board as it is and applying the steps one by one walks the solution path. Always uses the full
+ * technique set (not the hint filters).
+ */
+export function path(values: number[], cands: number[]): HintResult[] {
+  const solver = new SudokuSolver();
+  solver.setSudoku(boardToSudoku(values, cands));
+  solver.solve();
+  const replay = boardToSudoku(values, cands);
+  const steps: HintResult[] = [];
+  for (const step of solver.getSteps()) {
+    if (step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') break;
+    steps.push(toHintResult(step, replay));
+    solver.doStep(replay, step);
+  }
+  return steps;
+}
+
+/**
  * Every step that is available right now ("find all steps"), grouped by technique and sorted from
  * easy to hard. Techniques above `level` are skipped (0 = singles only); at most `perType` steps are
  * returned per technique and `total` tells how many there are. Techniques in `disabled` are dropped

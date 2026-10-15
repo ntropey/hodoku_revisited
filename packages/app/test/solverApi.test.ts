@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SOLUTION_TYPE_INFO, type SolutionType } from '@hodoku/core';
-import { newGame } from '../src/game';
-import { allHints, analyze, hint } from '../src/solverApi';
+import { isSolved, newGame, removeCands, setValue } from '../src/game';
+import { allHints, analyze, hint, path } from '../src/solverApi';
 
 // Rater and hint are deterministic, so the same board always yields the same first technique.
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -43,5 +43,22 @@ describe('disabled techniques', () => {
     const same = allHints(game.values, game.cands, 5, 12, []);
     expect(same.results.map((r) => r.type)).toEqual(all.results.map((r) => r.type));
     expect(same.total).toEqual(all.total);
+  });
+});
+
+describe('solution path', () => {
+  it('walks from the board to the solution one step at a time', () => {
+    const steps = path(game.values, game.cands);
+    expect(steps.length).toBeGreaterThan(0);
+    let g = game;
+    for (const h of steps) {
+      for (const p of h.marks.place) g = setValue(g, p.cell, p.digit);
+      if (h.marks.elim.length > 0) g = removeCands(g, h.marks.elim);
+    }
+    expect(isSolved(g)).toBe(true);
+  });
+
+  it('is empty on a solved board', () => {
+    expect(path(game.solution, game.cands)).toEqual([]);
   });
 });
