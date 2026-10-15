@@ -122,6 +122,20 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .cands .col-0 { background: var(--c0); }
 .cands .col-1 { background: var(--c1); }
 .cands .fd { color: var(--fg); font-weight: 600; }
+/* ColorKu: digits and candidates drawn as coloured balls (the numeral is kept for printing) */
+.cell .ku { width: 74%; height: 74%; flex: none; border-radius: 50%; box-shadow: inset 0 -0.06em 0.1em rgb(0 0 0 / 0.22); }
+.cell .kuval { display: none; }
+.cands .kudot, .key .kudot { display: block; flex: none; border-radius: 50%; box-shadow: inset 0 -1px 1px rgb(0 0 0 / 0.22); }
+.cands .kudot { width: 62%; height: 62%; }
+.key .kudot { width: 26px; height: 26px; }
+/* in ColorKu mode the hint overlays ring the ball instead of colouring a glyph */
+.board.ku .cands .col-0, .board.ku .cands .col-1 { background: transparent; }
+.board.ku .cands .keyc, .board.ku .cands .fin, .board.ku .cands .keep, .board.ku .cands .del, .board.ku .cands .fd { text-decoration: none; font-weight: 400; }
+.board.ku .cands .keyc .kudot { box-shadow: 0 0 0 2px var(--accent); }
+.board.ku .cands .fin .kudot { box-shadow: 0 0 0 2px var(--fin); }
+.board.ku .cands .keep .kudot { box-shadow: 0 0 0 2px var(--place-ring); }
+.board.ku .cands .del .kudot { box-shadow: 0 0 0 2px var(--elim); opacity: 0.6; }
+.board.ku .cands .fd .kudot { box-shadow: 0 0 0 2px var(--fg); }
 .overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .overlay line { stroke: var(--accent); stroke-width: 0.045; stroke-linecap: round; opacity: 0.75; }
 .overlay line.weak { stroke-dasharray: 0.12 0.1; }
@@ -215,6 +229,9 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .techniques h3 { font: 600 11px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 12px 0 0; }
 .techniques .field { padding: 6px 0; font-size: 14px; }
 .techniques > button { margin-top: 12px; }
+.colorku-colors .kurow { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin: 8px 0; }
+.colorku-colors .kurow label { display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.colorku-colors input[type='color'] { width: 100%; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 4px; background: var(--card); cursor: pointer; }
 
 /* tablet and phone: the panel becomes a bottom sheet */
 @media (max-width: 959px) {
@@ -270,5 +287,7 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
   .board { border-color: #000; }
   .cell { background: #fff !important; color: #000 !important; }
   .cell:not(.given) { color: transparent !important; }
+  .cell .ku { display: none !important; }
+  .cell .kuval { display: inline !important; }
   .cands { display: none; }
 }
