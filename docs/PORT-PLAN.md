@@ -175,6 +175,8 @@ returns the grouped solve path. Website: restyled with the same tokens, techniqu
 categories, Before/After toggle and "Open in app" on every diagram, and a nine-chapter manual (`src/manual.mjs`,
 must be kept in step with the app's behaviour). A new Setting, "Auto-fill last digit", fills the last
 empty cell of a row, column or box after a move (off by default; a normal, undoable move, not a hint).
+A "ColorKu" setting draws placed digits and candidates as coloured balls instead of numerals, as in the
+original, with a configurable colour per digit (off by default).
 
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
 tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense (loaded only after consent,

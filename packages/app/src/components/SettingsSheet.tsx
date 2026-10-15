@@ -1,6 +1,6 @@
 import { SOLUTION_TYPE_INFO, defaultSolverSteps } from '@hodoku/core';
 import { HINT_LEVEL_NAMES, LEVEL_NAMES } from '../protocol';
-import type { Settings, Theme } from '../ui';
+import { DEFAULT_COLORKU_COLORS, type Settings, type Theme } from '../ui';
 
 interface Props {
   settings: Settings;
@@ -30,6 +30,12 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
     else next.add(type);
     onChange({ ...settings, disabledTechniques: [...next] });
   };
+  const colors = settings.colorKuColors ?? DEFAULT_COLORKU_COLORS;
+  const setColor = (i: number, value: string) => {
+    const next = [...colors];
+    next[i] = value;
+    onChange({ ...settings, colorKuColors: next });
+  };
   return (
     <div className="modal" role="dialog" aria-label="Settings" aria-modal="true">
       <div className="modal-card">
@@ -46,6 +52,23 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
           <input type="checkbox" checked={settings.autoFill} onChange={(e) => onChange({ ...settings, autoFill: e.target.checked })} />
           Auto-fill the last digit (a row, column or box with one empty cell)
         </label>
+        <label className="field">
+          <input type="checkbox" checked={settings.colorKu} onChange={(e) => onChange({ ...settings, colorKu: e.target.checked })} />
+          ColorKu: draw digits and candidates as coloured balls
+        </label>
+        <details className="about colorku-colors">
+          <summary>ColorKu colours</summary>
+          <p className="note">One colour per digit, used when ColorKu is on.</p>
+          <div className="kurow">
+            {DEFAULT_COLORKU_COLORS.map((fallback, i) => (
+              <label key={i}>
+                <input type="color" value={colors[i] ?? fallback} onChange={(e) => setColor(i, e.target.value)} aria-label={`Colour for digit ${i + 1}`} />
+                {i + 1}
+              </label>
+            ))}
+          </div>
+          <button onClick={() => onChange({ ...settings, colorKuColors: [...DEFAULT_COLORKU_COLORS] })}>Reset to the default colours</button>
+        </details>
         <label className="field">
           Hints use
           <select value={settings.hintLevel} onChange={(e) => onChange({ ...settings, hintLevel: Number(e.target.value) as Settings['hintLevel'] })}>

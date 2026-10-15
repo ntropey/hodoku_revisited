@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import type { Mode } from '../ui';
+import { colorKuColor } from '../ui';
 
 interface Props {
   mode: Mode;
@@ -8,13 +9,17 @@ interface Props {
   filterDigit: number;
   disabled: boolean;
   canErase: boolean;
+  /** draw the keys as coloured balls (ColorKu) */
+  colorKu?: boolean;
+  /** ColorKu colour per digit 1-9 */
+  colors?: readonly string[];
   onDigit: (d: number) => void;
   /** long press: filter this digit */
   onFilter: (d: number) => void;
   onErase: () => void;
 }
 
-export function DigitPad({ mode, onMode, left, filterDigit, disabled, canErase, onDigit, onFilter, onErase }: Props) {
+export function DigitPad({ mode, onMode, left, filterDigit, disabled, canErase, colorKu = false, colors, onDigit, onFilter, onErase }: Props) {
   const timer = useRef<number | null>(null);
   const longPressed = useRef(false);
   const down = (d: number) => {
@@ -62,7 +67,7 @@ export function DigitPad({ mode, onMode, left, filterDigit, disabled, canErase, 
               }}
               onContextMenu={(e) => e.preventDefault()}
             >
-              <span className="d">{d}</span>
+              <span className="d">{colorKu ? <span className="kudot keydot" style={{ background: colorKuColor(colors, d) }} aria-hidden="true" /> : d}</span>
               <small>{done ? '✓' : left[d]}</small>
             </button>
           );

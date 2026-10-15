@@ -14,12 +14,34 @@ export interface Settings {
   hintLevel: HintLevel;
   /** solution types a hint may NOT use; empty means every technique is allowed (the default) */
   disabledTechniques: string[];
+  /** ColorKu: draw digits and candidates as coloured balls instead of numerals */
+  colorKu: boolean;
+  /** ColorKu: the colour per digit 1-9 (hex strings) */
+  colorKuColors: string[];
   theme: Theme;
   /** bank indices already played, per level */
   seen?: Record<number, number[]>;
 }
 
-export const DEFAULT_SETTINGS: Settings = { showCands: false, checkMistakes: false, autoFill: false, level: 1, hintLevel: 5, disabledTechniques: [], theme: 'system' };
+/** The default ColorKu palette: one distinct colour per digit. */
+export const DEFAULT_COLORKU_COLORS = ['#e03131', '#f08c00', '#fab005', '#2f9e44', '#0c8599', '#1971c2', '#6741d9', '#c2255c', '#868e96'];
+
+export const DEFAULT_SETTINGS: Settings = {
+  showCands: false,
+  checkMistakes: false,
+  autoFill: false,
+  level: 1,
+  hintLevel: 5,
+  disabledTechniques: [],
+  colorKu: false,
+  colorKuColors: DEFAULT_COLORKU_COLORS,
+  theme: 'system',
+};
+
+/** The ColorKu colour of a digit, falling back to the default palette (for old saves with a short list). */
+export function colorKuColor(colors: readonly string[] | undefined, digit: number): string {
+  return colors?.[digit - 1] ?? DEFAULT_COLORKU_COLORS[digit - 1] ?? '#888888';
+}
 
 export function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);

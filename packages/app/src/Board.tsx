@@ -1,6 +1,7 @@
 import { isGiven, notesOf, type GameState } from './game';
 import type { HintResult } from './protocol';
 import { PEERS } from './solverApi';
+import { colorKuColor } from './ui';
 
 interface Props {
   game: GameState;
@@ -10,6 +11,10 @@ interface Props {
   wrong: Set<number>;
   /** digit whose candidates are tinted (Filter mode), 0 = off */
   filter?: number;
+  /** draw digits and candidates as coloured balls (ColorKu) */
+  colorKu?: boolean;
+  /** ColorKu colour per digit 1-9 */
+  colors?: readonly string[];
   onSelect: (i: number) => void;
 }
 
@@ -25,7 +30,7 @@ function candidateLabel(mask: number): string {
   return list.length ? `, candidates ${list.join(' ')}` : ', empty';
 }
 
-export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSelect }: Props) {
+export function Board({ game, selected, showCands, hint, wrong, filter = 0, colorKu = false, colors, onSelect }: Props) {
   const notes = notesOf(game);
   const selValue = selected !== null ? game.values[selected] : 0;
   const peers = selected !== null ? new Set(PEERS[selected]) : new Set<number>();
@@ -47,7 +52,7 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSe
 
   return (
     <div className="boardWrap">
-      <div className="board" role="grid" aria-label="Sudoku board">
+      <div className={`board${colorKu ? ' ku' : ''}`} role="grid" aria-label="Sudoku board">
         {Array.from({ length: 9 }, (_, r) => (
           <div key={r} role="row">
             {game.values.slice(r * 9, r * 9 + 9).map((v, c) => {
@@ -77,7 +82,14 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSe
                   onClick={() => onSelect(i)}
                 >
                   {v !== 0 ? (
-                    v
+                    colorKu ? (
+                      <>
+                        <span className="ku" style={{ background: colorKuColor(colors, v) }} aria-hidden="true" />
+                        <span className="kuval">{v}</span>
+                      </>
+                    ) : (
+                      v
+                    )
                   ) : showHere ? (
                     <span className="cands">
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => {
@@ -92,7 +104,7 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSe
                         if (filter === d) c.push('fd');
                         return (
                           <span key={d} className={c.join(' ')}>
-                            {on ? d : ''}
+                            {on ? colorKu ? <span className="kudot" style={{ background: colorKuColor(colors, d) }} aria-hidden="true" /> : d : ''}
                           </span>
                         );
                       })}

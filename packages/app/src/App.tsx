@@ -32,7 +32,7 @@ import {
 } from './game';
 import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintResult } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
-import { DEFAULT_SETTINGS, type Mode, type Settings, type Tab } from './ui';
+import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, type Mode, type Settings, type Tab } from './ui';
 
 const SAVE_KEY = 'hodoku-revisited:game';
 const SETTINGS_KEY = 'hodoku-revisited:settings';
@@ -114,6 +114,7 @@ export function App() {
   const solved = game ? isSolved(game) : false;
   const hintLevel = settings.hintLevel ?? 5;
   const disabledTechniques = settings.disabledTechniques ?? NO_TECHNIQUES;
+  const colorKuColors = settings.colorKuColors ?? DEFAULT_COLORKU_COLORS;
 
   // the completion dialog opens when this session solves the puzzle, not when a finished game is reloaded
   const [solvedOpen, setSolvedOpen] = useState(false);
@@ -340,13 +341,14 @@ export function App() {
       { label: `${settings.showCands ? 'Hide' : 'Show'} all candidates`, run: () => setSettings((s) => ({ ...s, showCands: !s.showCands })) },
       { label: `Mark mistakes: ${settings.checkMistakes ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, checkMistakes: !s.checkMistakes })) },
       { label: `Auto-fill last digit: ${settings.autoFill ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, autoFill: !s.autoFill })) },
+      { label: `ColorKu: ${settings.colorKu ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, colorKu: !s.colorKu })) },
       { label: 'Import puzzle', run: () => setImporting(true) },
       { label: 'Copy puzzle', run: () => void copyPuzzle() },
       { label: 'Print', run: () => window.print() },
       { label: 'Settings', run: () => setSettingsOpen(true) },
       ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
     ],
-    [askAllSteps, askHint, applyHint, copyPuzzle, eraseSelected, filterDigit, game, hint, selected, settings.checkMistakes, settings.showCands, settings.autoFill, solved, startNew, update],
+    [askAllSteps, askHint, applyHint, copyPuzzle, eraseSelected, filterDigit, game, hint, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, solved, startNew, update],
   );
 
   useEffect(() => {
@@ -463,6 +465,8 @@ export function App() {
               hint={hint}
               wrong={wrong}
               filter={filterDigit}
+              colorKu={settings.colorKu}
+              colors={colorKuColors}
               onSelect={setSelected}
             />
           )}
@@ -473,6 +477,8 @@ export function App() {
             filterDigit={filterDigit}
             disabled={!game}
             canErase={selected !== null && !!game && !isGiven(game, selected)}
+            colorKu={settings.colorKu}
+            colors={colorKuColors}
             onDigit={input}
             onFilter={(d) => setFilterDigit((f) => (f === d ? 0 : d))}
             onErase={eraseSelected}
