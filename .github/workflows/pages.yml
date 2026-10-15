@@ -1,16 +1,17 @@
-# Publishes the website (with the app under /play/) to GitHub Pages. Run it by hand once Pages is enabled
-# for the repository (Settings > Pages > Source: GitHub Actions).
-#
-# While the app is in QA the site is behind a temporary password: add a repository secret SITE_PASSWORD
-# (Settings > Secrets and variables > Actions). The gate is soft (see packages/website/src/gate.mjs): it keeps
-# casual visitors and search engines out, it is not real access control. To open the site to everyone, run the
-# workflow with "public" ticked.
+# Publishes the website (with the app under /play/) to GitHub Pages at https://hodokurevisited.com/.
+# Runs on every push to main (after the website tests pass) and can be started by hand.
+# Requires Settings > Pages > Source: GitHub Actions, and `main` allowed in Settings > Environments > github-pages
+# > Deployment branches.
+# The temporary password gate (packages/website/src/gate.mjs) is off. To put it back for a manual run, tick "gate"
+# and set the repository secret SITE_PASSWORD.
 name: Deploy site
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
-      public:
-        description: 'Publish without the password gate (and with sitemap)'
+      gate:
+        description: 'Put the temporary password gate on the site (needs the SITE_PASSWORD secret)'
         type: boolean
         default: false
 permissions:
@@ -37,15 +38,19 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @hodoku/app build
-      - name: Require the password secret unless publishing publicly
-        if: ${{ !inputs.public && env.SITE_PASSWORD == '' }}
-        run: echo "Add the SITE_PASSWORD repository secret, or run with 'public' ticked." && exit 1
+      - name: Require the password secret when gating
+        if: ${{ inputs.gate && env.SITE_PASSWORD == '' }}
+        run: echo "Add the SITE_PASSWORD repository secret, or untick 'gate'." && exit 1
         env:
           SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+      - name: Website tests
+        run: pnpm --filter @hodoku/website build && pnpm --filter @hodoku/website test
+        env:
+          SITE_URL: https://hodokurevisited.com/
       - run: pnpm --filter @hodoku/website build
         env:
           SITE_URL: https://hodokurevisited.com/
-          SITE_PASSWORD: ${{ inputs.public && '' || secrets.SITE_PASSWORD }}
+          SITE_PASSWORD: ${{ inputs.gate && secrets.SITE_PASSWORD || '' }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: packages/website/dist

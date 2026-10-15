@@ -173,6 +173,10 @@ returns the grouped solve path. Website: restyled with the same tokens, techniqu
 categories, Before/After toggle and "Open in app" on every diagram, and a nine-chapter manual (`src/manual.mjs`,
 must be kept in step with the app's behaviour).
 
+Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
+tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense script and `ads.txt` are on
+the site pages, not in the app; the privacy page discloses advertising.
+
 Not yet: a German version, a custom domain, ads. Ads need a consent banner (EU/UK) and a privacy page
 update first; the privacy page currently promises no tracking, so change it in the same commit
 that adds ads.
