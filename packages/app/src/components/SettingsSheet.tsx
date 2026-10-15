@@ -60,6 +60,10 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
           <input type="checkbox" checked={settings.cellZoom} onChange={(e) => onChange({ ...settings, cellZoom: e.target.checked })} />
           Cell zoom (enlarge the selected cell)
         </label>
+        <label className="field">
+          <input type="checkbox" checked={settings.showDeviations} onChange={(e) => onChange({ ...settings, showDeviations: e.target.checked })} />
+          Show deviations (mark the cells where your candidate marks differ from what the placed values allow)
+        </label>
         <details className="about colorku-colors">
           <summary>ColorKu colours</summary>
           <p className="note">One colour per digit, used when ColorKu is on.</p>

@@ -10,6 +10,8 @@ interface Props {
   showCands: boolean;
   hint: HintResult | null;
   wrong: Set<number>;
+  /** cells whose candidate marks differ from what the placed values allow (Show deviations) */
+  deviate?: ReadonlySet<number>;
   /** digit whose candidates are tinted (Filter mode), 0 = off */
   filter?: number;
   /** draw digits and candidates as coloured balls (ColorKu) */
@@ -41,7 +43,7 @@ function candidateLabel(mask: number): string {
   return list.length ? `, candidates ${list.join(' ')}` : ', empty';
 }
 
-export function Board({ game, selected, showCands, hint, wrong, filter = 0, colorKu = false, colors, cellColors, candColors, palette, paintTarget = null, onPaintCell, onPaintCand, onSelect }: Props) {
+export function Board({ game, selected, showCands, hint, wrong, deviate, filter = 0, colorKu = false, colors, cellColors, candColors, palette, paintTarget = null, onPaintCell, onPaintCand, onSelect }: Props) {
   const notes = notesOf(game);
   const selValue = selected !== null ? game.values[selected] : 0;
   const peers = selected !== null ? new Set(PEERS[selected]) : new Set<number>();
@@ -75,6 +77,7 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, colo
               if (filter !== 0 && (v === filter || (v === 0 && (game.cands[i] & (1 << filter)) !== 0))) cls.push('filtered');
               if (isGiven(game, i)) cls.push('given');
               if (wrong.has(i)) cls.push('wrong');
+              if (deviate?.has(i)) cls.push('deviate');
               if (tinted.has(i)) cls.push(`tint-${tinted.get(i)}`);
               if (placeMap.has(i)) cls.push('hint-place');
               const ucIdx = cellColors?.[i] ?? 0;

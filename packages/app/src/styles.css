@@ -112,6 +112,8 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .cell.hint-place { background: var(--place); box-shadow: inset 0 0 0 2px var(--place-ring); }
 .cell.selected { background: var(--sel); box-shadow: inset 0 0 0 3px var(--fg); z-index: 2; }
 .cell.wrong { color: var(--wrong); }
+/* Show deviations: a small corner dot, so it does not fight the cell's state colour */
+.cell.deviate::after { content: ''; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.8; pointer-events: none; }
 /* the player's own cell colour; after the state rules so the tint sits over them */
 .cell.tint-uc { background-image: linear-gradient(var(--uc), var(--uc)); }
 .cell:focus-visible { outline-offset: -2px; z-index: 1; }
@@ -334,6 +336,7 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
   .board { border-color: #000; }
   .cell { background: #fff !important; color: #000 !important; }
   .cell:not(.given) { color: transparent !important; }
+  .cell.deviate::after { display: none !important; }
   .cell .ku { display: none !important; }
   .cell .kuval { display: inline !important; }
   .cands { display: none; }

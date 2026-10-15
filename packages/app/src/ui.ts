@@ -23,6 +23,8 @@ export interface Settings {
   colorKuColors: string[];
   /** show an enlarged view of the selected cell */
   cellZoom: boolean;
+  /** mark the cells whose candidate marks differ from what the placed values allow */
+  showDeviations: boolean;
   theme: Theme;
   /** bank indices already played, per level */
   seen?: Record<number, number[]>;
@@ -44,6 +46,7 @@ export const DEFAULT_SETTINGS: Settings = {
   colorKu: false,
   colorKuColors: DEFAULT_COLORKU_COLORS,
   cellZoom: false,
+  showDeviations: false,
   theme: 'system',
 };
 
