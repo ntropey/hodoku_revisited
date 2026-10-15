@@ -177,12 +177,15 @@ must be kept in step with the app's behaviour). A new Setting, "Auto-fill last d
 empty cell of a row, column or box after a move (off by default; a normal, undoable move, not a hint).
 
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
-tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense script and `ads.txt` are on
-the site pages, not in the app; the privacy page discloses advertising.
+tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense (loaded only after consent,
+see below) and `ads.txt` are on the site pages, not in the app; the privacy page discloses advertising.
 
-Not yet: a consent banner (EU/UK) for the ads. The AdSense script, `ads.txt` and the privacy
-disclosure are already in place; the banner is the remaining piece for EU/UK compliance. The
-custom domain is done (`CNAME` is written by the site build).
+Consent banner (EU/UK): a dependency-free banner (`src/consent.mjs`) is in place. It asks on the
+first visit, remembers accept or reject in localStorage (`hodoku-consent`), and loads the AdSense
+script only after accept, so nothing is requested before consent. A "Cookie settings" button in the
+footer clears the choice and asks again. It is not a Google-certified CMP: AdSense still expects a
+certified consent management platform for its EU/UK consent requirements. The custom domain is done
+(`CNAME` is written by the site build).
 
 ## Business notes (GPL)
 
@@ -191,7 +194,8 @@ keep the repository public and link it from the site. Paid extras should be thin
 code does not give you: an ad-free tier, cloud sync (server side), original puzzle packs and
 themes (separately licensed content), support. Start on the web (Apple's App Store terms have
 historically conflicted with the GPL). AdSense needs real content pages and a consent banner for
-EU/UK visitors; check its policy for installed PWAs before relying on it.
+EU/UK visitors; the hand-rolled banner is in place but is not a certified CMP, so a certified
+platform may still be needed. Check its policy for installed PWAs before relying on it.
 
 ## Backlog
 

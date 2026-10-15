@@ -7,6 +7,7 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ADSENSE_CLIENT, applyConsent } from './consent.mjs';
 import { caption, diagram, legend } from './diagram.mjs';
 import { applyGate } from './gate.mjs';
 import { MANUAL } from './manual.mjs';
@@ -44,8 +45,6 @@ const ORDERED = GROUPS.flatMap((g) => g.items);
 if (ORDERED.length !== TECHNIQUES.length) throw new Error('every technique needs a group');
 const groupOf = (t) => GROUPS.find((g) => g.items.includes(t));
 
-const ADSENSE_CLIENT = 'ca-pub-6409516653999633';
-
 const LOGO = (root) => `<a class="brand" href="${root}"><img src="${root}icon.svg" alt="" width="32" height="32"><span class="wordmark">Hodoku<small>Revisited</small></span></a>`;
 
 /** `root` is the path back to the site root from the page, e.g. '../' */
@@ -64,7 +63,6 @@ function page({ title, description, root, body, path, wide }) {
 <link rel="apple-touch-icon" href="${root}apple-touch-icon.png">
 <link rel="preload" href="${root}fonts/newsreader-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${root}site.css">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>
 ${canonical}
 </head>
 <body>
@@ -281,8 +279,9 @@ add(
     body: `<h1>Privacy</h1>
 <p>The app runs entirely in your browser. Puzzles are generated and solved on your device. Your current game and settings are saved in your browser's local storage so you can continue later; they are never sent to a server.</p>
 <h2>Advertising</h2>
-<p>This site shows ads served by Google AdSense. Google and its partners may use cookies and similar technologies to show ads based on your visits to this and other sites. You can manage or turn off personalized ads in <a href="https://adssettings.google.com/">Google's ad settings</a>, and learn how Google uses data at <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>. Visitors from the EU, the UK and Switzerland are asked for consent through a consent message before personalized ads are used.</p>
-<p>The solver app under <a href="play/">/play/</a> does not load ads or any third-party scripts. Your games and settings stay in your browser.</p>
+<p>This site shows ads served by Google AdSense. On your first visit a consent banner asks whether you accept these ads. The advertising script, and the cookies Google and its partners use to select and measure ads (including personalised ads), load only after you accept; if you reject, no advertising script is loaded and no ads are shown. Your choice, with a version, is stored in your browser's local storage under <code>hodoku-consent</code> and is never sent to a server. You can change or withdraw it at any time with the "Cookie settings" button in the footer, which reopens the banner.</p>
+<p>You can also manage or turn off personalized ads in <a href="https://adssettings.google.com/">Google's ad settings</a>, and learn how Google uses data at <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>.</p>
+<p>The solver app under <a href="play/">/play/</a> does not load ads or any third-party scripts and shows no consent banner. Your games and settings stay in your browser.</p>
 <p>This site has no accounts and uses no analytics of its own.</p>
 <p>Questions: open an issue at <a href="${REPO}/issues">${REPO}/issues</a>.</p>`,
   }),
@@ -400,6 +399,10 @@ for (const [path, content] of pages) {
   writeFileSync(file, content);
 }
 writeFileSync(join(out, 'site.css'), css);
+
+// Consent banner + consent-gated AdSense on the generated marketing pages only (never /play/, which is copied below).
+console.log(`consent banner added to ${applyConsent(out)} pages`);
+
 for (const f of ['icon.svg', 'favicon.svg', 'apple-touch-icon.png']) cpSync(join(here, '..', '..', 'app', 'public', f), join(out, f));
 const fontSrc = join(here, '..', '..', 'app', 'node_modules', '@fontsource');
 mkdirSync(join(out, 'fonts'), { recursive: true });
