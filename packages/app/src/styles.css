@@ -47,7 +47,7 @@ button, select {
   min-height: 40px; padding: 0 14px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
   transition: background-color 120ms, color 120ms, border-color 120ms;
 }
-button:hover:not(:disabled) { background: var(--surface-2); }
+button:not(.cell):hover:not(:disabled) { background: var(--surface-2); }
 button:disabled { opacity: 0.45; cursor: default; }
 button.primary { background: var(--accent); color: var(--card); border-color: var(--accent); font-weight: 500; }
 button.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); }
@@ -107,7 +107,7 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .cell.peer { background: var(--peer); }
 .cell.same { background: var(--same); }
 .cell.hint-place { background: var(--place); box-shadow: inset 0 0 0 2px var(--place-ring); }
-.cell.selected { background: var(--sel); }
+.cell.selected { background: var(--sel); box-shadow: inset 0 0 0 3px var(--fg); z-index: 2; }
 .cell.wrong { color: var(--wrong); }
 .cell:focus-visible { outline-offset: -2px; z-index: 1; }
 .cands { font-family: var(--font-mono); position: absolute; inset: 2px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 0; font-size: max(9px, calc(var(--board, 100vw) * 0.0235)); font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }

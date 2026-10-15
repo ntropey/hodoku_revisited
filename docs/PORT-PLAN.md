@@ -189,3 +189,11 @@ code does not give you: an ad-free tier, cloud sync (server side), original puzz
 themes (separately licensed content), support. Start on the web (Apple's App Store terms have
 historically conflicted with the GPL). AdSense needs real content pages and a consent banner for
 EU/UK visitors; check its policy for installed PWAs before relying on it.
+
+## Backlog
+
+- Setting "Auto-fill last digit": when a row, column or box has one empty cell left, fill it in automatically
+  (off by default; undoable; counts as a normal move, not a hint).
+- Siamese and dual fish variants, ALS nodes in tabling chains (core).
+- German translation.
+- Website diagrams: add non-colour cues for key/fin candidates, as in the app.
