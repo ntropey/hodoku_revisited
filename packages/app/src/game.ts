@@ -24,6 +24,8 @@ export interface GameState {
   score: number;
   /** techniques of the solve path (missing in games saved by older versions) */
   path?: PathEntry[];
+  /** hints applied (missing in older saves) */
+  hints?: number;
   past: Snapshot[];
   future: Snapshot[];
 }

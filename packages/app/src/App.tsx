@@ -6,6 +6,7 @@ import { CommandMenu, type Command } from './components/CommandMenu';
 import { DigitPad } from './components/DigitPad';
 import { HintView } from './components/HintView';
 import { ImportDialog } from './components/ImportDialog';
+import { SolvedDialog } from './components/SolvedDialog';
 import { SettingsSheet } from './components/SettingsSheet';
 import { SidePanel } from './components/SidePanel';
 import { Summary } from './components/Summary';
@@ -99,6 +100,15 @@ export function App() {
 
   const solved = game ? isSolved(game) : false;
   const hintLevel = settings.hintLevel ?? 5;
+
+  // the completion dialog opens when this session solves the puzzle, not when a finished game is reloaded
+  const [solvedOpen, setSolvedOpen] = useState(false);
+  const wasSolved = useRef(solved);
+  useEffect(() => {
+    if (solved && !wasSolved.current) setSolvedOpen(true);
+    if (!solved) setSolvedOpen(false);
+    wasSolved.current = solved;
+  }, [solved]);
 
   // timer: counts while the page is visible and the puzzle is not solved; saved with the puzzle's givens
   useEffect(() => {
@@ -237,7 +247,7 @@ export function App() {
       let next = g;
       for (const p of hint.marks.place) next = setValue(next, p.cell, p.digit);
       if (hint.marks.elim.length > 0) next = removeCands(next, hint.marks.elim);
-      return next;
+      return { ...next, hints: (g.hints ?? 0) + 1 };
     });
   }, [hint, update]);
 
@@ -444,6 +454,20 @@ export function App() {
           onChange={setSettings}
           onResetNotes={() => update(fillCands)}
           onClose={() => setSettingsOpen(false)}
+        />
+      )}
+      {solvedOpen && game && (
+        <SolvedDialog
+          seconds={seconds}
+          level={game.level}
+          score={game.score}
+          hints={game.hints ?? 0}
+          busy={busy !== null}
+          onNew={(l) => {
+            setSolvedOpen(false);
+            void startNew(l);
+          }}
+          onClose={() => setSolvedOpen(false)}
         />
       )}
       {commandsOpen && <CommandMenu commands={commands} onClose={() => setCommandsOpen(false)} />}
