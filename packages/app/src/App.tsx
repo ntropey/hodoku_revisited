@@ -31,7 +31,7 @@ import {
   type GameState,
 } from './game';
 import { HINT_LEVEL_NAMES, LEVEL_NAMES, type HintResult } from './protocol';
-import { SolverClient } from './solverClient';
+import { isCancelled, SolverClient } from './solverClient';
 import { DEFAULT_SETTINGS, type Mode, type Settings, type Tab } from './ui';
 
 const SAVE_KEY = 'hodoku-revisited:game';
@@ -182,7 +182,7 @@ export function App() {
         }
         startGame(newGame(info));
       } catch (e) {
-        if ((e as Error).message !== 'cancelled') setMessage((e as Error).message);
+        if (!isCancelled(e)) setMessage((e as Error).message);
       } finally {
         setBusy(null);
       }
@@ -203,7 +203,9 @@ export function App() {
       solver.current
         .analyze(p)
         .then((info) => startGame(newGame(info)))
-        .catch((e: Error) => setMessage(e.message))
+        .catch((e: Error) => {
+          if (!isCancelled(e)) setMessage(e.message);
+        })
         .finally(() => setBusy(null));
     } else if (!game) void startNew(settings.level);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -239,7 +241,7 @@ export function App() {
       setHint(h);
       setMessage(h ? null : hintLevel < 5 ? 'No hint at this hint level. Raise "Hints use" above.' : 'No logical hint found.');
     } catch (e) {
-      setMessage((e as Error).message);
+      if (!isCancelled(e)) setMessage((e as Error).message);
     } finally {
       setBusy(null);
     }
@@ -259,7 +261,7 @@ export function App() {
         setMessage(null);
       } catch (e) {
         setAllSteps({ results: [], total: {} });
-        setMessage((e as Error).message);
+        if (!isCancelled(e)) setMessage((e as Error).message);
       } finally {
         setBusy(null);
       }
@@ -297,7 +299,7 @@ export function App() {
       setImporting(false);
       setImportText('');
     } catch (e) {
-      setImportError((e as Error).message);
+      if (!isCancelled(e)) setImportError((e as Error).message);
     } finally {
       setBusy(null);
     }

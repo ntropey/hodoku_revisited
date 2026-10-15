@@ -90,6 +90,9 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 /* board */
 .boardWrap { position: relative; }
 .board { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); grid-template-rows: repeat(9, minmax(0, 1fr)); width: 100%; aspect-ratio: 1; background: var(--card); border: 2px solid var(--thick); border-radius: 2px; overflow: hidden; }
+/* the cells live in nine role="row" wrappers (ARIA requires a row owning the gridcells); display: contents keeps the
+   buttons as the grid items of .board, so the 9x9 layout is unchanged */
+.board > [role='row'] { display: contents; }
 .cell {
   position: relative; display: flex; align-items: center; justify-content: center; padding: 0; min-width: 0; min-height: 0;
   font-size: calc(var(--board, 100vw) * 0.062); font-family: var(--font-ui); font-weight: 500; color: var(--user);
@@ -98,7 +101,7 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .cell.rb { border-right: 2px solid var(--thick); }
 .cell.bb { border-bottom: 2px solid var(--thick); }
 .cell:nth-child(9n) { border-right: 0; }
-.cell:nth-child(n + 73) { border-bottom: 0; }
+.board > [role='row']:last-child .cell { border-bottom: 0; }
 .cell.given { color: var(--given); font-family: var(--font-display); font-weight: 500; font-size: calc(var(--board, 100vw) * 0.068); }
 /* layers, bottom to top: card, tint a/b, filter, peer, same, hint-place, selected, candidate marks, value */
 .cell.tint-a { background: var(--tint-a); }

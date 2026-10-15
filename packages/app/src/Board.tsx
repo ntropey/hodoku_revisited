@@ -48,56 +48,61 @@ export function Board({ game, selected, showCands, hint, wrong, filter = 0, onSe
   return (
     <div className="boardWrap">
       <div className="board" role="grid" aria-label="Sudoku board">
-        {game.values.map((v, i) => {
-          const cls = ['cell'];
-          if (i === selected) cls.push('selected');
-          else if (peers.has(i)) cls.push('peer');
-          if (selValue !== 0 && v === selValue) cls.push('same');
-          if (filter !== 0 && (v === filter || (v === 0 && (game.cands[i] & (1 << filter)) !== 0))) cls.push('filtered');
-          if (isGiven(game, i)) cls.push('given');
-          if (wrong.has(i)) cls.push('wrong');
-          if (tinted.has(i)) cls.push(`tint-${tinted.get(i)}`);
-          if (placeMap.has(i)) cls.push('hint-place');
-          if (i % 9 === 2 || i % 9 === 5) cls.push('rb');
-          if (Math.floor(i / 9) === 2 || Math.floor(i / 9) === 5) cls.push('bb');
-          // what a cell shows: the hint's cells and "show candidates" use the solver's candidates; while filtering only the
-          // filtered digit; otherwise the player's own pencil marks
-          const full = showCands || involved.has(i);
-          const mask = full ? game.cands[i] : filter !== 0 ? game.cands[i] & (1 << filter) : notes[i];
-          const showHere = mask !== 0 || full;
-          return (
-            <button
-              key={i}
-              className={cls.join(' ')}
-              role="gridcell"
-              aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${isGiven(game, i) ? 'given ' : ''}${v}` : showHere ? candidateLabel(mask) : ', empty'}`}
-              onClick={() => onSelect(i)}
-            >
-              {v !== 0 ? (
-                v
-              ) : showHere ? (
-                <span className="cands">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => {
-                    const on = (mask & (1 << d)) !== 0;
-                    const k = key(i, d);
-                    const c: string[] = [];
-                    if (elimSet.has(k)) c.push('del');
-                    else if (finSet.has(k)) c.push('fin');
-                    else if (placeMap.get(i) === d) c.push('keep');
-                    else if (keySet.has(k) || colorMap.has(k)) c.push('keyc');
-                    if (colorMap.has(k)) c.push(`col-${colorMap.get(k)! % 2}`);
-                    if (filter === d) c.push('fd');
-                    return (
-                      <span key={d} className={c.join(' ')}>
-                        {on ? d : ''}
-                      </span>
-                    );
-                  })}
-                </span>
-              ) : null}
-            </button>
-          );
-        })}
+        {Array.from({ length: 9 }, (_, r) => (
+          <div key={r} role="row">
+            {game.values.slice(r * 9, r * 9 + 9).map((v, c) => {
+              const i = r * 9 + c;
+              const cls = ['cell'];
+              if (i === selected) cls.push('selected');
+              else if (peers.has(i)) cls.push('peer');
+              if (selValue !== 0 && v === selValue) cls.push('same');
+              if (filter !== 0 && (v === filter || (v === 0 && (game.cands[i] & (1 << filter)) !== 0))) cls.push('filtered');
+              if (isGiven(game, i)) cls.push('given');
+              if (wrong.has(i)) cls.push('wrong');
+              if (tinted.has(i)) cls.push(`tint-${tinted.get(i)}`);
+              if (placeMap.has(i)) cls.push('hint-place');
+              if (i % 9 === 2 || i % 9 === 5) cls.push('rb');
+              if (Math.floor(i / 9) === 2 || Math.floor(i / 9) === 5) cls.push('bb');
+              // what a cell shows: the hint's cells and "show candidates" use the solver's candidates; while filtering only the
+              // filtered digit; otherwise the player's own pencil marks
+              const full = showCands || involved.has(i);
+              const mask = full ? game.cands[i] : filter !== 0 ? game.cands[i] & (1 << filter) : notes[i];
+              const showHere = mask !== 0 || full;
+              return (
+                <button
+                  key={i}
+                  className={cls.join(' ')}
+                  role="gridcell"
+                  aria-label={`row ${Math.floor(i / 9) + 1} column ${(i % 9) + 1}${v ? `, ${isGiven(game, i) ? 'given ' : ''}${v}` : showHere ? candidateLabel(mask) : ', empty'}`}
+                  onClick={() => onSelect(i)}
+                >
+                  {v !== 0 ? (
+                    v
+                  ) : showHere ? (
+                    <span className="cands">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => {
+                        const on = (mask & (1 << d)) !== 0;
+                        const k = key(i, d);
+                        const c: string[] = [];
+                        if (elimSet.has(k)) c.push('del');
+                        else if (finSet.has(k)) c.push('fin');
+                        else if (placeMap.get(i) === d) c.push('keep');
+                        else if (keySet.has(k) || colorMap.has(k)) c.push('keyc');
+                        if (colorMap.has(k)) c.push(`col-${colorMap.get(k)! % 2}`);
+                        if (filter === d) c.push('fd');
+                        return (
+                          <span key={d} className={c.join(' ')}>
+                            {on ? d : ''}
+                          </span>
+                        );
+                      })}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </div>
       {m && m.chains.length > 0 && (
         <svg className="overlay" viewBox="0 0 9 9" aria-hidden="true">
