@@ -147,9 +147,10 @@ Trainer update: "All steps" lists every available step by technique (find all st
 AIC notation, give a one-sentence reason and link to the guide page; Print button (givens only). `describeStep`
 in core turns any step into drawable data and is shared with the website diagrams.
 
-Not yet: settings that choose which individual techniques a hint may use. (The solution path,
-print and the PNG icons are done: the Summary tab calls `analyze()`, the top bar has Print, and
-`make-png-icons.mjs` writes the PNG icons.)
+Settings can choose which individual techniques a hint may use (`Settings → Techniques a hint may
+use`; untick one and neither a hint nor "All steps" uses it, while "Hints use" still caps the
+level). The solution path, print and the PNG icons are done too: the Summary tab calls `analyze()`,
+the top bar has Print, and `make-png-icons.mjs` writes the PNG icons.
 
 ## Status (M5, first version)
 

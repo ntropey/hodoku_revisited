@@ -10,7 +10,7 @@ puzzles by level, and reads/writes the common text formats. It is verified step 
 original Java solver on 587 puzzles. M4 (first version of the PWA in `packages/app`) is in too, and a static website with technique guides (`packages/website`).
 The app starts new puzzles instantly from a bank of generated puzzles, and every technique guide has a worked, solver-verified diagram.
 The engine now has everything in HoDoKu's default and optional techniques except Siamese/dual variants and ALS nodes in chains: Kraken fish, templates and "find all steps" are in too.
-Still to do: settings for which individual techniques a hint may use, and a consent banner for the site ads; see the plan.
+Still to do: a consent banner for the site ads; see the plan.
 
 - [Port plan](docs/PORT-PLAN.md)
 - [License audit](docs/LICENSE-AUDIT.md)

@@ -25,8 +25,8 @@ export type WorkerRequest =
   | { id: number; kind: 'generate'; level: number }
   | { id: number; kind: 'bank'; level: number; seen: number[] }
   | { id: number; kind: 'analyze'; puzzle: string }
-  | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel }
-  | { id: number; kind: 'allHints'; values: number[]; cands: number[]; level: HintLevel };
+  | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
+  | { id: number; kind: 'allHints'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] };
 
 /** One technique used on the way from the givens to the solution (the "solve path"). */
 export interface PathEntry {
