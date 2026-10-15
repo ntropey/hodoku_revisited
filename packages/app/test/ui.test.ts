@@ -4,6 +4,7 @@ import { colorKuColor, DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS } from '../src/u
 describe('settings', () => {
   it('defaults ColorKu to off with a colour for every digit', () => {
     expect(DEFAULT_SETTINGS.colorKu).toBe(false);
+    expect(DEFAULT_SETTINGS.cellZoom).toBe(false);
     expect(DEFAULT_SETTINGS.colorKuColors).toHaveLength(9);
     expect(DEFAULT_COLORKU_COLORS.every((c) => /^#[0-9a-f]{6}$/i.test(c))).toBe(true);
   });

@@ -3,6 +3,7 @@ import { defaultSolverSteps } from '@hodoku/core';
 import { Board } from './Board';
 import { AllSteps } from './components/AllSteps';
 import { BottomSheet, type Snap } from './components/BottomSheet';
+import { CellZoom } from './components/CellZoom';
 import { CommandMenu, type Command } from './components/CommandMenu';
 import { DigitPad } from './components/DigitPad';
 import { HintView } from './components/HintView';
@@ -407,13 +408,14 @@ export function App() {
       { label: `Mark mistakes: ${settings.checkMistakes ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, checkMistakes: !s.checkMistakes })) },
       { label: `Auto-fill last digit: ${settings.autoFill ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, autoFill: !s.autoFill })) },
       { label: `ColorKu: ${settings.colorKu ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, colorKu: !s.colorKu })) },
+      { label: `Cell zoom: ${settings.cellZoom ? 'turn off' : 'turn on'}`, run: () => setSettings((s) => ({ ...s, cellZoom: !s.cellZoom })) },
       { label: 'Import puzzle', run: () => setImporting(true) },
       { label: 'Copy puzzle', run: () => void copyPuzzle() },
       { label: 'Print', run: () => window.print() },
       { label: 'Settings', run: () => setSettingsOpen(true) },
       ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
     ],
-    [askAllSteps, askHint, applyHint, applyPath, copyPuzzle, eraseSelected, filterDigit, game, hint, pathDone, pathSteps, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, solved, startNew, tab, update],
+    [askAllSteps, askHint, applyHint, applyPath, copyPuzzle, eraseSelected, filterDigit, game, hint, pathDone, pathSteps, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, settings.cellZoom, solved, startNew, tab, update],
   );
 
   useEffect(() => {
@@ -549,6 +551,9 @@ export function App() {
               colors={colorKuColors}
               onSelect={setSelected}
             />
+          )}
+          {settings.cellZoom && game && (
+            <CellZoom game={game} selected={selected} showCands={settings.showCands} colorKu={settings.colorKu} colors={colorKuColors} />
           )}
           <DigitPad
             mode={mode}
