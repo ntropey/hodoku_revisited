@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Sudoku2, SOLUTION_TYPE_INFO, parseSudoku, seededRng, type SolutionType } from '@hodoku/core';
 import { isSolved, newGame, removeCands, setValue } from '../src/game';
-import { allHints, analyze, format, hint, path, train } from '../src/solverApi';
+import { allHints, analyze, book, format, hint, path, train } from '../src/solverApi';
 
 // Rater and hint are deterministic, so the same board always yields the same first technique.
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -92,16 +92,55 @@ describe('train', () => {
     expect(train(1, [], false, [])).toBeNull();
   });
 
-  it('auto-solves the board as far as it goes without the technique', () => {
+  it('auto-solves the board up to the first step that uses the technique', () => {
     const info = train(1, [TECHNIQUE], true, [], seededRng(1), 400);
     expect(info).not.toBeNull();
     const board = info!.board!;
     expect(board.values).toHaveLength(81);
     expect(board.cands).toHaveLength(81);
-    // the full solver stops at one of the trained techniques (or the board is already solved)
+    // the board stops right where the trained technique is needed, so it is not solved yet
+    expect(board.values.some((v) => v === 0)).toBe(true);
     const step = hint(board.values, board.cands, 5);
-    expect(step === null || step.type === TECHNIQUE).toBe(true);
-    // with the technique switched off no step is left: the board is stuck without it
-    expect(hint(board.values, board.cands, 5, [TECHNIQUE])).toBeNull();
+    expect(step?.type).toBe(TECHNIQUE);
+  });
+});
+
+describe('book', () => {
+  it('returns the requested puzzles in section order', () => {
+    const sections = [{ level: 1, count: 3, mode: 'playing' as const, cands: false }];
+    const puzzles = book(sections, [], seededRng(1));
+    expect(puzzles).toHaveLength(3);
+    for (const p of puzzles) {
+      expect(p.givens).toHaveLength(81);
+      expect(p.values).toHaveLength(81);
+      expect(p.cands).toHaveLength(81);
+      expect(p.showCands).toBe(false);
+    }
+  });
+
+  it('prints the candidates when a section asks for them', () => {
+    const sections = [{ level: 1, count: 1, mode: 'practising' as const, cands: true }];
+    const [p] = book(sections, [], seededRng(2));
+    expect(p.showCands).toBe(true);
+    // a real puzzle has empty cells, and those cells still allow candidates
+    expect(p.values.some((v) => v === 0)).toBe(true);
+    expect(p.cands.some((c) => c !== 0)).toBe(true);
+  });
+
+  it('is empty when there are no sections', () => {
+    expect(book([], [], seededRng(3))).toEqual([]);
+  });
+
+  it('solves a Learning puzzle up to its technique', () => {
+    const sections = [{ level: 1, count: 2, mode: 'learning' as const, cands: true }];
+    const puzzles = book(sections, ['HIDDEN_SINGLE'], seededRng(4));
+    expect(puzzles).toHaveLength(2);
+    for (const p of puzzles) {
+      expect(p.givens).toHaveLength(81);
+      // the board is solved further than the givens, but the technique is still needed somewhere
+      const givens = [...p.givens].map((c) => (c === '.' || c === '0' ? 0 : Number(c)));
+      expect(p.values).not.toEqual(givens);
+      expect(p.values.some((v) => v === 0)).toBe(true);
+    }
   });
 });

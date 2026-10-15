@@ -18,7 +18,7 @@ import {
   tables,
 } from '@hodoku/core';
 import { bankPuzzle, bankSize, isomorph, pickBankIndex, type Rng } from './bank/bank';
-import type { CopyFormat, HintLevel, HintResult, PathEntry, PuzzleInfo } from './protocol';
+import type { CopyFormat, HintLevel, HintResult, PathEntry, PrintSection, PrintSudoku, PuzzleInfo } from './protocol';
 import { techniqueInfo } from './techniqueInfo';
 
 /** Rate a puzzle and find its solution. Throws if it is invalid or has no unique solution. */
@@ -85,19 +85,15 @@ function shuffle<T>(a: T[], rng: Rng): T[] {
   return a;
 }
 
-/** The puzzle solved as far as the solver gets with `techniques` switched off. */
-function trainBoard(puzzle: string, techniques: string[]): { values: number[]; cands: number[] } {
+/** A fresh board of the puzzle. */
+function boardOf(puzzle: string): Sudoku2 {
   const s = new Sudoku2();
   s.setSudoku(puzzle);
-  const solver = new SudokuSolver();
-  solver.setSudoku(s);
-  const off = new Set(techniques);
-  const configs = defaultSolverSteps().map((c) => ({ ...c, enabled: c.enabled && !off.has(c.type) }));
-  for (;;) {
-    const step = solver.getHint(false, configs);
-    if (step === null || step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') break;
-    solver.doStep(s, step);
-  }
+  return s;
+}
+
+/** The candidates of a board's empty cells: what the placed values still allow (bit d = digit d). */
+function candsOf(s: Sudoku2): number[] {
   const cands = new Array<number>(81).fill(0);
   for (let i = 0; i < 81; i++) {
     if (s.values[i] !== 0) continue;
@@ -105,14 +101,33 @@ function trainBoard(puzzle: string, techniques: string[]): { values: number[]; c
     for (let d = 1; d <= 9; d++) if (s.isCandidate(i, d)) mask |= 1 << d;
     cands[i] = mask;
   }
-  return { values: Array.from(s.values), cands };
+  return cands;
+}
+
+/**
+ * The puzzle solved up to its technique: the solver's own steps are replayed on a fresh board and the
+ * replay stops before the first step that uses one of `techniques`, which is exactly where the
+ * original's Learning mode stops. Disabling the techniques instead would let other ones carry on and
+ * could hand back a solved board.
+ */
+function trainBoard(puzzle: string, techniques: readonly string[]): { values: number[]; cands: number[] } {
+  const solver = new SudokuSolver();
+  solver.setSudoku(boardOf(puzzle));
+  solver.solve();
+  const board = boardOf(puzzle);
+  const wanted = new Set(techniques);
+  for (const step of solver.getSteps()) {
+    if (wanted.has(step.type)) break;
+    solver.doStep(board, step);
+  }
+  return { values: Array.from(board.values), cands: candsOf(board) };
 }
 
 /**
  * A bank puzzle of the level that needs at least one of `techniques` (a technique the standard
  * solution uses). Examines puzzles in a random order, skipping `seen`, and stops after `maxTries`
- * analyses; returns null when none was found. With `autoSolve` the board is solved as far as the
- * solver can go **without** those techniques, which is the state Learning mode starts from.
+ * analyses; returns null when none was found. With `autoSolve` the board is solved up to the first
+ * step that uses one of `techniques`, which is the state Learning mode starts from.
  */
 export function train(level: number, techniques: string[], autoSolve: boolean, seen: readonly number[], rng: Rng = Math.random, maxTries = 500): PuzzleInfo | null {
   if (techniques.length === 0) return null;
@@ -134,6 +149,39 @@ export function train(level: number, techniques: string[], autoSolve: boolean, s
     return { ...info, bankIndex: index, board: autoSolve ? trainBoard(puzzle, techniques) : undefined };
   }
   return null;
+}
+
+/** The givens' values and the candidates those values still allow (bit d = digit d). */
+function candsFromGivens(puzzle: string): { values: number[]; cands: number[] } {
+  const s = boardOf(puzzle);
+  return { values: Array.from(s.values), cands: candsOf(s) };
+}
+
+/**
+ * The puzzles of an extended print job, in section order. Playing and Practising sections print the
+ * puzzle's starting board; a Learning section prints a bank puzzle solved as far as the solver gets
+ * with `techniques` switched off (the original's behaviour), falling back to the starting board when
+ * no puzzle of the level needs one. Bank indices are not recorded (printing must not change what the
+ * app considers "seen").
+ */
+export function book(sections: readonly PrintSection[], techniques: readonly string[], rng: Rng = Math.random): PrintSudoku[] {
+  const out: PrintSudoku[] = [];
+  for (const section of sections) {
+    const level = Math.min(5, Math.max(1, section.level));
+    const count = Math.min(99, Math.max(0, Math.floor(section.count)));
+    for (let i = 0; i < count; i++) {
+      const info = section.mode === 'learning' && techniques.length > 0 ? train(level, [...techniques], true, [], rng, 150) : null;
+      if (info !== null && info.board) {
+        out.push({ givens: info.puzzle, values: info.board.values, cands: info.board.cands, level: info.level, score: info.score, showCands: section.cands });
+        continue;
+      }
+      const playing = fromBank(level, [], rng);
+      if (playing === null) continue;
+      const board = candsFromGivens(playing.puzzle);
+      out.push({ givens: playing.puzzle, values: board.values, cands: board.cands, level: playing.level, score: playing.score, showCands: section.cands });
+    }
+  }
+  return out;
 }
 
 /** The board as the solver sees it: values, and only the candidates the player still has. */

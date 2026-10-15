@@ -45,7 +45,8 @@ export const MANUAL = [
 <h2>Sharing a puzzle</h2>
 <p><em>Copy</em> offers four formats: the 81-character line of the <em>givens</em>, the <em>puzzle with candidates</em> (a candidate/PM grid), a HoDoKu <em>library line</em>, and a <em>formatted grid</em>. Paste the givens anywhere, or into <em>Import</em> on another device. A link of the form <code>/play/?p=&lt;81 characters&gt;</code> opens that puzzle directly. The technique guides use this for their <em>Open in app</em> buttons.</p>
 <h2>Printing</h2>
-<p><em>Print</em> prints the board with the givens only, without candidates or the side panel; <em>Print solution</em> prints the board and the solved grid after it. <em>Export PNG</em> saves the board as a <code>.png</code> image file.</p>`,
+<p><em>Print</em> prints the board with the givens only, without candidates or the side panel; <em>Print solution</em> prints the board and the solved grid after it. <em>Export PNG</em> saves the board as a <code>.png</code> image file.</p>
+<p><em>Extended print</em> builds a book of puzzles. Add up to five sections; for each, choose how many puzzles (0 to 30), the level, the mode (Playing, Learning or Practising) and whether to print the candidates. A Learning section uses the techniques from the Training dialog. Then pick a layout: one, two or four puzzles per page, portrait or landscape. <em>Print the rating</em> writes the level and score under each puzzle. <em>Booklet</em> is offered for the landscape layouts only; it imposes the pages so that printing them double-sided and folding in the middle makes a booklet.</p>`,
   },
   {
     slug: 'candidates-and-filters',

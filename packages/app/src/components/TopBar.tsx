@@ -19,6 +19,7 @@ interface Props {
   onCopy: (what: CopyWhat) => void;
   onPrint: () => void;
   onPrintSolution: () => void;
+  onExtendedPrint: () => void;
   onExportPng: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -123,6 +124,7 @@ export function TopBar(p: Props) {
           )}
         </Menu>
         <button onClick={p.onPrint}>Print</button>
+        <button onClick={p.onExtendedPrint}>Extended print…</button>
       </div>
 
       <div className="spacer" />
@@ -171,6 +173,7 @@ export function TopBar(p: Props) {
             <button role="menuitem" onClick={() => (close(), p.onCopy('library'))}>Copy library line</button>
             <button role="menuitem" onClick={() => (close(), p.onCopy('formatted'))}>Copy formatted grid</button>
             <button role="menuitem" onClick={() => (close(), p.onPrint())}>Print</button>
+            <button role="menuitem" onClick={() => (close(), p.onExtendedPrint())}>Extended print…</button>
             <button role="menuitem" onClick={() => (close(), p.onPrintSolution())}>Print solution</button>
             <button role="menuitem" onClick={() => (close(), p.onExportPng())}>Export PNG</button>
             <button role="menuitem" onClick={() => (close(), p.onCommands())}>Commands</button>
