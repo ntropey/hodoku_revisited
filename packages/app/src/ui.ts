@@ -12,12 +12,14 @@ export interface Settings {
   /** level of "New puzzle" */
   level: number;
   hintLevel: HintLevel;
+  /** solution types a hint may NOT use; empty means every technique is allowed (the default) */
+  disabledTechniques: string[];
   theme: Theme;
   /** bank indices already played, per level */
   seen?: Record<number, number[]>;
 }
 
-export const DEFAULT_SETTINGS: Settings = { showCands: false, checkMistakes: false, autoFill: false, level: 1, hintLevel: 5, theme: 'system' };
+export const DEFAULT_SETTINGS: Settings = { showCands: false, checkMistakes: false, autoFill: false, level: 1, hintLevel: 5, disabledTechniques: [], theme: 'system' };
 
 export function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);

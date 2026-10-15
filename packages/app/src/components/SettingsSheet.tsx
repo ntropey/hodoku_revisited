@@ -1,3 +1,4 @@
+import { SOLUTION_TYPE_INFO, defaultSolverSteps } from '@hodoku/core';
 import { HINT_LEVEL_NAMES, LEVEL_NAMES } from '../protocol';
 import type { Settings, Theme } from '../ui';
 
@@ -9,7 +10,26 @@ interface Props {
   onClose: () => void;
 }
 
+/** The techniques a hint may use, grouped by difficulty; INCOMPLETE and GIVE_UP are not real hints. */
+const TECHNIQUES: [number, { type: string; name: string }[]][] = (() => {
+  const byLevel = new Map<number, { type: string; name: string }[]>();
+  for (const c of defaultSolverSteps()) {
+    if (c.type === 'INCOMPLETE' || c.type === 'GIVE_UP') continue;
+    const list = byLevel.get(c.level) ?? [];
+    list.push({ type: c.type, name: SOLUTION_TYPE_INFO[c.type].stepName });
+    byLevel.set(c.level, list);
+  }
+  return [...byLevel.entries()].sort((a, b) => a[0] - b[0]);
+})();
+
 export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, onClose }: Props) {
+  const disabled = new Set(settings.disabledTechniques);
+  const toggle = (type: string, enabled: boolean) => {
+    const next = new Set(disabled);
+    if (enabled) next.delete(type);
+    else next.add(type);
+    onChange({ ...settings, disabledTechniques: [...next] });
+  };
   return (
     <div className="modal" role="dialog" aria-label="Settings" aria-modal="true">
       <div className="modal-card">
@@ -36,6 +56,24 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
             ))}
           </select>
         </label>
+        <details className="about techniques">
+          <summary>Techniques a hint may use</summary>
+          <p>Untick a technique to keep hints from using it. Every technique is on by default. The <em>Hints use</em> level above still caps how hard a hint may be.</p>
+          <div className="techscroll">
+            {TECHNIQUES.map(([level, list]) => (
+              <div key={level}>
+                <h3>{LEVEL_NAMES[level]}</h3>
+                {list.map((t) => (
+                  <label key={t.type} className="field">
+                    <input type="checkbox" checked={!disabled.has(t.type)} onChange={(e) => toggle(t.type, e.target.checked)} />
+                    {t.name}
+                  </label>
+                ))}
+              </div>
+            ))}
+          </div>
+          <button onClick={() => onChange({ ...settings, disabledTechniques: [] })}>Enable all techniques</button>
+        </details>
         <label className="field">
           Difficulty of new puzzles
           <select value={settings.level} onChange={(e) => onChange({ ...settings, level: Number(e.target.value) })}>

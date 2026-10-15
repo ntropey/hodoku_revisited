@@ -38,6 +38,9 @@ const SAVE_KEY = 'hodoku-revisited:game';
 const SETTINGS_KEY = 'hodoku-revisited:settings';
 const TIME_KEY = 'hodoku-revisited:time';
 
+/** Stable fallback so the "no technique disabled" case keeps the same array reference across renders. */
+const NO_TECHNIQUES: string[] = [];
+
 function load<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);
@@ -110,6 +113,7 @@ export function App() {
 
   const solved = game ? isSolved(game) : false;
   const hintLevel = settings.hintLevel ?? 5;
+  const disabledTechniques = settings.disabledTechniques ?? NO_TECHNIQUES;
 
   // the completion dialog opens when this session solves the puzzle, not when a finished game is reloaded
   const [solvedOpen, setSolvedOpen] = useState(false);
@@ -231,7 +235,7 @@ export function App() {
     setBusy('Looking for a hint...');
     setMessage(null);
     try {
-      const h = await solver.current.hint(game.values, game.cands, hintLevel);
+      const h = await solver.current.hint(game.values, game.cands, hintLevel, disabledTechniques);
       setHint(h);
       setMessage(h ? null : hintLevel < 5 ? 'No hint at this hint level. Raise "Hints use" above.' : 'No logical hint found.');
     } catch (e) {
@@ -239,7 +243,7 @@ export function App() {
     } finally {
       setBusy(null);
     }
-  }, [game, hintLevel]);
+  }, [game, hintLevel, disabledTechniques]);
 
   const askAllSteps = useCallback(
     async (auto = false) => {
@@ -248,7 +252,7 @@ export function App() {
       if (!auto) setSnap((s) => (s === 'peek' ? 'half' : s));
       setBusy('Looking for all steps...');
       try {
-        const data = await solver.current.allHints(game.values, game.cands, hintLevel);
+        const data = await solver.current.allHints(game.values, game.cands, hintLevel, disabledTechniques);
         setAllSteps(data);
         // the top step is shown on the board right away
         setHint(data.results[0] ?? null);
@@ -260,8 +264,15 @@ export function App() {
         setBusy(null);
       }
     },
-    [game, hintLevel],
+    [game, hintLevel, disabledTechniques],
   );
+
+  // changing which techniques a hint may use throws away the current hint and the All steps list,
+  // exactly like changing "Hints use" does; the steps tab then refreshes itself
+  useEffect(() => {
+    setAllSteps(null);
+    setHint(null);
+  }, [disabledTechniques]);
 
   // the All steps tab is always filled: opening it, making a move or changing "Hints use" refreshes the list
   useEffect(() => {

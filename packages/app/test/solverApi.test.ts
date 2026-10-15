@@ -1,0 +1,47 @@
+import { describe, expect, it } from 'vitest';
+import { SOLUTION_TYPE_INFO, type SolutionType } from '@hodoku/core';
+import { newGame } from '../src/game';
+import { allHints, analyze, hint } from '../src/solverApi';
+
+// Rater and hint are deterministic, so the same board always yields the same first technique.
+const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
+const game = newGame(analyze(PUZZLE));
+
+describe('disabled techniques', () => {
+  it('keeps the default hint when nothing is disabled', () => {
+    const first = hint(game.values, game.cands, 5)!;
+    expect(first).not.toBeNull();
+    expect(hint(game.values, game.cands, 5, [])!.type).toBe(first.type);
+  });
+
+  it('lets a hint skip a technique it would otherwise return', () => {
+    const first = hint(game.values, game.cands, 5)!;
+    const type = first.type;
+    // with the technique allowed it is the hint
+    expect(hint(game.values, game.cands, 5, [])!.type).toBe(type);
+    // with it disabled the hint is either gone or a different technique
+    const without = hint(game.values, game.cands, 5, [type]);
+    expect(without === null || without.type !== type).toBe(true);
+  });
+
+  it('drops a disabled technique from all steps, including its total', () => {
+    const all = allHints(game.values, game.cands, 5);
+    const type = all.results[0].type;
+    const name = SOLUTION_TYPE_INFO[type as SolutionType].stepName;
+    expect(all.results.some((r) => r.type === type)).toBe(true);
+    expect(all.total[name]).toBeGreaterThan(0);
+
+    const filtered = allHints(game.values, game.cands, 5, 12, [type]);
+    expect(filtered.results.some((r) => r.type === type)).toBe(false);
+    expect(filtered.total[name] ?? 0).toBeLessThan(all.total[name]);
+    // the other techniques are still there
+    expect(filtered.results.length).toBeGreaterThan(0);
+  });
+
+  it('does not change all steps when nothing is disabled', () => {
+    const all = allHints(game.values, game.cands, 5);
+    const same = allHints(game.values, game.cands, 5, 12, []);
+    expect(same.results.map((r) => r.type)).toEqual(all.results.map((r) => r.type));
+    expect(same.total).toEqual(all.total);
+  });
+});

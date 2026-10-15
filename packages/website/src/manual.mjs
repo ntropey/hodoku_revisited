@@ -80,6 +80,7 @@ export const MANUAL = [
 <p><em>Apply step</em> (<kbd>Enter</kbd>) places the value or removes the candidates. <em>Dismiss</em> (<kbd>Esc</kbd>) hides the hint. <em>Next hint</em> asks for another step from the current position.</p>
 <h2>Hints use</h2>
 <p>This setting limits how hard a hint may be: <em>Singles only</em>, <em>Up to Easy</em>, Medium, Hard, Unfair, or <em>Everything</em>. A puzzle that needs more than the limit allows gets the answer that no such step exists, which is a useful result in itself.</p>
+<p>Individual techniques can be switched off as well, under <em>Settings → Techniques a hint may use</em>. The level is the upper cap; unticking a technique narrows it further, so a hint never uses a technique you would rather spot yourself. With every technique ticked (the default) nothing changes.</p>
 <h2>All steps</h2>
 <p>The <em>All steps</em> tab lists every step available right now, grouped by technique with counts. Select the steps you want and choose <em>Apply selected</em>, or <em>Refresh</em> after you have changed the board.</p>`,
   },
@@ -166,6 +167,7 @@ export const MANUAL = [
 <dt>Mark mistakes</dt><dd>Show values that disagree with the solution in red.</dd>
 <dt>Auto-fill last digit</dt><dd>Off by default. When a row, column or box is down to one empty cell, that cell is filled in for you after your move. It counts as a normal, undoable move, not as a hint.</dd>
 <dt>Hints use</dt><dd>The hardest class of technique a hint may use. Also available in the side panel.</dd>
+<dt>Techniques a hint may use</dt><dd>The individual techniques a hint is allowed to use, grouped by difficulty. Untick any you would rather solve yourself; the choice is remembered. <em>Hints use</em> still caps them from above, and <em>Enable all techniques</em> puts everything back.</dd>
 <dt>New puzzle level</dt><dd>The difficulty used by the plain <em>New puzzle</em> button.</dd>
 <dt>Theme</dt><dd>Follow the system, or force light or dark.</dd>
 <dt>Clear pencil marks</dt><dd>Remove all the notes you wrote.</dd>\n<dt>Reset candidates</dt><dd>Restore the solver's candidates to everything the placed values allow.</dd>
