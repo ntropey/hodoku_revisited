@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clearNotes, notesOf, toggleNote, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells } from '../src/game';
+import { ALL_CANDS, autoFillLastDigit, clearNotes, notesOf, toggleNote, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells, type GameState } from '../src/game';
 import { allHints, analyze, hint } from '../src/solverApi';
 
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -154,6 +154,55 @@ describe('all steps', () => {
     const g = newGame(analyze(PUZZLE));
     const { results } = allHints(g.values, g.cands, 0, 50);
     for (const r of results) expect(['FULL_HOUSE', 'NAKED_SINGLE', 'HIDDEN_SINGLE']).toContain(r.type);
+  });
+});
+
+describe('auto-fill last digit', () => {
+  const blank = (): GameState => ({
+    givens: '.'.repeat(81),
+    values: new Array<number>(81).fill(0),
+    cands: new Array<number>(81).fill(ALL_CANDS),
+    solution: new Array<number>(81).fill(0),
+    level: 1,
+    score: 0,
+    past: [],
+    future: [],
+  });
+
+  it('fills the last empty cell of a row, column or box, and cascades', () => {
+    let g = blank();
+    for (let c = 0; c < 8; c++) g = setValue(g, c, c + 1); // row 0: 1..8, cell 8 empty -> 9
+    for (let c = 10; c < 18; c++) g = setValue(g, c, c - 9); // row 1: cells 10..17 = 1..8, cell 9 empty -> 9
+    const out = autoFillLastDigit(g);
+    expect(out.values[8]).toBe(9);
+    expect(out.values[9]).toBe(9);
+  });
+
+  it('leaves a position alone when nothing is forced', () => {
+    const g = blank();
+    expect(autoFillLastDigit(g)).toBe(g);
+  });
+
+  it('does not fill when a unit has a duplicate, so more than one digit is missing', () => {
+    let g = blank();
+    for (let c = 0; c < 7; c++) g = setValue(g, c, c + 1); // 1..7 in cells 0..6
+    g = setValue(g, 7, 1); // duplicate 1: cells 8,9 are both missing, nothing is forced
+    expect(g.values[8]).toBe(0);
+    const out = autoFillLastDigit(g);
+    expect(out.values[8]).toBe(0);
+  });
+
+  it('is a normal, candidate-clearing, undoable move', () => {
+    let g = blank();
+    for (let c = 0; c < 8; c++) g = setValue(g, c, c + 1);
+    const out = autoFillLastDigit(g);
+    expect(out.values[8]).toBe(9);
+    // placing 9 clears its own candidates and removes 9 from the candidates of peers (cell 26 is in column 8)
+    expect(out.cands[8]).toBe(0);
+    expect(out.cands[26] & (1 << 9)).toBe(0);
+    expect(g.cands[26] & (1 << 9)).not.toBe(0);
+    // undo goes back to the board before the automatic move
+    expect(undo(out).values[8]).toBe(0);
   });
 });
 

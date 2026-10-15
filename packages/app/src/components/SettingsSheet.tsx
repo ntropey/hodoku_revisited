@@ -23,6 +23,10 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
           Mark mistakes (values that differ from the solution)
         </label>
         <label className="field">
+          <input type="checkbox" checked={settings.autoFill} onChange={(e) => onChange({ ...settings, autoFill: e.target.checked })} />
+          Auto-fill the last digit (a row, column or box with one empty cell)
+        </label>
+        <label className="field">
           Hints use
           <select value={settings.hintLevel} onChange={(e) => onChange({ ...settings, hintLevel: Number(e.target.value) as Settings['hintLevel'] })}>
             {HINT_LEVEL_NAMES.map((n, i) => (

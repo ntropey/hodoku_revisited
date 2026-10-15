@@ -7,6 +7,8 @@ export type Tab = 'hint' | 'steps' | 'summary';
 export interface Settings {
   showCands: boolean;
   checkMistakes: boolean;
+  /** fill the last empty cell of a row, column or box automatically after a move */
+  autoFill: boolean;
   /** level of "New puzzle" */
   level: number;
   hintLevel: HintLevel;
@@ -15,7 +17,7 @@ export interface Settings {
   seen?: Record<number, number[]>;
 }
 
-export const DEFAULT_SETTINGS: Settings = { showCands: false, checkMistakes: false, level: 1, hintLevel: 5, theme: 'system' };
+export const DEFAULT_SETTINGS: Settings = { showCands: false, checkMistakes: false, autoFill: false, level: 1, hintLevel: 5, theme: 'system' };
 
 export function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
