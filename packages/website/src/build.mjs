@@ -44,6 +44,8 @@ const ORDERED = GROUPS.flatMap((g) => g.items);
 if (ORDERED.length !== TECHNIQUES.length) throw new Error('every technique needs a group');
 const groupOf = (t) => GROUPS.find((g) => g.items.includes(t));
 
+const ADSENSE_CLIENT = 'ca-pub-6409516653999633';
+
 const LOGO = (root) => `<a class="brand" href="${root}"><img src="${root}icon.svg" alt="" width="32" height="32"><span class="wordmark">Hodoku<small>Revisited</small></span></a>`;
 
 /** `root` is the path back to the site root from the page, e.g. '../' */
@@ -62,6 +64,7 @@ function page({ title, description, root, body, path, wide }) {
 <link rel="apple-touch-icon" href="${root}apple-touch-icon.png">
 <link rel="preload" href="${root}fonts/newsreader-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${root}site.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>
 ${canonical}
 </head>
 <body>
@@ -277,7 +280,10 @@ add(
     path: 'privacy.html',
     body: `<h1>Privacy</h1>
 <p>The app runs entirely in your browser. Puzzles are generated and solved on your device. Your current game and settings are saved in your browser's local storage so you can continue later; they are never sent to a server.</p>
-<p>This site does not use cookies, accounts or analytics at this time. If advertising or analytics are added in the future, this page will be updated first, and visitors from the EU and the UK will be asked for consent before any tracking starts.</p>
+<h2>Advertising</h2>
+<p>This site shows ads served by Google AdSense. Google and its partners may use cookies and similar technologies to show ads based on your visits to this and other sites. You can manage or turn off personalized ads in <a href="https://adssettings.google.com/">Google's ad settings</a>, and learn how Google uses data at <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>. Visitors from the EU, the UK and Switzerland are asked for consent through a consent message before personalized ads are used.</p>
+<p>The solver app under <a href="play/">/play/</a> does not load ads or any third-party scripts. Your games and settings stay in your browser.</p>
+<p>This site has no accounts and uses no analytics of its own.</p>
 <p>Questions: open an issue at <a href="${REPO}/issues">${REPO}/issues</a>.</p>`,
   }),
 );
@@ -403,6 +409,8 @@ else console.warn('packages/app/dist not found: the site is built without /play/
 
 // a custom domain (anything but github.io) gets a CNAME file so Pages keeps serving it
 if (siteUrl && siteUrl !== '/' && !new URL(siteUrl).hostname.endsWith('github.io')) writeFileSync(join(out, 'CNAME'), new URL(siteUrl).hostname + '\n');
+
+writeFileSync(join(out, 'ads.txt'), `google.com, pub-${ADSENSE_CLIENT.replace('ca-pub-', '')}, DIRECT, f08c47fec0942fa0\n`);
 
 const gated = Boolean(process.env.SITE_PASSWORD);
 if (!gated && siteUrl !== '/') {
