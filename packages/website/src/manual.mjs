@@ -11,7 +11,7 @@ export const MANUAL = [
     title: 'Getting started',
     summary: 'The screen, the first puzzle, and installing the app.',
     body: `
-<p>Open <a href="../play/">the solver</a>. The first time, it deals you an Easy puzzle. Your game is saved in the browser after every move, so you can close the tab and continue later.</p>
+<p>Open <a href="../play/">the solver</a>. The first time, it deals you an Easy sudoku puzzle. Your game is saved in the browser after every move, so you can close the tab and continue later.</p>
 <h2>The screen</h2>
 <ul>
 <li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Mode</em> (Playing, Learning or Practising), <em>Import</em>, <em>Copy</em>, <em>Save</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>

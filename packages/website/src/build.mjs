@@ -48,7 +48,7 @@ const groupOf = (t) => GROUPS.find((g) => g.items.includes(t));
 const LOGO = (root) => `<a class="brand" href="${root}"><img src="${root}icon.svg" alt="" width="32" height="32"><span class="wordmark">Hodoku<small>Revisited</small></span></a>`;
 
 /** `root` is the path back to the site root from the page, e.g. '../' */
-function page({ title, description, root, body, path, wide }) {
+function page({ title, description, root, body, path, wide, jsonld }) {
   const canonical = siteUrl && path ? `<link rel="canonical" href="${siteUrl}${path}">` : '';
   return `<!doctype html>
 <html lang="en">
@@ -57,6 +57,12 @@ function page({ title, description, root, body, path, wide }) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hodoku Revisited">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(description)}">
+${siteUrl ? `<meta property="og:url" content="${siteUrl}${path ?? ''}">\n<meta property="og:image" content="${siteUrl}icon-512.png">` : ''}
+<meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#F5F2EA" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#15171B" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="${root}favicon.svg" type="image/svg+xml">
@@ -64,6 +70,7 @@ function page({ title, description, root, body, path, wide }) {
 <link rel="preload" href="${root}fonts/newsreader-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${root}site.css">
 ${canonical}
+${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(/</g, '\\u003c')}</script>` : ''}
 </head>
 <body>
 <header class="top">
@@ -80,7 +87,7 @@ ${canonical}
 ${body}
 </main>
 <footer>
-  <p>Based on HoDoKu by Bernhard Hobiger. Free software under the GPL (GPL-3.0-or-later), with no warranty.</p>
+  <p>Free sudoku solver, based on HoDoKu by Bernhard Hobiger. Free software under the GPL (GPL-3.0-or-later), with no warranty.</p>
   <p><a href="${REPO}">GitHub</a> · <a href="${REPO}/commits/main">Changelog</a> · <a href="https://hodoku.sourceforge.net/">Original site</a> · <a href="${root}about.html">About and license</a> · <a href="${root}privacy.html">Privacy</a></p>
 </footer>
 </body>
@@ -116,27 +123,40 @@ add(
   'index.html',
   page({
     title: 'Hodoku Revisited: the sudoku solver that explains every step',
-    description: 'The HoDoKu hint engine, analyzer and technique library in your browser. No install. It tells you which step comes next and why it works. Free and open source.',
+    description: 'Free sudoku solver and trainer in your browser: the HoDoKu hint engine, analyzer and technique library. It tells you which sudoku step comes next and why it works. No install, open source.',
     root: '',
     path: '',
     wide: true,
+    jsonld: siteUrl
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'WebApplication',
+          name: 'Hodoku Revisited',
+          alternateName: 'Hodoku Revisited sudoku solver',
+          url: siteUrl,
+          applicationCategory: 'GameApplication',
+          operatingSystem: 'Any (web browser)',
+          description: 'Free sudoku solver and trainer with step-by-step logical hints, difficulty rating and technique guides.',
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        }
+      : undefined,
     body: `<section class="hero">
   <div>
-    <p class="eyebrow">The HoDoKu solver, now in your browser</p>
-    <h1>Every step,<br>explained.</h1>
-    <p class="lead">The hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript. No Java and no install. It tells you which step comes next and why it works.</p>
+    <p class="eyebrow">The HoDoKu sudoku solver, now in your browser</p>
+    <h1>Every sudoku step,<br>explained.</h1>
+    <p class="lead">A free sudoku solver and trainer: the hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript. No Java and no install. It tells you which sudoku step comes next and why it works.</p>
     <p><a class="btn" href="play/">Open the solver</a> <a class="btn alt" href="techniques/">Browse techniques</a></p>
     <p class="gen"><span>Generate:</span> ${['Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'].map((l, i) => `<a class="chip" href="play/?level=${i + 1}">${l}</a>`).join(' ')}</p>
   </div>
   ${homeEx ? `<figure class="example hero-board">${diagram(homeEx)}<figcaption><span class="mono">${esc(homeEx.name)}</span> · ${esc(caption(homeEx).replace(/^[^:]*: /, ''))}</figcaption></figure>` : ''}
 </section>
 <section class="cards">
-  <article><p class="eyebrow">Hints</p><h2>Vague, concrete or the full step</h2><p>You choose how much it gives away. It can just name the technique, or highlight every candidate involved.</p></article>
-  <article><p class="eyebrow">Analyzer</p><h2>See the whole solution path</h2><p>Get the techniques the solver would use and the hardest one required, plus a difficulty rating for any puzzle you paste in.</p></article>
+  <article><p class="eyebrow">Hints</p><h2>Vague, concrete or the full step</h2><p>You choose how much a sudoku hint gives away. It can just name the technique, or highlight every candidate involved.</p></article>
+  <article><p class="eyebrow">Analyzer</p><h2>See the whole solution path</h2><p>Get the techniques the solver would use and the hardest one required, plus a difficulty rating for any sudoku puzzle you paste in.</p></article>
   <article><p class="eyebrow">Library</p><h2>From singles to last resort</h2><p>${TECHNIQUES.length} technique guides, written new. Every example is a board you can step through and open in the app.</p></article>
 </section>
 <section class="trust">
-  <p>The solver finds the same steps as HoDoKu 2.2.0 (we compare them step by step), so a hint is always a real technique, never a guess. It runs entirely in your browser and works offline once installed.</p>
+  <p>This sudoku solver finds the same steps as HoDoKu 2.2.0 (we compare them step by step), so a hint is always a real technique, never a guess. It runs entirely in your browser and works offline once installed.</p>
 </section>`,
   }),
 );
@@ -176,7 +196,7 @@ ORDERED.forEach((t, i) => {
     `techniques/${t.slug}.html`,
     page({
       title: `${t.name}: sudoku technique | Hodoku Revisited`,
-      description: `${t.name}: ${t.summary}`,
+      description: `${t.name} sudoku technique: ${t.summary}`,
       root: '../',
       path: `techniques/${t.slug}.html`,
       wide: true,
@@ -222,8 +242,8 @@ const manualRail = (current) => `<aside class="rail"><label class="railselect"><
 add(
   'manual/index.html',
   page({
-    title: 'Manual | Hodoku Revisited',
-    description: 'How to use Hodoku Revisited: hints, candidates, filters, importing puzzles, shortcuts and settings.',
+    title: 'Manual: how to use the sudoku solver | Hodoku Revisited',
+    description: 'How to use the Hodoku Revisited sudoku solver: hints, candidates, filters, importing puzzles, shortcuts and settings.',
     root: '../',
     path: 'manual/',
     wide: true,
@@ -238,8 +258,8 @@ MANUAL.forEach((c, i) => {
   add(
     `manual/${c.slug}.html`,
     page({
-      title: `${c.title} | Manual | Hodoku Revisited`,
-      description: c.summary,
+      title: `${c.title} | Sudoku solver manual | Hodoku Revisited`,
+      description: `${c.summary} Part of the Hodoku Revisited sudoku solver manual.`,
       root: '../',
       path: `manual/${c.slug}.html`,
       wide: true,
@@ -253,12 +273,12 @@ MANUAL.forEach((c, i) => {
 add(
   'about.html',
   page({
-    title: 'About and license | Hodoku Revisited',
-    description: 'Where Hodoku Revisited comes from, how it is licensed, and how to get the source.',
+    title: 'About Hodoku Revisited, a free sudoku solver | License',
+    description: 'Hodoku Revisited is a free, open source sudoku solver and trainer based on HoDoKu. Where it comes from, how it is licensed, and how to get the source.',
     root: '',
     path: 'about.html',
     body: `<h1>About</h1>
-<p>Hodoku Revisited is a TypeScript port of <a href="https://hodoku.sourceforge.net/">HoDoKu</a>, the Sudoku generator, solver and trainer by Bernhard Hobiger (2008-2012). HoDoKu has not been updated since 2013 and runs only as a Java desktop program. This project brings its solving engine to the web and mobile with a new interface.</p>
+<p>Hodoku Revisited is a free sudoku solver and trainer. It is a TypeScript port of <a href="https://hodoku.sourceforge.net/">HoDoKu</a>, the Sudoku generator, solver and trainer by Bernhard Hobiger (2008-2012). HoDoKu has not been updated since 2013 and runs only as a Java desktop program. This project brings its solving engine to the web and mobile with a new interface.</p>
 <h2>Accuracy</h2>
 <p>The solver was ported technique by technique. Its output is tested against the original program: hundreds of puzzles are solved with HoDoKu 2.2.0, and the new engine must find exactly the same steps, in the same order, with the same score and difficulty rating.</p>
 <h2>License</h2>
@@ -333,7 +353,7 @@ main{max-width:760px;margin:0 auto;padding:16px}main.wide{max-width:1200px}
 .btn:hover{filter:brightness(1.1)}.btn.alt{background:transparent;color:var(--accent)}.btn.small{padding:6px 14px;font-size:.9rem;margin:4px 0 4px 0}
 .top .btn.small{color:var(--card)}
 .hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:48px;align-items:center;padding:48px 0 32px}
-.hero h1{font-size:clamp(2.6rem,6vw,4.5rem);margin:.1em 0 .3em}
+.hero h1{font-size:clamp(2.2rem,4.6vw,3.6rem);margin:.1em 0 .3em}
 .gen{color:var(--muted)}.chip{display:inline-block;padding:2px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);text-decoration:none;font-size:.9rem}.chip:hover{background:var(--surface-2)}
 .hero-board{margin:0}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:24px 0}
@@ -403,7 +423,7 @@ writeFileSync(join(out, 'site.css'), css);
 // Consent banner + consent-gated AdSense on the generated marketing pages only (never /play/, which is copied below).
 console.log(`consent banner added to ${applyConsent(out)} pages`);
 
-for (const f of ['icon.svg', 'favicon.svg', 'apple-touch-icon.png']) cpSync(join(here, '..', '..', 'app', 'public', f), join(out, f));
+for (const f of ['icon.svg', 'favicon.svg', 'apple-touch-icon.png', 'icon-512.png']) cpSync(join(here, '..', '..', 'app', 'public', f), join(out, f));
 const fontSrc = join(here, '..', '..', 'app', 'node_modules', '@fontsource');
 mkdirSync(join(out, 'fonts'), { recursive: true });
 for (const [id, , w] of FONTS) cpSync(join(fontSrc, id, 'files', `${id}-latin-${w}-normal.woff2`), join(out, 'fonts', `${id}-latin-${w}-normal.woff2`));
