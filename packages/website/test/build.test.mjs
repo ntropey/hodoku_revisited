@@ -30,6 +30,41 @@ test('internal links resolve', () => {
   }
 });
 
+test('every marketing page shows the consent banner and never loads AdSense statically', () => {
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (e.name === 'play' ? [] : walk(join(d, e.name))) : e.name.endsWith('.html') ? [join(d, e.name)] : []));
+  const files = walk(dist);
+  assert.ok(files.length > TECHNIQUES.length, 'found the marketing pages');
+  for (const file of files) {
+    const html = readFileSync(file, 'utf8');
+    assert.match(html, /hodoku-consent/, `${file}: storage key / banner`);
+    assert.match(html, /role="dialog"/, `${file}: dialog markup`);
+    assert.match(html, /aria-modal="true"/, `${file}: aria-modal`);
+    assert.ok(!/<script[^>]*\bsrc="[^"]*adsbygoogle\.js/.test(html), `${file}: no static AdSense <script> tag`);
+    assert.match(html, /adsbygoogle\.js\?client=/, `${file}: consent-gated AdSense loader`);
+  }
+});
+
+test('the consent script gates AdSense, remembers accept/reject, and can be reopened', () => {
+  const html = readFileSync(join(dist, 'index.html'), 'utf8');
+  assert.match(html, /localStorage/, 'stores the choice in localStorage');
+  assert.match(html, /'granted'/, 'accept is stored');
+  assert.match(html, /'denied'/, 'reject is stored too (no re-prompt)');
+  assert.match(html, /Cookie settings/, 'footer control to withdraw consent');
+  // The AdSense URL is built into a script element at runtime, never a static tag.
+  assert.ok(!/<script[^>]*src="https:\/\/pagead2\.googlesyndication\.com/.test(html));
+  assert.match(html, /v:V/, 'the stored choice carries a version');
+});
+
+test('privacy page explains the consent banner and the locally stored choice', () => {
+  const html = readFileSync(join(dist, 'privacy.html'), 'utf8');
+  assert.match(html, /consent banner/i);
+  assert.match(html, /local storage/i);
+  assert.match(html, /hodoku-consent/);
+  assert.match(html, /Cookie settings/);
+  assert.match(html, /adssettings\.google\.com/, 'keeps the Google ad settings link');
+  assert.match(html, /play\//, 'keeps the statement about /play/');
+});
+
 test('sitemap and robots are written when SITE_URL is set', () => {
   assert.match(readFileSync(join(dist, 'sitemap.xml'), 'utf8'), /https:\/\/example\.org\/techniques\/x-wing\.html/);
   assert.match(readFileSync(join(dist, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/example\.org\/sitemap\.xml/);
