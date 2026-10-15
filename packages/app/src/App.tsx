@@ -70,10 +70,19 @@ import {
   type Store,
 } from './store';
 import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, PALETTE, type CopyWhat, type Mode, type Settings, type Tab } from './ui';
+import { downloadText, readTextFile } from './files';
 
 const SAVE_KEY = 'hodoku-revisited:game';
 const SETTINGS_KEY = 'hodoku-revisited:settings';
 const TIME_KEY = 'hodoku-revisited:time';
+
+/** What each Copy/Save format is called, for the status line. */
+const COPY_LABELS: Record<CopyWhat, string> = {
+  givens: 'givens',
+  pm: 'puzzle with candidates',
+  library: 'library line',
+  formatted: 'formatted grid',
+};
 
 /** localStorage in the shape the store helpers want; they swallow the failures (private mode, quota). */
 const localStorageStore: Store = {
@@ -505,38 +514,48 @@ export function App() {
     }
   };
 
-  /** The Copy menu: put one of the text formats on the clipboard. Only the givens are made here. */
-  const copyPuzzle = useCallback(
-    async (what: CopyWhat) => {
-      if (!game) return;
-      const label: Record<CopyWhat, string> = {
-        givens: 'givens',
-        pm: 'puzzle with candidates',
-        library: 'library line',
-        formatted: 'formatted grid',
-      };
-      let text: string;
+  /** The text of one of the Copy/Save formats, or null when it could not be made. */
+  const puzzleText = useCallback(
+    async (what: CopyWhat): Promise<string | null> => {
+      if (!game) return null;
       try {
-        if (what === 'givens') {
-          text = game.givens;
-        } else {
-          const mode: CopyFormat = what === 'pm' ? 'PM_GRID' : what === 'library' ? 'LIBRARY' : 'CLUES_ONLY_FORMATTED';
-          text = await solver.current.format(game.values, game.cands, mode);
-        }
+        if (what === 'givens') return game.givens;
+        const mode: CopyFormat = what === 'pm' ? 'PM_GRID' : what === 'library' ? 'LIBRARY' : 'CLUES_ONLY_FORMATTED';
+        return await solver.current.format(game.values, game.cands, mode);
       } catch (e) {
         if (!isCancelled(e)) setMessage((e as Error).message);
-        return;
+        return null;
       }
+    },
+    [game],
+  );
+
+  /** The Copy menu: put one of the text formats on the clipboard. */
+  const copyPuzzle = useCallback(
+    async (what: CopyWhat) => {
+      const text = await puzzleText(what);
+      if (text === null) return;
       try {
         await navigator.clipboard.writeText(text);
-        setMessage(`Copied the ${label[what]}.`);
+        setMessage(`Copied the ${COPY_LABELS[what]}.`);
       } catch {
         // the clipboard can be blocked (insecure context): fall back to the text itself, but it is
         // only readable in the status line when it is short (the grid formats are many lines)
         setMessage(text.length <= 81 ? text : 'Copy failed.');
       }
     },
-    [game],
+    [puzzleText],
+  );
+
+  /** Save one of the text formats to a file (the browser's own download). */
+  const savePuzzle = useCallback(
+    async (what: CopyWhat) => {
+      const text = await puzzleText(what);
+      if (text === null) return;
+      downloadText(`hodoku-${what}.txt`, text);
+      setMessage(`Saved the ${COPY_LABELS[what]} to a file.`);
+    },
+    [puzzleText],
   );
 
   /** Export the current board as a PNG (board only: grid, values, candidates, colours). */
@@ -687,6 +706,10 @@ export function App() {
       { label: 'Copy puzzle with candidates', run: () => void copyPuzzle('pm') },
       { label: 'Copy library line', run: () => void copyPuzzle('library') },
       { label: 'Copy formatted grid', run: () => void copyPuzzle('formatted') },
+      { label: 'Save puzzle: givens', run: () => void savePuzzle('givens') },
+      { label: 'Save puzzle: candidates', run: () => void savePuzzle('pm') },
+      { label: 'Save puzzle: library line', run: () => void savePuzzle('library') },
+      { label: 'Save puzzle: formatted grid', run: () => void savePuzzle('formatted') },
       { label: 'Print', run: () => window.print() },
       { label: 'Print solution', run: () => setPrintSolution(true) },
       { label: 'Extended print…', run: () => setExtendedPrintOpen(true) },
@@ -694,7 +717,7 @@ export function App() {
       { label: 'Settings', run: () => setSettingsOpen(true) },
       ...['light', 'dark', 'system'].map((t) => ({ label: `Theme: ${t}`, run: () => setSettings((s) => ({ ...s, theme: t as Settings['theme'] })) })),
     ],
-    [askAllSteps, askHint, applyHint, applyPath, copyPuzzle, eraseSelected, exportPng, filterDigit, game, hasHiddenSingle, hasOwnValues, hasProgress, hint, pathDone, pathSteps, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, settings.cellZoom, solved, startNew, tab, update],
+    [askAllSteps, askHint, applyHint, applyPath, copyPuzzle, savePuzzle, eraseSelected, exportPng, filterDigit, game, hasHiddenSingle, hasOwnValues, hasProgress, hint, pathDone, pathSteps, selected, settings.checkMistakes, settings.showCands, settings.autoFill, settings.colorKu, settings.cellZoom, solved, startNew, tab, update],
   );
 
   useEffect(() => {
@@ -816,6 +839,7 @@ export function App() {
         onImport={() => (setImportError(null), setImporting(true))}
         onPuzzles={() => setPuzzlesOpen(true)}
         onCopy={(what) => void copyPuzzle(what)}
+        onSave={(what) => void savePuzzle(what)}
         onPrint={() => window.print()}
         onPrintSolution={() => setPrintSolution(true)}
         onExtendedPrint={() => setExtendedPrintOpen(true)}
@@ -896,6 +920,10 @@ export function App() {
         <ImportDialog
           text={importText}
           onText={setImportText}
+          onFile={(file) => {
+            setImportError(null);
+            void readTextFile(file).then(setImportText, (e: unknown) => setImportError(e instanceof Error ? e.message : String(e)));
+          }}
           error={importError}
           busy={!!busy}
           onLoad={() => void doImport()}

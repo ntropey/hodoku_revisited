@@ -62,7 +62,7 @@ in the port too, with its own palette (Colour mode).
 | Named save points (create / restore) | ✅ `RestoreSavePointDialog` | ✅ **done** — Puzzles dialog → Saves |
 | Restart game | ✅ *Restart game* / *Reset game* | ✅ **done** — command *Restart game*; the port has one action where the original split *Restart game* and *Reset game* |
 | Set givens (freeze the placed digits as clues) | ✅ `SetGivensDialog` | ✅ **done** — command *Set givens* |
-| Load / save puzzle to a file, Save as | ✅ | ❌ (import/paste and copy only) |
+| Load / save puzzle to a file, Save as | ✅ | ✅ **done** — *Open a file* in the Import dialog and the *Save* menu (the browser's file picker and download; there is no in-place *Save*) |
 | Load / save configuration | ✅ | ~ settings in `localStorage` |
 
 ## Output
@@ -111,7 +111,8 @@ a **precomputed puzzle bank** for instant starts, technique guides with solver-v
 Done since this comparison was first made: **ColorKu** (with per-digit colours), the **solution-path
 trainer** (Path tab), **cell zoom**, **manual colouring** of cells and candidates, **show deviations**,
 the **puzzle tools** (*Restart game*, *Set givens* and *Fill all hidden singles*), puzzle management
-(a **library**, a **history** and named **save points**, in the Puzzles dialog), the copy formats
+(a **library**, a **history** and named **save points**, in the Puzzles dialog), loading a puzzle from a
+file and saving one to a file, the copy formats
 (**givens**, **puzzle with candidates**, **library line** and **formatted grid**), the two
 outputs, **print solution** and **PNG**, **extended print** (a book of up to five sections, five
 layouts, a rating line and booklet imposition), and the **game modes** (Playing / Learning / Practising,

@@ -17,6 +17,7 @@ interface Props {
   onImport: () => void;
   onPuzzles: () => void;
   onCopy: (what: CopyWhat) => void;
+  onSave: (what: CopyWhat) => void;
   onPrint: () => void;
   onPrintSolution: () => void;
   onExtendedPrint: () => void;
@@ -123,6 +124,16 @@ export function TopBar(p: Props) {
             </>
           )}
         </Menu>
+        <Menu label="Save">
+          {(close) => (
+            <>
+              <button role="menuitem" onClick={() => (close(), p.onSave('givens'))}>Givens</button>
+              <button role="menuitem" onClick={() => (close(), p.onSave('pm'))}>Puzzle with candidates</button>
+              <button role="menuitem" onClick={() => (close(), p.onSave('library'))}>Library line</button>
+              <button role="menuitem" onClick={() => (close(), p.onSave('formatted'))}>Formatted grid</button>
+            </>
+          )}
+        </Menu>
         <button onClick={p.onPrint}>Print</button>
         <button onClick={p.onExtendedPrint}>Extended print…</button>
       </div>
@@ -172,6 +183,10 @@ export function TopBar(p: Props) {
             <button role="menuitem" onClick={() => (close(), p.onCopy('pm'))}>Copy puzzle with candidates</button>
             <button role="menuitem" onClick={() => (close(), p.onCopy('library'))}>Copy library line</button>
             <button role="menuitem" onClick={() => (close(), p.onCopy('formatted'))}>Copy formatted grid</button>
+            <button role="menuitem" onClick={() => (close(), p.onSave('givens'))}>Save puzzle: givens</button>
+            <button role="menuitem" onClick={() => (close(), p.onSave('pm'))}>Save puzzle: candidates</button>
+            <button role="menuitem" onClick={() => (close(), p.onSave('library'))}>Save puzzle: library line</button>
+            <button role="menuitem" onClick={() => (close(), p.onSave('formatted'))}>Save puzzle: formatted grid</button>
             <button role="menuitem" onClick={() => (close(), p.onPrint())}>Print</button>
             <button role="menuitem" onClick={() => (close(), p.onExtendedPrint())}>Extended print…</button>
             <button role="menuitem" onClick={() => (close(), p.onPrintSolution())}>Print solution</button>

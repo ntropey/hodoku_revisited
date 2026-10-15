@@ -160,6 +160,10 @@ printed puzzle is coloured), it has no manual-duplex half-print pause (the brows
 printing is used), and a Learning section prints a puzzle of the section's level, where the original
 forces Extreme.
 
+Puzzles can be read from and written to a file too: *Import* has an *Open a file* picker, and the top
+bar's *Save* menu downloads the puzzle in any of the four copy formats. A browser has no in-place
+*Save*, so *Save* and *Save as* are the same action.
+
 ## Status (M5, first version)
 
 `packages/website` is a dependency-free static site generator (`src/build.mjs`): start page,
