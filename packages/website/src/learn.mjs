@@ -41,7 +41,7 @@ export const LEARN = [
       const blurb = {
         Easy: 'Only singles are needed: a cell that is the last empty one in its unit, a cell with one candidate, or a digit with only one place in a unit.',
         Medium: 'Singles are not enough. You need to remove candidates with locked candidates and with naked and hidden pairs and triples.',
-        Hard: 'Patterns that span the grid: fish, single-digit patterns, wings, colouring, uniqueness arguments and short chains.',
+        Hard: 'Patterns that span the grid: fish, single-digit patterns, wings, coloring, uniqueness arguments and short chains.',
         Unfair: 'Long chains and loops, almost locked sets, and fish with fins. Some of these are laborious to find by eye.',
         Extreme: 'Techniques that try an assumption and follow its consequences: forcing chains and nets, Kraken fish and templates. Only a computer finds these comfortably.',
       };
@@ -57,7 +57,7 @@ ${lists}
 <h2>The number next to the level</h2>
 <p>Each technique carries a score, and the puzzle's <strong>score</strong> adds up the scores of all the steps on its solution path. Two puzzles of the same level can therefore differ: a long Hard puzzle can have a higher score than a short one. In the app the rating appears at the top as, for example, <em>Hard · 612</em>. A higher number means more or harder work.</p>
 <h2>Choosing a level</h2>
-<p>If you are new, start at Easy and move up when you finish a puzzle without hints. If you want practice on a particular technique, use the Learning and Practising modes, which build puzzles around the techniques you pick. The hint setting <em>Hints use</em> caps how hard a hint may be, which is handy when you only want to be reminded of the simpler tricks.</p>
+<p>If you are new, start at Easy and move up when you finish a puzzle without hints. If you want practice on a particular technique, use the Learning and Practicing modes, which build puzzles around the techniques you pick. The hint setting <em>Hints use</em> caps how hard a hint may be, which is handy when you only want to be reminded of the simpler tricks.</p>
 <p><a class="btn" href="../play/?level=1">Try an Easy puzzle</a> <a class="btn alt" href="../play/?level=3">Try a Hard one</a></p>`;
     },
   },
@@ -98,7 +98,7 @@ ${lists}
 <h2>Cells and boxes</h2>
 <p>Guides and the solver write a cell as <code>rXcY</code>: row X, column Y, both counted from 1. So <code>r1c6</code> is the first row, sixth column. A box is written <code>bN</code> (<code>b3</code> is the top right box). Rows are numbered top to bottom, columns left to right, boxes in the same reading order.</p>
 <h2>Placing and removing digits</h2>
-<p>Placing a digit is written with an equals sign: <code>r5c5=3</code>, a 3 in the centre cell. Removing a candidate uses <code>&lt;&gt;</code>: <code>r1c6&lt;&gt;4</code> says that 4 is not a candidate of that cell. Several cells in a row of the notation (<code>r1c6, r2c6&lt;&gt;4</code>) mean the same removal in each. A hint in the solver reads, for example, <em>Locked Candidates Type 1 (Pointing): 4 in b3 ⇒ r1c6&lt;&gt;4</em>.</p>
+<p>Placing a digit is written with an equals sign: <code>r5c5=3</code>, a 3 in the center cell. Removing a candidate uses <code>&lt;&gt;</code>: <code>r1c6&lt;&gt;4</code> says that 4 is not a candidate of that cell. Several cells in a row of the notation (<code>r1c6, r2c6&lt;&gt;4</code>) mean the same removal in each. A hint in the solver reads, for example, <em>Locked Candidates Type 1 (Pointing): 4 in b3 ⇒ r1c6&lt;&gt;4</em>.</p>
 <h2>Chains</h2>
 <p>In chain notation, a strong link is shown with <code>=</code> and a weak link with <code>-</code>, so <code>4r1c1 = 4r1c7 - 5r1c7</code> reads: in row 1 the 4 goes in c1 or c7, and in cell r1c7 a 4 rules out a 5. The solver draws strong links as solid lines and weak links as dashed lines.</p>
 <h2>Pencil marks</h2>

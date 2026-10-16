@@ -112,3 +112,23 @@ test('learn pages exist and the level page lists every technique under its level
   const levels = readFileSync(new URL('learn/sudoku-difficulty-levels.html', dist), 'utf8');
   for (const t of TECHNIQUES) assert.ok(levels.includes(`techniques/${t.slug}.html`), `${t.slug} on the level page`);
 });
+
+test('user-facing text and docs use American spelling', async () => {
+  const { readdirSync, readFileSync, statSync } = await import('node:fs');
+  const repo = new URL('../../../', import.meta.url);
+  const roots = ['packages/app/src', 'packages/website/src', 'docs', 'README.md', 'AGENTS.md'];
+  const skip = /node_modules|\/dist\/|docs\/design|hodoku_legacy_captures|examples\.json|bank\.json/;
+  const British = /colour|practis(e|ing)|behaviour|\bcentre\b|labelled|honour|\bgrey\b|organis(e|ation)|recognis(e|ing)/i;
+  const walk = (p) => (statSync(p).isDirectory() ? readdirSync(p).flatMap((n) => walk(`${p}/${n}`)) : [p]);
+  const bad = [];
+  for (const r of roots) {
+    for (const f of walk(new URL(r, repo).pathname)) {
+      if (skip.test(f) || !/\.(ts|tsx|mjs|md|css)$/.test(f)) continue;
+      readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+        // the game mode identifier 'practising' is a stored value, kept as it is
+        if (British.test(line.replace(/'practising'|practising:/g, ''))) bad.push(`${f.replace(repo.pathname, '')}:${i + 1}`);
+      });
+    }
+  }
+  assert.deepEqual(bad, [], 'British spellings found');
+});

@@ -1,5 +1,5 @@
 """Builds public/icon.svg and public/favicon.svg: the Hodoku Revisited mark (a ruled 3x3 box with the candidates
-1 3 4 5 6 7 9 in their fixed slots, which spell an H; the 5 in the centre is the accent colour).
+1 3 4 5 6 7 9 in their fixed slots, which spell an H; the 5 in the center is the accent color).
 The digits are IBM Plex Mono 600 outlines (OFL), drawn as paths so the icon does not need the font.
 Needs: pip install fonttools brotli; the font from node_modules/@fontsource/ibm-plex-mono."""
 from fontTools.pens.svgPathPen import SVGPathPen

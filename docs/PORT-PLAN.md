@@ -156,7 +156,7 @@ solved grid after the board (*Print solution*) and exports the board as a `.png`
 mode and candidate setting, one of five layouts (one, two or four puzzles per page, portrait or
 landscape), an optional rating line under each puzzle, and a booklet imposition for the landscape
 layouts. Three small deviations from the original: the port has no *all black* option (nothing on a
-printed puzzle is coloured), it has no manual-duplex half-print pause (the browser's own double-sided
+printed puzzle is colored), it has no manual-duplex half-print pause (the browser's own double-sided
 printing is used), and a Learning section prints a puzzle of the section's level, where the original
 forces Extreme.
 
@@ -185,10 +185,10 @@ mode (Filter segment, Alt+digit, long press), timer, command search (Ctrl/Cmd+K)
 puzzle) and `?level=` (new puzzle) links. The Summary tab's "Techniques used" comes from `analyze()`, which now
 returns the grouped solve path. Website: restyled with the same tokens, technique index rail grouped in 13
 categories, Before/After toggle and "Open in app" on every diagram, and a twelve-chapter manual (`src/manual.mjs`,
-must be kept in step with the app's behaviour). A new Setting, "Auto-fill last digit", fills the last
+must be kept in step with the app's behavior). A new Setting, "Auto-fill last digit", fills the last
 empty cell of a row, column or box after a move (off by default; a normal, undoable move, not a hint).
-A "ColorKu" setting draws placed digits and candidates as coloured balls instead of numerals, as in the
-original, with a configurable colour per digit (off by default).
+A "ColorKu" setting draws placed digits and candidates as colored balls instead of numerals, as in the
+original, with a configurable color per digit (off by default).
 A "Puzzles" dialog adds three lists kept in `localStorage`: a library of named puzzles (save the current
 puzzle, open or delete an entry), a history of the puzzles played (level, score, time and whether it was
 solved, newest first) and named save points (a snapshot of the current game, restored without crossing the
@@ -197,18 +197,18 @@ undo history).
 The side panel has a fourth tab, "Path": it lists the solver's remaining steps from the current board
 (technique, action, difficulty) with <em>Next step</em> and <em>Solve up to</em> (apply every step up to a
 chosen difficulty), built on a new worker `path` request. A "Cell zoom" setting adds an enlarged view of
-the selected cell (its value or candidates) under the board. A "Colour" input mode lets the player paint
-cells and candidates with a palette (the original's *Color cells* / *Color candidates*); the colours are
+the selected cell (its value or candidates) under the board. A "Color" input mode lets the player paint
+cells and candidates with a palette (the original's *Color cells* / *Color candidates*); the colors are
 stored on the game, covered by undo, and cleared with one command. The command menu also has *Restart
 game*, *Set givens* and *Fill all hidden singles*, and a *Show deviations* setting marks the cells whose
 candidates differ from what the placed values allow.
 
 Game modes (the original's Mode menu): a _Mode_ menu in the top bar and a command-menu entry pick
-Playing (the default), Learning or Practising. Learning and Practising drill a set of techniques chosen
+Playing (the default), Learning or Practicing. Learning and Practicing drill a set of techniques chosen
 in a Training dialog (grouped by difficulty, shared with the hints list): a new puzzle is drawn from the
 bank only if its solve path uses at least one of them, and in Learning it is also solved up to the point
 where that technique applies (the board state comes back with the puzzle from the worker's `train`
-request; Practising starts from the givens). The status line shows the mode and the techniques.
+request; Practicing starts from the givens). The status line shows the mode and the techniques.
 
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
 tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense (loaded only after consent,

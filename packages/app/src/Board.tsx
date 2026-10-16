@@ -14,17 +14,17 @@ interface Props {
   deviate?: ReadonlySet<number>;
   /** digit whose candidates are tinted (Filter mode), 0 = off */
   filter?: number;
-  /** draw digits and candidates as coloured balls (ColorKu) */
+  /** draw digits and candidates as colored balls (ColorKu) */
   colorKu?: boolean;
-  /** ColorKu colour per digit 1-9 */
+  /** ColorKu color per digit 1-9 */
   colors?: readonly string[];
-  /** the player's own cell colours (palette index per cell, 0 = none) */
+  /** the player's own cell colors (palette index per cell, 0 = none) */
   cellColors?: readonly number[];
-  /** the player's own candidate colours (palette index per `cell * 9 + digit - 1`) */
+  /** the player's own candidate colors (palette index per `cell * 9 + digit - 1`) */
   candColors?: readonly number[];
-  /** the palette the colour indices refer to */
+  /** the palette the color indices refer to */
   palette?: readonly string[];
-  /** while colouring: what a click paints; null = normal play */
+  /** while coloring: what a click paints; null = normal play */
   paintTarget?: 'cell' | 'cand' | null;
   onPaintCell?: (i: number) => void;
   onPaintCand?: (i: number, d: number) => void;

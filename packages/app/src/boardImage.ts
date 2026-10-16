@@ -51,14 +51,14 @@ function circle(cx: number, cy: number, r: number, fill: string): string {
 }
 
 /**
- * A standalone SVG of the board: grid, placed values, candidates and the player's own colours.
+ * A standalone SVG of the board: grid, placed values, candidates and the player's own colors.
  * Only digits and numbers are written, so nothing needs escaping.
  */
 export function boardSvg(values: readonly number[], cands: readonly number[], options: BoardImageOptions): string {
   const { showCands, colorKu, colorKuColors, cellColors, candColors, palette, givens } = options;
   const parts: string[] = [rect(0, 0, SIZE, SIZE, BG)];
 
-  // the player's own cell colours sit behind the grid
+  // the player's own cell colors sit behind the grid
   if (cellColors) {
     for (let i = 0; i < 81; i++) {
       const idx = cellColors[i] ?? 0;

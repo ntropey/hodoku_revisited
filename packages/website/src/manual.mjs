@@ -14,9 +14,9 @@ export const MANUAL = [
 <p>Open <a href="../play/">the solver</a>. The first time, it deals you an Easy sudoku puzzle. Your game is saved in the browser after every move, so you can close the tab and continue later.</p>
 <h2>The screen</h2>
 <ul>
-<li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Mode</em> (Playing, Learning or Practising), <em>Import</em>, <em>Copy</em>, <em>Save</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>
-<li><strong>Board:</strong> Givens are set in the serif face. Your own digits are blue. With <em>ColorKu</em> on (see <em>Settings</em>), digits and candidates are shown as coloured balls instead. <em>Cell zoom</em> (also under <em>Settings</em>) adds an enlarged view of the selected cell under the board.</li>
-<li><strong>Digit pad</strong> below the board, with <em>Value</em>, <em>Notes</em>, <em>Filter</em> and <em>Colour</em> modes. The small number on each key is how many of that digit are still missing.</li>
+<li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Mode</em> (Playing, Learning or Practicing), <em>Import</em>, <em>Copy</em>, <em>Save</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>
+<li><strong>Board:</strong> Givens are set in the serif face. Your own digits are blue. With <em>ColorKu</em> on (see <em>Settings</em>), digits and candidates are shown as colored balls instead. <em>Cell zoom</em> (also under <em>Settings</em>) adds an enlarged view of the selected cell under the board.</li>
+<li><strong>Digit pad</strong> below the board, with <em>Value</em>, <em>Notes</em>, <em>Filter</em> and <em>Color</em> modes. The small number on each key is how many of that digit are still missing.</li>
 <li><strong>Side panel</strong> with <em>Hint</em>, <em>All steps</em> and <em>Summary</em> tabs. On a phone this is a sheet at the bottom that you drag up and down.</li>
 </ul>
 <h2>Your first moves</h2>
@@ -46,7 +46,7 @@ export const MANUAL = [
 <p><em>Copy</em> offers four formats: the 81-character line of the <em>givens</em>, the <em>puzzle with candidates</em> (a candidate/PM grid), a HoDoKu <em>library line</em>, and a <em>formatted grid</em>. <em>Save</em> writes the same four formats to a file, which the browser downloads. Paste the givens anywhere, or into <em>Import</em> on another device. A link of the form <code>/play/?p=&lt;81 characters&gt;</code> opens that puzzle directly. The technique guides use this for their <em>Open in app</em> buttons.</p>
 <h2>Printing</h2>
 <p><em>Print</em> prints the board with the givens only, without candidates or the side panel; <em>Print solution</em> prints the board and the solved grid after it. <em>Export PNG</em> saves the board as a <code>.png</code> image file.</p>
-<p><em>Extended print</em> builds a book of puzzles. Add up to five sections; for each, choose how many puzzles (0 to 30), the level, the mode (Playing, Learning or Practising) and whether to print the candidates. A Learning section uses the techniques from the Training dialog. Then pick a layout: one, two or four puzzles per page, portrait or landscape. <em>Print the rating</em> writes the level and score under each puzzle. <em>Booklet</em> is offered for the landscape layouts only; it imposes the pages so that printing them double-sided and folding in the middle makes a booklet.</p>`,
+<p><em>Extended print</em> builds a book of puzzles. Add up to five sections; for each, choose how many puzzles (0 to 30), the level, the mode (Playing, Learning or Practicing) and whether to print the candidates. A Learning section uses the techniques from the Training dialog. Then pick a layout: one, two or four puzzles per page, portrait or landscape. <em>Print the rating</em> writes the level and score under each puzzle. <em>Booklet</em> is offered for the landscape layouts only; it imposes the pages so that printing them double-sided and folding in the middle makes a booklet.</p>`,
   },
   {
     slug: 'candidates-and-filters',
@@ -65,23 +65,23 @@ export const MANUAL = [
 <h2>Mark mistakes</h2>
 <p>With <em>Settings → Mark mistakes</em> on, a value that disagrees with the puzzle's solution is shown in red. It is off by default, because finding the error is often part of the puzzle.</p>
 <h2>Board tools</h2>
-<p>Three commands in the search (<kbd>Ctrl</kbd>+<kbd>K</kbd>) work on the whole board. <em>Restart game</em> starts the same puzzle again: your digits, notes and colours are cleared and the undo history is dropped, but the puzzle, its rating and your timer stay. <em>Set givens</em> turns every digit you have placed into a given, so it can no longer be erased and it prints as a given; use it to keep a position as the starting point. <em>Fill all hidden singles</em> places, in one undoable move, every digit that is the only candidate for its row, column or box.</p>
+<p>Three commands in the search (<kbd>Ctrl</kbd>+<kbd>K</kbd>) work on the whole board. <em>Restart game</em> starts the same puzzle again: your digits, notes and colors are cleared and the undo history is dropped, but the puzzle, its rating and your timer stay. <em>Set givens</em> turns every digit you have placed into a given, so it can no longer be erased and it prints as a given; use it to keep a position as the starting point. <em>Fill all hidden singles</em> places, in one undoable move, every digit that is the only candidate for its row, column or box.</p>
 <p>With <em>Settings → Show deviations</em> on, a cell whose candidate marks differ from what the placed values allow gets a small dot in its corner.</p>`,
   },
   {
-    slug: 'colour',
-    title: 'Colour on the board',
+    slug: 'color',
+    title: 'Color on the board',
     summary: 'Paint cells and candidates with your own palette.',
     body: `
-<p>The pad has a fourth mode, <em>Colour</em> (<kbd>C</kbd>). It is for marking the board up yourself, to keep track of a chain or a pattern you are working on by hand. It is separate from the colours a hint draws, which you cannot change.</p>
+<p>The pad has a fourth mode, <em>Color</em> (<kbd>C</kbd>). It is for marking the board up yourself, to keep track of a chain or a pattern you are working on by hand. It is separate from the colors a hint draws, which you cannot change.</p>
 <h2>Painting</h2>
 <ul>
-<li>Pick a colour from the palette, then choose whether you are painting <em>Cells</em> or <em>Candidates</em>.</li>
-<li>With <em>Cells</em>, tap a cell to give it the colour. Choose the <em>×</em> swatch (no colour) to clear a cell, or select it and press <kbd>0</kbd> or <kbd>Backspace</kbd>.</li>
-<li>With <em>Candidates</em>, the candidates are shown in every empty cell; tap one to colour that candidate only.</li>
-<li>The digit keys <kbd>1</kbd> to <kbd>6</kbd> pick a palette colour from the keyboard, and <kbd>0</kbd> selects the eraser.</li>
+<li>Pick a color from the palette, then choose whether you are painting <em>Cells</em> or <em>Candidates</em>.</li>
+<li>With <em>Cells</em>, tap a cell to give it the color. Choose the <em>×</em> swatch (no color) to clear a cell, or select it and press <kbd>0</kbd> or <kbd>Backspace</kbd>.</li>
+<li>With <em>Candidates</em>, the candidates are shown in every empty cell; tap one to color that candidate only.</li>
+<li>The digit keys <kbd>1</kbd> to <kbd>6</kbd> pick a palette color from the keyboard, and <kbd>0</kbd> selects the eraser.</li>
 </ul>
-<p>Your colours are saved with the game and covered by undo, and <em>Clear colours</em> wipes them all in one step.</p>`,
+<p>Your colors are saved with the game and covered by undo, and <em>Clear colors</em> wipes them all in one step.</p>`,
   },
   {
     slug: 'your-puzzles',
@@ -94,7 +94,7 @@ export const MANUAL = [
 <h2>History</h2>
 <p>Every puzzle you start is listed here, newest first, with its difficulty, score and the time you spent on it. A tick marks the puzzles you finished. <em>Open</em> plays one again and <em>Delete</em> removes a single entry; <em>Clear history</em> empties the list. The list is capped, so the oldest entries drop off by themselves.</p>
 <h2>Save points</h2>
-<p>A save point is a named snapshot of the game <em>as it is now</em>: the values, your pencil marks and your colours at the moment you saved it. Choose <em>Save current position</em> to make one, then <em>Restore</em> to return to it later. Restoring does not cross the undo history, so <em>Undo</em> stays on the restored position. Unlike the autosave, which always follows your latest move, a save point stays where you left it.</p>`,
+<p>A save point is a named snapshot of the game <em>as it is now</em>: the values, your pencil marks and your colors at the moment you saved it. Choose <em>Save current position</em> to make one, then <em>Restore</em> to return to it later. Restoring does not cross the undo history, so <em>Undo</em> stays on the restored position. Unlike the autosave, which always follows your latest move, a save point stays where you left it.</p>`,
   },
   {
     slug: 'hints',
@@ -106,7 +106,7 @@ export const MANUAL = [
 <ul>
 <li>The <strong>name</strong> and a one-line explanation of the technique, with a link to its guide.</li>
 <li>A <strong>summary</strong> of the step, for example <code>1 goes in r1c2</code>. Cells are written <code>rXcY</code>: row X, column Y.</li>
-<li>On the board, a legend in the panel explains the colours: <em>key</em> candidates (the pattern), <em>cover</em> candidates, <em>fins</em>, candidates that are <em>removed</em> (red, struck through) and values that are <em>placed</em> (green).</li>
+<li>On the board, a legend in the panel explains the colors: <em>key</em> candidates (the pattern), <em>cover</em> candidates, <em>fins</em>, candidates that are <em>removed</em> (red, struck through) and values that are <em>placed</em> (green).</li>
 <li>For chains and loops, lines join the candidates: solid for strong links, dashed for weak links.</li>
 </ul>
 <p><em>Apply step</em> (<kbd>Enter</kbd>) places the value or removes the candidates. <em>Dismiss</em> (<kbd>Esc</kbd>) hides the hint. <em>Next hint</em> asks for another step from the current position.</p>
@@ -119,18 +119,18 @@ export const MANUAL = [
   {
     slug: 'training',
     title: 'Training modes',
-    summary: 'Playing, Learning and Practising, and how to pick the techniques you drill.',
+    summary: 'Playing, Learning and Practicing, and how to pick the techniques you drill.',
     body: `
 <p>The <em>Mode</em> menu in the top bar chooses how a new puzzle is dealt and whether the app helps you into it. There are three modes, as in the original HoDoKu.</p>
 <h2>Playing</h2>
 <p>The normal mode. A new puzzle is a fresh puzzle and nothing is solved for you. This is the default. Pick it from the <em>Mode</em> menu, or with the <em>Playing mode</em> command.</p>
 <h2>Learning</h2>
 <p>Choose one or more techniques to work on. Every newly created sudoku is guaranteed to need at least one of them, and the app solves the puzzle up to the point where that technique applies. You then take over from there, so you always meet the technique in a position where it is the next step.</p>
-<h2>Practising</h2>
+<h2>Practicing</h2>
 <p>The same guarantee: a new puzzle always needs one of your techniques. Here it is shown in its starting state, with nothing solved for you, so you can test yourself on the technique from the beginning.</p>
 <h2>Picking the techniques</h2>
-<p><em>Learning…</em> and <em>Practising…</em> in the <em>Mode</em> menu open the <strong>Training</strong> dialog. Tick the techniques you want to drill, grouped by difficulty. The same list is also under <em>Training techniques…</em> in the command search (<kbd>Ctrl</kbd>+<kbd>K</kbd>).</p>
-<p>Learning and Practising need at least one technique: until you tick one, their buttons are disabled. When no puzzle of the chosen level needs any of your techniques, the app says so and leaves the board as it is, so try another level or technique. The status line under the board shows the current mode and the techniques you are training.</p>`,
+<p><em>Learning…</em> and <em>Practicing…</em> in the <em>Mode</em> menu open the <strong>Training</strong> dialog. Tick the techniques you want to drill, grouped by difficulty. The same list is also under <em>Training techniques…</em> in the command search (<kbd>Ctrl</kbd>+<kbd>K</kbd>).</p>
+<p>Learning and Practicing need at least one technique: until you tick one, their buttons are disabled. When no puzzle of the chosen level needs any of your techniques, the app says so and leaves the board as it is, so try another level or technique. The status line under the board shows the current mode and the techniques you are training.</p>`,
   },
   {
     slug: 'analyzer',
@@ -155,7 +155,7 @@ export const MANUAL = [
 <li><em>Next step</em> applies the first remaining step to the board, and counts as a hint. The board shows the step (its cells and candidates) before you apply it.</li>
 <li><em>Solve up to</em> applies every step up to a chosen difficulty in one go — pick <em>Up to Medium</em>, for example, and it stops before the first step that is harder.</li>
 </ul>
-<p>The path uses every technique the solver knows, so it is the solver's route and not the one you might take. That makes it useful both for watching how a hard puzzle falls and for practising: solve up to a level and finish the harder part yourself.</p>`,
+<p>The path uses every technique the solver knows, so it is the solver's route and not the one you might take. That makes it useful both for watching how a hard puzzle falls and for practicing: solve up to a level and finish the harder part yourself.</p>`,
   },
   {
     slug: 'generator-and-levels',
@@ -207,7 +207,7 @@ export const MANUAL = [
 <tr><td><kbd>Backspace</kbd>, <kbd>Delete</kbd>, <kbd>0</kbd></td><td>Erase the selected cell</td></tr>
 <tr><td><kbd>N</kbd></td><td>Switch between Value and Notes</td></tr>
 <tr><td><kbd>F</kbd></td><td>Switch between Value and Filter</td></tr>
-<tr><td><kbd>C</kbd></td><td>Switch between Value and Colour</td></tr>
+<tr><td><kbd>C</kbd></td><td>Switch between Value and Color</td></tr>
 <tr><td><kbd>Alt</kbd>+<kbd>1</kbd> to <kbd>9</kbd></td><td>Filter on that digit (again to clear)</td></tr>
 <tr><td><kbd>H</kbd></td><td>Get a hint</td></tr>
 <tr><td><kbd>Enter</kbd></td><td>Apply the hint that is showing</td></tr>
@@ -227,7 +227,7 @@ export const MANUAL = [
 <dl>
 <dt>Show candidates</dt><dd>Display the computed candidates in every empty cell.</dd>
 <dt>Mark mistakes</dt><dd>Show values that disagree with the solution in red.</dd>
-<dt>ColorKu</dt><dd>Draw placed digits and candidates as coloured balls instead of numerals, as in the original. The nine colours can be changed, and the default set restored, in the same dialog.</dd>
+<dt>ColorKu</dt><dd>Draw placed digits and candidates as colored balls instead of numerals, as in the original. The nine colors can be changed, and the default set restored, in the same dialog.</dd>
 <dt>Cell zoom</dt><dd>Show an enlarged view of the selected cell under the board, with its value or its candidates; handy on small screens.</dd>
 <dt>Show deviations</dt><dd>Mark the cells where your candidate marks differ from what the placed values allow, with a small dot in the corner.</dd>
 <dt>Auto-fill last digit</dt><dd>Off by default. When a row, column or box is down to one empty cell, that cell is filled in for you after your move. It counts as a normal, undoable move, not as a hint.</dd>

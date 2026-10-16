@@ -19,7 +19,7 @@ interface Props {
 const MODES: [PrintSection['mode'], string][] = [
   ['playing', 'Playing'],
   ['learning', 'Learning'],
-  ['practising', 'Practising'],
+  ['practising', 'Practicing'],
 ];
 
 /** The five sections at their defaults: six puzzles in the first, none in the rest. */

@@ -158,9 +158,9 @@ function candsFromGivens(puzzle: string): { values: number[]; cands: number[] } 
 }
 
 /**
- * The puzzles of an extended print job, in section order. Playing and Practising sections print the
+ * The puzzles of an extended print job, in section order. Playing and Practicing sections print the
  * puzzle's starting board; a Learning section prints a bank puzzle solved as far as the solver gets
- * with `techniques` switched off (the original's behaviour), falling back to the starting board when
+ * with `techniques` switched off (the original's behavior), falling back to the starting board when
  * no puzzle of the level needs one. Bank indices are not recorded (printing must not change what the
  * app considers "seen").
  */

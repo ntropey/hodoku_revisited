@@ -94,7 +94,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  * `play` directory (the app stays ad-free and banner-free). Returns the number of pages changed.
  *
  * The script is injected right after the charset declaration (not before it, as gate.mjs does): it is
- * ~4 KB, and HTML only honours a <meta charset> that appears within the first 1024 bytes, which matters
+ * ~4 KB, and HTML only honors a <meta charset> that appears within the first 1024 bytes, which matters
  * when the files are opened locally rather than served with a charset in the HTTP header. It still runs
  * during head parsing, before <body>.
  */
