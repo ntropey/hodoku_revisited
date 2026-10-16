@@ -388,11 +388,12 @@ main{max-width:760px;margin:0 auto;padding:16px}main.wide{max-width:1200px}
 .dg text{text-anchor:middle;dominant-baseline:central;fill:var(--fg)}
 .dg .val{font-family:var(--font-display);font-size:32px;font-weight:500}.dg .val.placed{fill:var(--place);font-family:var(--font-ui);font-weight:600}
 .dg .cand{font-family:var(--font-mono);font-size:11px;fill:var(--muted)}.dg .cand.faded{opacity:.3}
-.dg .cand.key{fill:var(--key);font-weight:600;font-size:13px}.dg .cand.fin{fill:var(--fin);font-weight:600;font-size:13px}
+.dg .cand.key{fill:var(--key);font-weight:600;font-size:13px;text-decoration:underline}.dg .cand.fin{fill:var(--fin);font-weight:600;font-size:13px;font-style:italic}
+.dg .placebg{fill:var(--place-bg);stroke:var(--place);stroke-width:2}
 .dg .cand.elim{fill:var(--elim);font-weight:600;font-size:13px}.dg .strike{stroke:var(--elim);stroke-width:1.5}
 .dg .col-0{fill:var(--c0)}.dg .col-1{fill:var(--c1)}
 .dg .link{stroke:var(--key);stroke-width:1.5;opacity:.7}.dg .link.weak{stroke-dasharray:4 3}
-.example[data-step=before] .val.placed{display:none}.example[data-step=before] .cand.faded{opacity:1}
+.example[data-step=before] .val.placed,.example[data-step=before] .placebg{display:none}.example[data-step=before] .cand.faded{opacity:1}
 .example[data-step=after] .cand.elim,.example[data-step=after] .strike{display:none}
 figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
 .legend{margin:4px 0}.lg{display:inline-block;margin-right:12px;font:600 .8rem var(--font-mono)}
