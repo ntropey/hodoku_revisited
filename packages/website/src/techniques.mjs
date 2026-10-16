@@ -42,7 +42,7 @@ export const TECHNIQUES = [
   {
     slug: 'locked-candidates',
     name: 'Locked Candidates',
-    level: 'Easy',
+    level: 'Medium',
     summary: 'A digit confined to the overlap of a box and a line (also called pointing pairs, claiming).',
     body: [
       'Type 1 (pointing): if all candidates for a digit inside a box lie in one row (or column), then that digit must go in that row inside the box. So it can be removed from the rest of that row outside the box.',
@@ -175,7 +175,7 @@ export const TECHNIQUES = [
   {
     slug: 'xy-chain',
     name: 'XY-Chain and Remote Pairs',
-    level: 'Hard',
+    level: 'Unfair',
     summary: 'A chain of bi-value cells where each shares one digit with the next.',
     body: [
       'Start with a bi-value cell {A,B}. The next cell sees it and holds {B,C}, the next {C,D}, and so on, up to an end cell that contains A. If the start cell is not A, it is B; that makes the second cell C, the third D, and so on, until the end cell must be A. So at least one of the two end cells is A.',

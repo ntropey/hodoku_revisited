@@ -103,3 +103,12 @@ test('manual chapters exist and every guide has an Open in app link with a valid
   assert.match(guide, /play\/\?p=[.0-9]{81}"/);
   assert.ok(readdirSync(new URL('fonts/', dist)).length >= 7);
 });
+
+test('learn pages exist and the level page lists every technique under its level', () => {
+  const dist = new URL('../dist/', import.meta.url);
+  for (const f of ['learn/index.html', 'learn/how-to-solve-sudoku.html', 'learn/sudoku-glossary.html', 'learn/sudoku-notation.html']) {
+    assert.ok(existsSync(new URL(f, dist)), f);
+  }
+  const levels = readFileSync(new URL('learn/sudoku-difficulty-levels.html', dist), 'utf8');
+  for (const t of TECHNIQUES) assert.ok(levels.includes(`techniques/${t.slug}.html`), `${t.slug} on the level page`);
+});
