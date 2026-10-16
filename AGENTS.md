@@ -15,9 +15,13 @@ pnpm workspace, Node >= 20 (CI and the site build use Node 22), TypeScript, ESM 
 
 - `packages/core` — the engine. Pure TypeScript: **no DOM, no Node APIs.** Board model, solver,
   generator, text formats.
-- `packages/app` — the PWA (React 18 + Vite). The app UI; runs the solver/generator in a Web Worker.
-- `packages/website` — a dependency-free static site generator (plain `.mjs`). Technique guides plus
-  the app copied to `/play/`.
+- `packages/app` — the PWA (React 19 + Vite 8). The app UI; runs the solver/generator in a Web Worker.
+  `src/components/` holds the UI pieces (top bar, digit pad, side panel, dialogs), `game.ts` the pure game
+  state, `store.ts` the localStorage helpers, `ui.ts` settings and shared types, `public/sw.js` the service
+  worker.
+- `packages/website` — a dependency-free static site generator (plain `.mjs`). Pages: home, the technique
+  guides (`techniques.mjs`, with solver-verified diagrams from `examples.json`), the Learn pages
+  (`learn.mjs`), the manual (`manual.mjs`), about/privacy, and the app copied to `/play/`.
 - `docs/` — `PORT-PLAN.md` (status and roadmap), `LICENSE-AUDIT.md`, `design/`.
 
 ## Common commands
@@ -38,6 +42,8 @@ pnpm --filter @hodoku/website test                # builds the site, then assert
 
 `SITE_URL=https://hodokurevisited.com/` is set in CI for the website build (it writes `sitemap.xml`
 and `robots.txt`). The core golden tests take a couple of minutes; run the full `pnpm test`.
+The website test builds `dist` with a password gate to test the gate, so rebuild without `SITE_PASSWORD` before
+looking at the site in a browser.
 
 Before finishing a change, run `pnpm typecheck` and `pnpm test`, and the affected package's `build`.
 `pnpm install` may print `ERR_PNPM_IGNORED_BUILDS` for `esbuild`; that is expected here.
@@ -59,6 +65,13 @@ Before finishing a change, run `pnpm typecheck` and `pnpm test`, and the affecte
   the app.
 - **The manual documents the app.** `packages/website/src/manual.mjs` must be kept in step with the
   app's behavior.
+- **Stored values are a contract.** Settings, saved games, the library and the game mode live in the
+  browser's localStorage. Renaming a stored key or value (for example the game mode `'practising'`, which
+  is shown as "Practicing") resets people's data; change the label, not the value, or migrate.
+- **The service worker** (`packages/app/public/sw.js`) fetches pages network-first and hashed assets
+  cache-first, so a deploy shows on the next visit and the app works offline. Keep that split if you touch it.
+- **Ads load only after consent.** `consent.mjs` adds the banner to every site page; the AdSense script is
+  injected only after Accept. The app under `/play/` has no ads and no third-party scripts.
 
 ## Do not edit generated files
 
@@ -77,7 +90,8 @@ Edit the sources, not these outputs.
 - Style: **2-space indent, single quotes, semicolons.** No Prettier or ESLint is configured — match
   the surrounding code, and keep comments purposeful.
 - No new runtime dependencies without a clear reason; the website is deliberately dependency-free.
-- UI text is plain English for now (i18n is planned but not implemented).
+- UI text is plain English for now (i18n is planned but not implemented), in **American spelling** (color,
+  practicing, behavior). A website test fails if British spellings appear in the app, website, docs or README.
 
 ## Tests
 
@@ -85,16 +99,23 @@ Edit the sources, not these outputs.
 - `packages/website` uses Node's built-in test runner (`node --test`); it builds the site and asserts
   on the generated HTML.
 - Add tests with behavior changes. CI runs the whole suite.
+- The core tests set a 10 minute timeout in `packages/core/vitest.config.ts` because the golden test is one
+  long synchronous test; Vitest 5 enforces its default 5 s on those. Do not shorten it.
 
 ## Git and pull requests
 
-- **`main` deploys.** Every push to `main` runs `.github/workflows/pages.yml` and publishes to
-  https://hodokurevisited.com/. Do not commit or push to `main` directly.
-- Work on a branch and open a pull request. CI (`.github/workflows/ci.yml`) runs `pnpm typecheck`,
-  `pnpm test`, and the app and website builds on every push and PR.
-- Use a short, descriptive branch name (recent examples: `hint-technique-settings`,
-  `consent-banner`, `legacy-captures`). Commit subjects read `Area: summary`, lowercase after the
-  colon (e.g. `App: …`, `Website: …`, `Docs: …`).
+- **`main` deploys and is protected.** Every push to `main` runs `.github/workflows/pages.yml` and publishes to
+  https://hodokurevisited.com/. Do not commit or push to `main` directly; changes go through a pull request
+  with a passing `test` check, and `.github/CODEOWNERS` makes the owner the reviewer.
+- Work on a branch and open a pull request, filling in `.github/pull_request_template.md` (Summary, Changes,
+  Verification). CI (`.github/workflows/ci.yml`) runs `pnpm typecheck`, `pnpm test`, and the app and website
+  builds on every push and PR.
+- Use a short, descriptive branch name (recent examples: `topbar-menus`, `learn-pages`, `american-spelling`).
+  Commit subjects read `Area: summary`, lowercase after the colon (e.g. `App: …`, `Website: …`, `Docs: …`).
+- **Dependabot** opens grouped PRs (minor and patch together, major versions one at a time). Check CI on each;
+  a major bump that fails on its own often needs a matching change (see the test timeout above). Related bumps
+  that touch the same lines (the GitHub Actions in `ci.yml` and `pages.yml`) are easier to land as one PR.
+- Keep the committer email a GitHub no-reply address; do not commit work or private addresses.
 
 ## Documentation and licensing
 
