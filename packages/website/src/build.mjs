@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { ADSENSE_CLIENT, applyConsent } from './consent.mjs';
 import { caption, diagram, legend } from './diagram.mjs';
 import { applyGate } from './gate.mjs';
+import { LEARN } from './learn.mjs';
 import { MANUAL } from './manual.mjs';
 import { TECHNIQUES } from './techniques.mjs';
 
@@ -76,6 +77,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(
 <header class="top">
   ${LOGO(root)}
   <nav aria-label="Main">
+    <a href="${root}learn/">Learn</a>
     <a href="${root}techniques/">Techniques</a>
     <a href="${root}manual/">Manual</a>
     <a href="${root}about.html">About</a>
@@ -155,6 +157,7 @@ add(
   <article><p class="eyebrow">Analyzer</p><h2>See the whole solution path</h2><p>Get the techniques the solver would use and the hardest one required, plus a difficulty rating for any sudoku puzzle you paste in.</p></article>
   <article><p class="eyebrow">Library</p><h2>From singles to last resort</h2><p>${TECHNIQUES.length} technique guides, written new. Every example is a board you can step through and open in the app.</p></article>
 </section>
+<section class="learnhome"><p class="eyebrow">New to sudoku?</p><p>Read <a href="learn/how-to-solve-sudoku.html">how to solve sudoku</a> step by step, see <a href="learn/sudoku-difficulty-levels.html">what the difficulty levels mean</a>, or look up a word in the <a href="learn/sudoku-glossary.html">glossary</a>.</p></section>
 <section class="trust">
   <p>This sudoku solver finds the same steps as HoDoKu 2.2.0 (we compare them step by step), so a hint is always a real technique, never a guess. It runs entirely in your browser and works offline once installed.</p>
 </section>`,
@@ -232,6 +235,40 @@ ${next ? `<a href="${next.slug}.html"><small>Next</small>${esc(next.name)} →</
 </nav>
 </article></div>
 ${exs.length ? STEP_SCRIPT : ''}`,
+    }),
+  );
+});
+
+// ---- learn
+const learnRail = (current) => `<aside class="rail"><label class="railselect"><span>Page</span><select onchange="location.href=this.value" aria-label="Jump to a page">${LEARN.map((c) => `<option value="${c.slug}.html"${c === current ? ' selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>
+<nav class="railnav" aria-label="Learn"><h2><a href="./">Learn</a></h2><ul class="flat">${LEARN.map((c) => `<li><a href="${c.slug}.html"${c === current ? ' aria-current="page"' : ''}>${esc(c.title)}</a></li>`).join('')}</ul></nav></aside>`;
+add(
+  'learn/index.html',
+  page({
+    title: 'Learn sudoku: how to solve, difficulty levels, glossary and notation',
+    description: 'Learn how to solve sudoku step by step, what the difficulty levels mean, and the words and notation used in sudoku guides.',
+    root: '../',
+    path: 'learn/',
+    wide: true,
+    body: `<div class="with-rail">${learnRail(null)}<div class="content"><h1>Learn sudoku</h1>
+<p class="lead">Start here if you are new, or if a guide uses a word you do not know.</p>
+<div class="tgrid">${LEARN.map((c, i) => `<a class="tcard" href="${c.slug}.html"><span class="band">${String(i + 1).padStart(2, '0')}</span><strong>${esc(c.title)}</strong><span>${esc(c.summary)}</span></a>`).join('\n')}</div>
+<p>When you are ready for the techniques themselves, see the <a href="../techniques/">technique guides</a>, or <a href="../play/">open the solver</a> and ask it for a hint.</p></div></div>`,
+  }),
+);
+LEARN.forEach((c, i) => {
+  const prev = LEARN[i - 1];
+  const next = LEARN[i + 1];
+  add(
+    `learn/${c.slug}.html`,
+    page({
+      title: `${c.title}: sudoku help | Hodoku Revisited`,
+      description: c.summary,
+      root: '../',
+      path: `learn/${c.slug}.html`,
+      wide: true,
+      body: `<div class="with-rail">${learnRail(c)}<article class="content guide"><p class="crumbs"><a href="./">Learn</a></p><h1>${esc(c.title)}</h1><p class="lead">${esc(c.summary)}</p><div class="prose">${c.body(TECHNIQUES)}</div>
+<nav class="pager">${prev ? `<a href="${prev.slug}.html"><small>Previous</small>← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a href="${next.slug}.html"><small>Next</small>${esc(next.title)} →</a>` : '<span></span>'}</nav></article></div>`,
     }),
   );
 });
@@ -359,6 +396,9 @@ main{max-width:760px;margin:0 auto;padding:16px}main.wide{max-width:1200px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:24px 0}
 .cards article{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 24px}.cards h2{font-size:1.35rem;margin:.2em 0 .4em}
 .trust{border-top:1px solid var(--line);margin-top:32px;color:var(--muted)}
+.learnhome{margin:32px 0 0;padding:20px 24px;background:var(--card);border:1px solid var(--line);border-radius:10px}.learnhome p{margin:.2em 0}
+.glossary dt{font-weight:600;margin-top:14px}.glossary dd{margin:2px 0 0}
+.note{color:var(--muted);font-size:.95rem}
 .band{display:inline-block;font:600 .7rem/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;border-radius:3px;background:var(--surface-2);color:var(--muted)}
 .lv-medium{background:var(--tint-b)}.lv-hard{background:var(--c1)}.lv-unfair{background:var(--elim-bg);color:var(--elim)}.lv-extreme{background:var(--fg);color:var(--bg)}.lv-easy{background:var(--place-bg);color:var(--place)}
 .with-rail{display:grid;grid-template-columns:240px minmax(0,1fr);gap:48px;align-items:start}
