@@ -56,8 +56,7 @@ export function TrainingDialog({ settings, onChange, onClose }: Props) {
         <p className="note">{BLURBS[settings.gameMode]}</p>
         <details className="about techniques" open>
           <summary>Techniques to train</summary>
-          <p>Tick the techniques you want to drill. Learning and Practising need at least one.</p>
-          {needsTechnique && <p className="note">Tick at least one technique to use Learning or Practising.</p>}
+          <p className={needsTechnique ? 'error' : undefined}>Tick the techniques you want to drill. Learning and Practising need at least one.</p>
           <div className="techscroll">
             {TECHNIQUE_GROUPS.map(([level, list]) => (
               <div key={level}>
