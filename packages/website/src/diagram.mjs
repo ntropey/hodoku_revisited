@@ -84,6 +84,7 @@ export function diagram(ex) {
     }
     const placed = ex.place.find((p) => p.cell === cell);
     if (placed) {
+      out.push(`<rect class="placebg" x="${(cell % 9) * CELL + 2}" y="${Math.floor(cell / 9) * CELL + 2}" width="${CELL - 4}" height="${CELL - 4}" rx="3"/>`);
       out.push(`<text class="val placed" x="${cx}" y="${cy}">${placed.digit}</text>`);
     }
     for (let d = 1; d <= 9; d++) {

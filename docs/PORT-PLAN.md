@@ -236,4 +236,3 @@ platform may still be needed. Check its policy for installed PWAs before relying
 - Siamese and dual fish variants, ALS nodes in tabling chains (core).
 - Multi-lingual support (i18n): extract the UI strings and add locales together. A single extra
   language (e.g. German) was dropped on purpose; do the whole thing when we get to it.
-- Website diagrams: add non-colour cues for key/fin candidates, as in the app.
