@@ -70,7 +70,61 @@ const MODE_LABELS: Record<GameMode, string> = {
   practising: 'Practising',
 };
 
+const COPY_ITEMS: [CopyWhat, string][] = [
+  ['givens', 'Givens'],
+  ['pm', 'Puzzle with candidates'],
+  ['library', 'Library line'],
+  ['formatted', 'Formatted grid'],
+];
+
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="menu-label" role="presentation">
+      {children}
+    </div>
+  );
+}
+
 export function TopBar(p: Props) {
+  const item = (close: () => void, label: string, run: () => void, disabled = false) => (
+    <button key={label} role="menuitem" disabled={disabled} onClick={() => (close(), run())}>
+      {label}
+    </button>
+  );
+  /** the Game menu: new puzzle, modes, import and the puzzle collection */
+  const gameItems = (close: () => void) => (
+    <>
+      <Label>Mode</Label>
+      {item(close, `Playing${p.mode === 'playing' ? ' ✓' : ''}`, () => p.onMode('playing'))}
+      {item(close, `Learning…${p.mode === 'learning' ? ' ✓' : ''}`, p.onTraining)}
+      {item(close, `Practising…${p.mode === 'practising' ? ' ✓' : ''}`, p.onTraining)}
+      <Label>Puzzle</Label>
+      {item(close, 'Import…', p.onImport)}
+      {item(close, 'Puzzles (library, history, saves)…', p.onPuzzles)}
+      {item(close, 'Restart game', p.onRestart, !p.canRestart)}
+    </>
+  );
+  /** the Share menu: copy, save and print */
+  const shareItems = (close: () => void) => (
+    <>
+      <Label>Copy</Label>
+      {COPY_ITEMS.map(([w, l]) => item(close, l, () => p.onCopy(w)))}
+      <Label>Save to a file</Label>
+      {COPY_ITEMS.map(([w, l]) => item(close, l, () => p.onSave(w)))}
+      <Label>Print and export</Label>
+      {item(close, 'Print', p.onPrint)}
+      {item(close, 'Print solution', p.onPrintSolution)}
+      {item(close, 'Extended print…', p.onExtendedPrint)}
+      {item(close, 'Export as PNG', p.onExportPng)}
+    </>
+  );
+  const newItems = (close: () => void) => (
+    <>
+      <Label>New puzzle</Label>
+      {[1, 2, 3, 4, 5].map((l) => item(close, LEVEL_NAMES[l], () => p.onNew(l)))}
+    </>
+  );
+
   return (
     <header className="topbar">
       <a className="brand" href="../" aria-label="Hodoku Revisited home">
@@ -82,65 +136,16 @@ export function TopBar(p: Props) {
 
       <div className="actions wide">
         <Menu label="New puzzle ▾" className="primary-menu">
-          {(close) =>
-            [1, 2, 3, 4, 5].map((l) => (
-              <button
-                key={l}
-                role="menuitem"
-                onClick={() => {
-                  close();
-                  p.onNew(l);
-                }}
-              >
-                {LEVEL_NAMES[l]}
-              </button>
-            ))
-          }
+          {newItems}
         </Menu>
-        <Menu label={`Mode: ${MODE_LABELS[p.mode]} ▾`}>
-          {(close) => (
-            <>
-              <button role="menuitem" onClick={() => (close(), p.onMode('playing'))}>
-                Playing
-              </button>
-              <button role="menuitem" onClick={() => (close(), p.onTraining())}>
-                Learning…
-              </button>
-              <button role="menuitem" onClick={() => (close(), p.onTraining())}>
-                Practising…
-              </button>
-            </>
-          )}
-        </Menu>
-        <button onClick={p.onImport}>Import</button>
-        <button onClick={p.onPuzzles}>Puzzles</button>
-        <Menu label="Copy">
-          {(close) => (
-            <>
-              <button role="menuitem" onClick={() => (close(), p.onCopy('givens'))}>Givens</button>
-              <button role="menuitem" onClick={() => (close(), p.onCopy('pm'))}>Puzzle with candidates</button>
-              <button role="menuitem" onClick={() => (close(), p.onCopy('library'))}>Library line</button>
-              <button role="menuitem" onClick={() => (close(), p.onCopy('formatted'))}>Formatted grid</button>
-            </>
-          )}
-        </Menu>
-        <Menu label="Save">
-          {(close) => (
-            <>
-              <button role="menuitem" onClick={() => (close(), p.onSave('givens'))}>Givens</button>
-              <button role="menuitem" onClick={() => (close(), p.onSave('pm'))}>Puzzle with candidates</button>
-              <button role="menuitem" onClick={() => (close(), p.onSave('library'))}>Library line</button>
-              <button role="menuitem" onClick={() => (close(), p.onSave('formatted'))}>Formatted grid</button>
-            </>
-          )}
-        </Menu>
-        <button onClick={p.onPrint}>Print</button>
-        <button onClick={p.onExtendedPrint}>Extended print…</button>
+        <Menu label="Game ▾">{gameItems}</Menu>
+        <Menu label="Share ▾">{shareItems}</Menu>
       </div>
 
       <div className="spacer" />
 
       {p.busy && <button onClick={p.onCancel}>Cancel</button>}
+      {p.mode !== 'playing' && <span className="chip-mode">{MODE_LABELS[p.mode]}</span>}
       {p.badge && (
         <span className="badge">
           {LEVEL_NAMES[p.badge.level]} <span className="dim">· {p.badge.score}</span>
@@ -158,8 +163,8 @@ export function TopBar(p: Props) {
       <button className="icon-btn wide" onClick={p.onRedo} disabled={!p.canRedo} aria-label="Redo" title="Redo (Y)">
         ↷
       </button>
-      <button className="search wide" onClick={p.onCommands} aria-label="Search commands">
-        Search commands <kbd>⌘K</kbd>
+      <button className="search wide" onClick={p.onCommands} aria-label="Search commands" title="Search commands (Ctrl or Cmd + K)">
+        Search <kbd>⌘K</kbd>
       </button>
       <button className="wide" onClick={p.onSettings}>
         Settings
@@ -168,31 +173,12 @@ export function TopBar(p: Props) {
       <Menu label="≡" className="narrow">
         {(close) => (
           <>
-            {[1, 2, 3, 4, 5].map((l) => (
-              <button key={l} role="menuitem" onClick={() => (close(), p.onNew(l))}>
-                New: {LEVEL_NAMES[l]}
-              </button>
-            ))}
-            <button role="menuitem" onClick={() => (close(), p.onMode('playing'))}>Playing mode</button>
-            <button role="menuitem" onClick={() => (close(), p.onTraining())}>Learning mode…</button>
-            <button role="menuitem" onClick={() => (close(), p.onTraining())}>Practising mode…</button>
-            <button role="menuitem" onClick={() => (close(), p.onImport())}>Import</button>
-            <button role="menuitem" onClick={() => (close(), p.onPuzzles())}>Puzzles</button>
-            <button role="menuitem" disabled={!p.canRestart} onClick={() => (close(), p.onRestart())}>Restart game</button>
-            <button role="menuitem" onClick={() => (close(), p.onCopy('givens'))}>Copy givens</button>
-            <button role="menuitem" onClick={() => (close(), p.onCopy('pm'))}>Copy puzzle with candidates</button>
-            <button role="menuitem" onClick={() => (close(), p.onCopy('library'))}>Copy library line</button>
-            <button role="menuitem" onClick={() => (close(), p.onCopy('formatted'))}>Copy formatted grid</button>
-            <button role="menuitem" onClick={() => (close(), p.onSave('givens'))}>Save puzzle: givens</button>
-            <button role="menuitem" onClick={() => (close(), p.onSave('pm'))}>Save puzzle: candidates</button>
-            <button role="menuitem" onClick={() => (close(), p.onSave('library'))}>Save puzzle: library line</button>
-            <button role="menuitem" onClick={() => (close(), p.onSave('formatted'))}>Save puzzle: formatted grid</button>
-            <button role="menuitem" onClick={() => (close(), p.onPrint())}>Print</button>
-            <button role="menuitem" onClick={() => (close(), p.onExtendedPrint())}>Extended print…</button>
-            <button role="menuitem" onClick={() => (close(), p.onPrintSolution())}>Print solution</button>
-            <button role="menuitem" onClick={() => (close(), p.onExportPng())}>Export PNG</button>
-            <button role="menuitem" onClick={() => (close(), p.onCommands())}>Commands</button>
-            <button role="menuitem" onClick={() => (close(), p.onSettings())}>Settings</button>
+            {newItems(close)}
+            {gameItems(close)}
+            {shareItems(close)}
+            <Label>App</Label>
+            {item(close, 'Search commands', p.onCommands)}
+            {item(close, 'Settings', p.onSettings)}
           </>
         )}
       </Menu>

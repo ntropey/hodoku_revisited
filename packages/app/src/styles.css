@@ -80,11 +80,15 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .icon-btn { width: 40px; padding: 0; font-size: 18px; }
 .search { color: var(--muted); display: inline-flex; gap: 8px; align-items: center; }
 .menu { position: relative; }
-.menu-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 180px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: grid; gap: 2px; box-shadow: 0 8px 28px rgb(0 0 0 / 0.18); }
+.menu-list { max-height: calc(100vh - 80px); max-height: calc(100dvh - 80px); overflow-y: auto; overscroll-behavior: contain; position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 180px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: grid; gap: 2px; box-shadow: 0 8px 28px rgb(0 0 0 / 0.18); }
+.menu-label { font: 600 11px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px 2px; }
+.menu-label:first-child { padding-top: 2px; }
+.chip-mode { font: 600 11px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 8px; border-radius: 3px; background: var(--accent-soft); color: var(--accent); }
 .menu-list button { border: 0; text-align: left; background: transparent; min-height: 36px; }
 .menu-list button:hover { background: var(--accent-soft); }
 .menu.narrow { display: none; }
-.menu.narrow .menu-list { left: auto; right: 0; }
+.menu.narrow .menu-list { left: auto; right: 0; min-width: 230px; max-height: calc(100vh - 200px); max-height: calc(100dvh - 200px); }
+.menu-list button { white-space: nowrap; }
 .primary-menu > button { background: var(--accent); color: var(--card); border-color: var(--accent); font-weight: 500; }
 
 /* board */
