@@ -42,7 +42,7 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
         </label>
         <label className="field">
           <input type="checkbox" checked={settings.colorKu} onChange={(e) => onChange({ ...settings, colorKu: e.target.checked })} />
-          ColorKu: draw digits and candidates as coloured balls
+          ColorKu: draw digits and candidates as colored balls
         </label>
         <label className="field">
           <input type="checkbox" checked={settings.cellZoom} onChange={(e) => onChange({ ...settings, cellZoom: e.target.checked })} />
@@ -53,17 +53,17 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
           Show deviations (mark the cells where your candidate marks differ from what the placed values allow)
         </label>
         <details className="about colorku-colors">
-          <summary>ColorKu colours</summary>
-          <p className="note">One colour per digit, used when ColorKu is on.</p>
+          <summary>ColorKu colors</summary>
+          <p className="note">One color per digit, used when ColorKu is on.</p>
           <div className="kurow">
             {DEFAULT_COLORKU_COLORS.map((fallback, i) => (
               <label key={i}>
-                <input type="color" value={colors[i] ?? fallback} onChange={(e) => setColor(i, e.target.value)} aria-label={`Colour for digit ${i + 1}`} />
+                <input type="color" value={colors[i] ?? fallback} onChange={(e) => setColor(i, e.target.value)} aria-label={`Color for digit ${i + 1}`} />
                 {i + 1}
               </label>
             ))}
           </div>
-          <button onClick={() => onChange({ ...settings, colorKuColors: [...DEFAULT_COLORKU_COLORS] })}>Reset to the default colours</button>
+          <button onClick={() => onChange({ ...settings, colorKuColors: [...DEFAULT_COLORKU_COLORS] })}>Reset to the default colors</button>
         </details>
         <label className="field">
           Hints use

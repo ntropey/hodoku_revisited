@@ -8,7 +8,7 @@ this project brings it to the web as an installable app (PWA) that runs on phone
 optional configuration (singles up to forcing nets, Kraken fish, templates, "find all steps", brute force), rates
 difficulty, generates puzzles by level and reads/writes the common text formats; it is verified step by step against the
 original Java solver on 587 puzzles. The app (`packages/app`) is an installable, offline-capable PWA with hints at six
-levels, an All steps list, the solution path and summary, pencil marks and a digit filter, manual colouring, ColorKu,
+levels, an All steps list, the solution path and summary, pencil marks and a digit filter, manual coloring, ColorKu,
 training modes, a puzzle library with history and save points, file open/save, several copy formats, and extended
 print. The site (`packages/website`) has 32 technique guides with solver-verified diagrams and a manual. Ads load only
 after consent through a dependency-free EU/UK consent banner (it is not a Google-certified CMP). Not done yet: Siamese

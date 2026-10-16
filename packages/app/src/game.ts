@@ -12,7 +12,7 @@ interface Snapshot {
   values: number[];
   cands: number[];
   notes: number[];
-  /** cell/candidate colours (missing in older saves) */
+  /** cell/candidate colors (missing in older saves) */
   cellColors?: number[];
   candColors?: number[];
 }
@@ -25,9 +25,9 @@ export interface GameState {
   cands: number[];
   /** the player's own pencil marks (bit d = digit d); separate from `cands`, which the solver uses. Missing in older saves. */
   notes?: number[];
-  /** the player's own colours: one palette index per cell (0 = none). Missing in older saves. */
+  /** the player's own colors: one palette index per cell (0 = none). Missing in older saves. */
   cellColors?: number[];
-  /** the player's own colours: one palette index per cell/digit (index `cell * 9 + digit - 1`, 0 = none). */
+  /** the player's own colors: one palette index per cell/digit (index `cell * 9 + digit - 1`, 0 = none). */
   candColors?: number[];
   solution: number[];
   level: number;
@@ -80,18 +80,18 @@ function snapshot(g: GameState): Snapshot {
 }
 
 function push(g: GameState, values: number[], cands: number[], notes: number[] = notesOf(g)): GameState {
-  // spreading `g` also carries the colours over, so a normal move never drops them
+  // spreading `g` also carries the colors over, so a normal move never drops them
   return { ...g, values, cands, notes, past: [...g.past, snapshot(g)].slice(-200), future: [] };
 }
 
-/** A change that touches only the colours; values and candidates are kept as they are. */
+/** A change that touches only the colors; values and candidates are kept as they are. */
 function pushState(g: GameState, patch: Partial<GameState>): GameState {
   return { ...g, ...patch, past: [...g.past, snapshot(g)].slice(-200), future: [] };
 }
 
 const candIndex = (cell: number, digit: number) => cell * 9 + (digit - 1);
 
-/** Colour a cell (0 clears it); the colour is an index into the app's palette. */
+/** Color a cell (0 clears it); the color is an index into the app's palette. */
 export function paintCell(g: GameState, i: number, color: number): GameState {
   if ((g.cellColors?.[i] ?? 0) === color) return g;
   const cellColors = g.cellColors ? g.cellColors.slice() : new Array<number>(81).fill(0);
@@ -99,7 +99,7 @@ export function paintCell(g: GameState, i: number, color: number): GameState {
   return pushState(g, { cellColors });
 }
 
-/** Colour one candidate of a cell (0 clears it). */
+/** Color one candidate of a cell (0 clears it). */
 export function paintCand(g: GameState, i: number, d: number, color: number): GameState {
   const idx = candIndex(i, d);
   if ((g.candColors?.[idx] ?? 0) === color) return g;
@@ -108,14 +108,14 @@ export function paintCand(g: GameState, i: number, d: number, color: number): Ga
   return pushState(g, { candColors });
 }
 
-/** Remove every colour from the board. */
+/** Remove every color from the board. */
 export function clearColors(g: GameState): GameState {
   return g.cellColors || g.candColors ? pushState(g, { cellColors: undefined, candColors: undefined }) : g;
 }
 
-/** The colour index of a cell (0 = none). */
+/** The color index of a cell (0 = none). */
 export const cellColorAt = (g: GameState, i: number): number => g.cellColors?.[i] ?? 0;
-/** The colour index of a candidate (0 = none). */
+/** The color index of a candidate (0 = none). */
 export const candColorAt = (g: GameState, i: number, d: number): number => g.candColors?.[candIndex(i, d)] ?? 0;
 
 /** Place a digit. Removes the digit from the candidates of all peers. */
@@ -272,7 +272,7 @@ function givensValues(g: GameState): number[] {
 }
 
 /**
- * Start the same puzzle again: your values, notes, colours and hint counter back to the start.
+ * Start the same puzzle again: your values, notes, colors and hint counter back to the start.
  * The givens, solution, level, score, path and bank index are kept. Like the original's
  * "Restart Game", the undo history is dropped, so Undo/Redo does not reach across the restart.
  * Returns `g` unchanged when the board is already at the start.

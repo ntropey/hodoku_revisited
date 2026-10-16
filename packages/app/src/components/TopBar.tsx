@@ -67,7 +67,7 @@ export function Logo({ size = 28 }: { size?: number }) {
 const MODE_LABELS: Record<GameMode, string> = {
   playing: 'Playing',
   learning: 'Learning',
-  practising: 'Practising',
+  practising: 'Practicing',
 };
 
 const COPY_ITEMS: [CopyWhat, string][] = [
@@ -97,7 +97,7 @@ export function TopBar(p: Props) {
       <Label>Mode</Label>
       {item(close, `Playing${p.mode === 'playing' ? ' ✓' : ''}`, () => p.onMode('playing'))}
       {item(close, `Learning…${p.mode === 'learning' ? ' ✓' : ''}`, p.onTraining)}
-      {item(close, `Practising…${p.mode === 'practising' ? ' ✓' : ''}`, p.onTraining)}
+      {item(close, `Practicing…${p.mode === 'practising' ? ' ✓' : ''}`, p.onTraining)}
       <Label>Puzzle</Label>
       {item(close, 'Import…', p.onImport)}
       {item(close, 'Puzzles (library, history, saves)…', p.onPuzzles)}

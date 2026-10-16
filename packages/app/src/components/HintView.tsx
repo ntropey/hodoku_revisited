@@ -14,14 +14,14 @@ interface Props {
 
 const cells = (list: { cell: number }[]) => [...new Set(list.map((x) => cellName(x.cell)))].join(', ');
 
-/** The roles of a step, written out (colour is never the only signal). */
+/** The roles of a step, written out (color is never the only signal). */
 function Roles({ hint }: { hint: HintResult }) {
   const m = hint.marks;
   const rows: { cls: string; label: string; where: string; digit: string }[] = [];
   const digits = (list: { digit: number }[]) => [...new Set(list.map((x) => x.digit))].sort().join('');
   if (m.place.length) rows.push({ cls: 'keep', label: 'Place', where: cells(m.place), digit: digits(m.place) });
   if (m.key.length) rows.push({ cls: 'keyc', label: 'Key', where: cells(m.key), digit: digits(m.key) });
-  if (m.colors.length && !m.key.length) rows.push({ cls: 'keyc', label: 'Colours', where: cells(m.colors), digit: digits(m.colors) });
+  if (m.colors.length && !m.key.length) rows.push({ cls: 'keyc', label: 'Colors', where: cells(m.colors), digit: digits(m.colors) });
   if (m.fins.length) rows.push({ cls: 'fin', label: 'Fin', where: cells(m.fins), digit: digits(m.fins) });
   if (m.elim.length) rows.push({ cls: 'del', label: 'Eliminate', where: cells(m.elim), digit: digits(m.elim) });
   return (

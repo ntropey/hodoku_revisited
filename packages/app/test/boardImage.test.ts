@@ -41,7 +41,7 @@ describe('boardSvg', () => {
     expect(on.length).toBeGreaterThan(off.length);
   });
 
-  it('paints a cell and a candidate with their palette colour', () => {
+  it('paints a cell and a candidate with their palette color', () => {
     const cell = game.values.indexOf(0);
     const digit = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((d) => (game.cands[cell] & (1 << d)) !== 0)!;
     const cellColors = new Array<number>(81).fill(0);
@@ -54,7 +54,7 @@ describe('boardSvg', () => {
     expect(svg).toContain(`fill="${PALETTE[1]}"`);
   });
 
-  it('draws a coloured ball instead of a digit in ColorKu', () => {
+  it('draws a colored ball instead of a digit in ColorKu', () => {
     const digit = game.values.find((v) => v !== 0)!;
     const colors = ['#000001', '#000002', '#000003', '#000004', '#000005', '#000006', '#000007', '#000008', '#000009'];
     const svg = boardSvg(game.values, game.cands, base({ colorKu: true, colorKuColors: colors }));

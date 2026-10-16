@@ -15,7 +15,7 @@ interface Props {
 const MODES: [GameMode, string][] = [
   ['playing', 'Playing'],
   ['learning', 'Learning'],
-  ['practising', 'Practising'],
+  ['practising', 'Practicing'],
 ];
 
 const BLURBS: Record<GameMode, string> = {
@@ -56,7 +56,7 @@ export function TrainingDialog({ settings, onChange, onClose }: Props) {
         <p className="note">{BLURBS[settings.gameMode]}</p>
         <details className="about techniques" open>
           <summary>Techniques to train</summary>
-          <p className={needsTechnique ? 'error' : undefined}>Tick the techniques you want to drill. Learning and Practising need at least one.</p>
+          <p className={needsTechnique ? 'error' : undefined}>Tick the techniques you want to drill. Learning and Practicing need at least one.</p>
           <div className="techscroll">
             {TECHNIQUE_GROUPS.map(([level, list]) => (
               <div key={level}>

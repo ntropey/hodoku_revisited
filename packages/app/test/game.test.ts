@@ -18,7 +18,7 @@ describe('analyze', () => {
   });
 });
 
-describe('colouring', () => {
+describe('coloring', () => {
   it('paints cells and candidates, keeps them across moves, undoes and clears', () => {
     const i = info();
     const g0 = newGame(i);
@@ -28,7 +28,7 @@ describe('colouring', () => {
     expect(g.past.length).toBe(1);
     expect(paintCell(g, cell, 2)).toBe(g); // no change, no snapshot
     g = setValue(g, cell, i.solution[cell]);
-    expect(cellColorAt(g, cell)).toBe(2); // a move keeps the colour
+    expect(cellColorAt(g, cell)).toBe(2); // a move keeps the color
     g = undo(g);
     expect(g.values[cell]).toBe(0);
     expect(cellColorAt(g, cell)).toBe(2);
@@ -297,7 +297,7 @@ const emptyBoard = (): GameState => ({
 });
 
 describe('restart', () => {
-  it('resets values, notes, colours and hints, and drops the undo history', () => {
+  it('resets values, notes, colors and hints, and drops the undo history', () => {
     const i = info();
     const fresh = newGame(i);
     expect(restart(fresh)).toBe(fresh); // nothing to reset

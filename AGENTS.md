@@ -7,7 +7,7 @@ changes.
 
 Hodoku Revisited is a modern TypeScript port of **HoDoKu 2.2.0** (Bernhard Hobiger's Sudoku
 generator, solver, trainer and analyzer, 2008–12). The goal is to match the original solver's
-behaviour exactly while giving it a new web UI. Licensed **GPL-3.0-or-later**.
+behavior exactly while giving it a new web UI. Licensed **GPL-3.0-or-later**.
 
 ## Repository layout
 
@@ -58,7 +58,7 @@ Before finishing a change, run `pnpm typecheck` and `pnpm test`, and the affecte
   `/play/` is the app's own Vite build copied verbatim — never add site-only scripts or banners to
   the app.
 - **The manual documents the app.** `packages/website/src/manual.mjs` must be kept in step with the
-  app's behaviour.
+  app's behavior.
 
 ## Do not edit generated files
 
@@ -84,7 +84,7 @@ Edit the sources, not these outputs.
 - `packages/core` and `packages/app` use Vitest.
 - `packages/website` uses Node's built-in test runner (`node --test`); it builds the site and asserts
   on the generated HTML.
-- Add tests with behaviour changes. CI runs the whole suite.
+- Add tests with behavior changes. CI runs the whole suite.
 
 ## Git and pull requests
 

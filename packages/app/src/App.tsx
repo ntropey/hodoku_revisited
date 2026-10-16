@@ -359,7 +359,7 @@ export function App() {
         return;
       }
       if (mode === 'color') {
-        // the digit keys pick a palette colour while colouring
+        // the digit keys pick a palette color while coloring
         if (d >= 0 && d <= PALETTE.length) setPaintColor(d);
         return;
       }
@@ -558,7 +558,7 @@ export function App() {
     [puzzleText],
   );
 
-  /** Export the current board as a PNG (board only: grid, values, candidates, colours). */
+  /** Export the current board as a PNG (board only: grid, values, candidates, colors). */
   const exportPng = useCallback(async () => {
     if (!game) return;
     try {
@@ -655,7 +655,7 @@ export function App() {
 
   const eraseSelected = useCallback(() => {
     if (selected === null) return;
-    // in Colour mode Erase clears the colour of the selected cell
+    // in Color mode Erase clears the color of the selected cell
     if (mode === 'color') {
       update((g) => paintCell(g, selected, 0));
       return;
@@ -665,7 +665,7 @@ export function App() {
     else update((g) => erase(g, selected));
   }, [selected, update, mode, game]);
 
-  // colouring: while in Colour mode a click paints with the active colour
+  // coloring: while in Color mode a click paints with the active color
   const paintTargetNow = mode === 'color' ? paintTarget : null;
   const onPaintCell = useCallback((i: number) => update((g) => paintCell(g, i, paintColor)), [update, paintColor]);
   const onPaintCand = useCallback((i: number, d: number) => update((g) => paintCand(g, i, d, paintColor)), [update, paintColor]);
@@ -675,7 +675,7 @@ export function App() {
       ...[1, 2, 3, 4, 5].map((l) => ({ label: `New puzzle: ${LEVEL_NAMES[l]}`, run: () => void startNew(l) })),
       { label: 'Playing mode', run: () => setSettings((s) => ({ ...s, gameMode: 'playing' })) },
       { label: 'Learning mode…', run: () => setTrainingOpen(true) },
-      { label: 'Practising mode…', run: () => setTrainingOpen(true) },
+      { label: 'Practicing mode…', run: () => setTrainingOpen(true) },
       { label: 'Training techniques…', run: () => setTrainingOpen(true) },
       { label: 'Get a hint', hint: 'H', run: () => void askHint(), disabled: !game || solved },
       { label: 'Find all steps', run: () => void askAllSteps(), disabled: !game || solved },
@@ -690,8 +690,8 @@ export function App() {
       { label: 'Value mode', run: () => setMode('value') },
       { label: 'Notes mode', hint: 'N', run: () => setMode('notes') },
       { label: 'Filter mode', hint: 'F', run: () => setMode('filter') },
-      { label: 'Colour mode', hint: 'C', run: () => setMode('color') },
-      { label: 'Clear colours', run: () => update(clearColors), disabled: !game?.cellColors && !game?.candColors },
+      { label: 'Color mode', hint: 'C', run: () => setMode('color') },
+      { label: 'Clear colors', run: () => update(clearColors), disabled: !game?.cellColors && !game?.candColors },
       { label: 'Clear digit filter', run: () => setFilterDigit(0), disabled: filterDigit === 0 },
       { label: 'Clear pencil marks', run: () => update(clearNotes) },
       { label: 'Reset candidates', run: () => update(fillCands) },
@@ -819,7 +819,7 @@ export function App() {
   const selCands = selected !== null && game && game.values[selected] === 0 ? [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((d) => (game.cands[selected] & (1 << d)) !== 0) : [];
   // on the Path tab the board previews the next step of the solution path
   const boardHint = tab === 'path' ? (pathSteps?.[pathDone] ?? null) : hint;
-  // colouring candidates needs to see them, so colour mode turns them on for that target
+  // coloring candidates needs to see them, so color mode turns them on for that target
   const showCandsNow = settings.showCands || (mode === 'color' && paintTarget === 'cand');
 
   return (
@@ -903,7 +903,7 @@ export function App() {
               {busy ?? (selected !== null ? `r${Math.floor(selected / 9) + 1}c${(selected % 9) + 1}${selCands.length ? ` · candidates ${selCands.join(' ')}` : ''}` : (message ?? 'Select a cell'))}
             </span>
             <span className="dim">
-              Mark mistakes {settings.checkMistakes ? 'on' : 'off'} · show candidates {settings.showCands ? 'on' : 'off'}{mode === 'notes' ? ' · notes mode' : ''}{mode === 'color' ? ` · colour mode (${paintTarget === 'cell' ? 'cells' : 'candidates'})` : ''}{settings.gameMode !== 'playing' ? ` · ${settings.gameMode} mode${trainingNames ? ` · training: ${trainingNames}` : ''}` : ''} · autosaved
+              Mark mistakes {settings.checkMistakes ? 'on' : 'off'} · show candidates {settings.showCands ? 'on' : 'off'}{mode === 'notes' ? ' · notes mode' : ''}{mode === 'color' ? ` · color mode (${paintTarget === 'cell' ? 'cells' : 'candidates'})` : ''}{settings.gameMode !== 'playing' ? ` · ${settings.gameMode} mode${trainingNames ? ` · training: ${trainingNames}` : ''}` : ''} · autosaved
             </span>
           </div>
         </section>
