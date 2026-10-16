@@ -4,15 +4,19 @@ A modern TypeScript port of [HoDoKu](https://hodoku.sourceforge.net/), the Sudok
 generator, solver, trainer and analyzer. HoDoKu has had no release since 2012;
 this project brings it to the web as an installable app (PWA) that runs on phones and desktops, with a new UI.
 
-**Status:** M3 done (mostly), M4 and M5 first versions are in. The core engine solves puzzles with every technique of HoDoKu's
-default configuration (singles up to forcing nets, plus brute force), rates their difficulty, generates
-puzzles by level, and reads/writes the common text formats. It is verified step by step against the
-original Java solver on 587 puzzles. M4 (first version of the PWA in `packages/app`) is in too, and a static website with technique guides (`packages/website`).
-The app starts new puzzles instantly from a bank of generated puzzles, and every technique guide has a worked, solver-verified diagram.
-The engine now has everything in HoDoKu's default and optional techniques except Siamese/dual variants and ALS nodes in chains: Kraken fish, templates and "find all steps" are in too.
-Site ads are gated by a dependency-free EU/UK consent banner (accept or reject, remembered per browser, withdrawable from the footer); it is not a Google-certified CMP. See the plan.
+**Status:** live at https://hodokurevisited.com/. The core engine has every technique of HoDoKu 2.2.0's default and
+optional configuration (singles up to forcing nets, Kraken fish, templates, "find all steps", brute force), rates
+difficulty, generates puzzles by level and reads/writes the common text formats; it is verified step by step against the
+original Java solver on 587 puzzles. The app (`packages/app`) is an installable, offline-capable PWA with hints at six
+levels, an All steps list, the solution path and summary, pencil marks and a digit filter, manual colouring, ColorKu,
+training modes, a puzzle library with history and save points, file open/save, several copy formats, and extended
+print. The site (`packages/website`) has 32 technique guides with solver-verified diagrams and a manual. Ads load only
+after consent through a dependency-free EU/UK consent banner (it is not a Google-certified CMP). Not done yet: Siamese
+and dual fish variants and ALS nodes in chains (core), generator patterns in the app, backdoor search, translations.
+See the plan and the feature comparison.
 
 - [Port plan](docs/PORT-PLAN.md)
+- [Feature comparison with the original](docs/FEATURE-COMPARISON.md)
 - [License audit](docs/LICENSE-AUDIT.md)
 - [Notice and attribution](NOTICE.md)
 
