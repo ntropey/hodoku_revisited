@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import type { Snap } from '../components/BottomSheet';
 import type { GameState } from '../game';
-import type { HintLevel, HintResult } from '../protocol';
+import type { HintLevel, HintResult, ProofResult } from '../protocol';
 import { isCancelled, type SolverClient } from '../solverClient';
 import type { Tab } from '../ui';
 
@@ -19,11 +19,14 @@ interface Deps {
 type AllSteps = { results: HintResult[]; total: Record<string, number> };
 
 /**
- * The side panel's state and the solver calls behind its tabs: the current hint, the All steps list and the
- * solution path, and which tab is open (and how far the phone's bottom sheet is pulled up).
+ * The side panel's state and the solver calls behind its tabs: the current hint (and AI Coach walkthrough stage),
+ * "Why not?" contradiction proofs, the All steps list and the solution path, and which tab is open.
  */
 export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechniques, busy, setBusy, setMessage }: Deps) {
   const [hint, setHint] = useState<HintResult | null>(null);
+  const [coachStep, setCoachStep] = useState<number | null>(null);
+  const [proof, setProof] = useState<ProofResult | null>(null);
+  const [proofStep, setProofStep] = useState(0);
   const [allSteps, setAllSteps] = useState<AllSteps | null>(null);
   const [pathSteps, setPathSteps] = useState<HintResult[] | null>(null);
   const [pathDone, setPathDone] = useState(0);
@@ -33,6 +36,9 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
   /** Throw away everything the panel shows (after a move or a new game). */
   const clearPanel = useCallback(() => {
     setHint(null);
+    setCoachStep(null);
+    setProof(null);
+    setProofStep(0);
     setAllSteps(null);
     setPathSteps(null);
     setPathDone(0);
@@ -43,6 +49,8 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
   const invalidateSteps = useCallback(() => {
     setAllSteps(null);
     setHint(null);
+    setCoachStep(null);
+    setProof(null);
   }, []);
 
   /** Open a tab; on a phone a collapsed sheet opens halfway so the content is visible. */
@@ -51,21 +59,46 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
     setSnap((s) => (s === 'peek' ? 'half' : s));
   }, []);
 
-  const askHint = useCallback(async () => {
-    if (!game) return;
-    openTab('hint');
-    setBusy('Looking for a hint...');
-    setMessage(null);
-    try {
-      const h = await solver.current.hint(game.values, game.cands, hintLevel, disabledTechniques);
-      setHint(h);
-      setMessage(h ? null : hintLevel < 5 ? 'No hint at this hint level. Raise "Hints use" above.' : 'No logical hint found.');
-    } catch (e) {
-      if (!isCancelled(e)) setMessage((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  }, [game, hintLevel, disabledTechniques, solver, openTab, setBusy, setMessage]);
+  const askHint = useCallback(
+    async (startInCoach = false) => {
+      if (!game) return;
+      openTab('hint');
+      setBusy(startInCoach ? 'AI Coach is analyzing the board...' : 'Looking for a hint...');
+      setMessage(null);
+      setProof(null);
+      try {
+        const h = await solver.current.hint(game.values, game.cands, hintLevel, disabledTechniques);
+        setHint(h);
+        setCoachStep(h && startInCoach && h.coach?.length ? 0 : null);
+        setMessage(h ? null : hintLevel < 5 ? 'No hint at this hint level. Raise "Hints use" above.' : 'No logical hint found.');
+      } catch (e) {
+        if (!isCancelled(e)) setMessage((e as Error).message);
+      } finally {
+        setBusy(null);
+      }
+    },
+    [game, hintLevel, disabledTechniques, solver, openTab, setBusy, setMessage],
+  );
+
+  /** Ask the AI Coach why `digit` cannot go in `cell` (or verify whether it is valid). */
+  const askProof = useCallback(
+    async (cell: number, digit: number) => {
+      if (!game) return;
+      openTab('hint');
+      setBusy('Tracing consequences...');
+      setMessage(null);
+      try {
+        const p = await solver.current.prove(game.values, game.cands, cell, digit);
+        setProof(p);
+        setProofStep(Math.max(0, p.stages.length - 1));
+      } catch (e) {
+        if (!isCancelled(e)) setMessage((e as Error).message);
+      } finally {
+        setBusy(null);
+      }
+    },
+    [game, solver, openTab, setBusy, setMessage],
+  );
 
   const askAllSteps = useCallback(
     async (auto = false) => {
@@ -78,6 +111,8 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
         setAllSteps(data);
         // the top step is shown on the board right away
         setHint(data.results[0] ?? null);
+        setCoachStep(null);
+        setProof(null);
         setMessage(null);
       } catch (e) {
         setAllSteps({ results: [], total: {} });
@@ -110,6 +145,7 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
   useEffect(() => {
     setAllSteps(null);
     setHint(null);
+    setCoachStep(null);
   }, [disabledTechniques]);
 
   // the All steps tab is always filled: opening it, making a move or changing "Hints use" refreshes the list
@@ -125,6 +161,12 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
   return {
     hint,
     setHint,
+    coachStep,
+    setCoachStep,
+    proof,
+    setProof,
+    proofStep,
+    setProofStep,
     allSteps,
     pathSteps,
     pathDone,
@@ -136,6 +178,7 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
     clearPanel,
     invalidateSteps,
     askHint,
+    askProof,
     askAllSteps,
     askPath,
   };

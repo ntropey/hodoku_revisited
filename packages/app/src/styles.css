@@ -203,6 +203,14 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .roles .chip.del { background: var(--elim-bg); color: var(--elim); }
 .roles .chip.keep { background: var(--place); color: var(--fg); }
 .roles .chip.fin { background: var(--surface-2); color: var(--fin); }
+/* AI Coach walkthrough and contradiction prover */
+.coach-walk { margin: 10px 0; }
+.coach-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.coach-box { margin: 8px 0; padding: 10px 12px; background: var(--surface-2); border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; }
+.coach-box p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.45; }
+.coach-stage { font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+.coach-whynot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+.coach-whynot .note { margin: 2px 0 6px; }
 .allhead { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 .allhead strong { color: var(--fg); white-space: nowrap; }
 .group { margin-bottom: 12px; }

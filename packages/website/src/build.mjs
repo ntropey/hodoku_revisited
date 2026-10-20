@@ -125,7 +125,7 @@ add(
   'index.html',
   page({
     title: 'Hodoku Revisited: the sudoku solver that explains every step',
-    description: 'Free sudoku solver and trainer in your browser: the HoDoKu hint engine, analyzer and technique library. It tells you which sudoku step comes next and why it works. No install, open source.',
+    description: 'Free sudoku solver and trainer in your browser, now with an AI Super Solver & Coach: progressive Socratic nudges, step-by-step walkthroughs, contradiction proofs, analyzer and technique library.',
     root: '',
     path: '',
     wide: true,
@@ -138,22 +138,23 @@ add(
           url: siteUrl,
           applicationCategory: 'GameApplication',
           operatingSystem: 'Any (web browser)',
-          description: 'Free sudoku solver and trainer with step-by-step logical hints, difficulty rating and technique guides.',
+          description: 'Free sudoku solver and trainer with AI Coach step-by-step logical hints, contradiction proofs, difficulty rating and technique guides.',
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
         }
       : undefined,
     body: `<section class="hero">
   <div>
-    <p class="eyebrow">The HoDoKu sudoku solver, now in your browser</p>
+    <p class="eyebrow">The HoDoKu sudoku solver, now with AI Super Solver &amp; Coach</p>
     <h1>Every sudoku step,<br>explained.</h1>
-    <p class="lead">A free sudoku solver and trainer: the hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript. No Java and no install. It tells you which sudoku step comes next and why it works.</p>
+    <p class="lead">A free sudoku solver and trainer: the hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript with an interactive AI Coach. No Java and no install. Get progressive nudges, step through every deduction on the board, or ask why any candidate fails.</p>
     <p><a class="btn" href="play/">Open the solver</a> <a class="btn alt" href="techniques/">Browse techniques</a></p>
     <p class="gen"><span>Generate:</span> ${['Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'].map((l, i) => `<a class="chip" href="play/?level=${i + 1}">${l}</a>`).join(' ')}</p>
   </div>
   ${homeEx ? `<figure class="example hero-board">${diagram(homeEx)}<figcaption><span class="mono">${esc(homeEx.name)}</span> · ${esc(caption(homeEx).replace(/^[^:]*: /, ''))}</figcaption></figure>` : ''}
 </section>
 <section class="cards">
-  <article><p class="eyebrow">Hints</p><h2>Vague, concrete or the full step</h2><p>You choose how much a sudoku hint gives away. It can just name the technique, or highlight every candidate involved.</p></article>
+  <article><p class="eyebrow">AI Super Solver</p><h2>Nudges, walkthroughs &amp; “Why not?”</h2><p>Let the AI Coach guide you in four stages—from where to look to the final move—or tap any cell candidate to watch the chain of forced moves that proves a contradiction.</p></article>
+  <article><p class="eyebrow">Hints</p><h2>Vague, concrete or the full step</h2><p>You choose how much a sudoku hint gives away. Start with a Socratic nudge, name the technique, or highlight every candidate involved.</p></article>
   <article><p class="eyebrow">Analyzer</p><h2>See the whole solution path</h2><p>Get the techniques the solver would use and the hardest one required, plus a difficulty rating for any sudoku puzzle you paste in.</p></article>
   <article><p class="eyebrow">Library</p><h2>From singles to last resort</h2><p>${TECHNIQUES.length} technique guides, written new. Every example is a board you can step through and open in the app.</p></article>
 </section>

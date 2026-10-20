@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Sudoku2, SOLUTION_TYPE_INFO, parseSudoku, seededRng, type SolutionType } from '@hodoku/core';
 import { isSolved, newGame, removeCands, setValue } from '../src/game';
-import { allHints, analyze, book, format, hint, path, train } from '../src/solverApi';
+import { allHints, analyze, book, format, hint, path, prove, train } from '../src/solverApi';
 
 // Rater and hint are deterministic, so the same board always yields the same first technique.
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -43,6 +43,50 @@ describe('disabled techniques', () => {
     const same = allHints(game.values, game.cands, 5, 12, []);
     expect(same.results.map((r) => r.type)).toEqual(all.results.map((r) => r.type));
     expect(same.total).toEqual(all.total);
+  });
+});
+
+describe('AI Coach walkthrough and contradiction prover', () => {
+  it('attaches a 4-stage progressive coach walkthrough to hints without spoiling the conclusion on stage 1', () => {
+    const steps = path(game.values, game.cands);
+    expect(steps.length).toBeGreaterThan(0);
+    for (const h of steps) {
+      expect(h.coach).toBeDefined();
+      expect(h.coach!.length).toBe(4);
+      expect(h.coach!.map((c) => c.label)).toEqual(['Where to look', 'The pattern', 'The logic', 'Conclusion']);
+      // Stage 1 ("Where to look") must not reveal the placement or elimination on the board
+      expect(h.coach![0].marks.place).toEqual([]);
+      expect(h.coach![0].marks.elim).toEqual([]);
+      // Stage 4 ("Conclusion") reveals the full step marks
+      expect(h.coach![3].marks).toEqual(h.marks);
+    }
+  });
+
+  it('proves a direct peer conflict when the digit is already in the same row, column or box', () => {
+    // cell 2 (r1c3) is empty, and cell 0 (r1c1) has given 9
+    const p = prove(game.values, game.cands, 2, 9);
+    expect(p.verdict).toBe('conflict');
+    expect(p.stages).toHaveLength(1);
+    expect(p.stages[0].label).toBe('Direct conflict');
+    expect(p.stages[0].marks.elim).toEqual([{ cell: 2, digit: 9 }]);
+  });
+
+  it('traces forced moves to a contradiction when a wrong candidate is tested, and confirms the true solution digit', () => {
+    // Find an empty cell that has at least 2 candidates
+    const cell = game.values.findIndex((v, i) => v === 0 && (game.cands[i] & (game.cands[i] - 1)) !== 0);
+    expect(cell).toBeGreaterThanOrEqual(0);
+    const trueDigit = game.solution[cell];
+    const wrongDigit = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((d) => d !== trueDigit && (game.cands[cell] & (1 << d)) !== 0)!;
+
+    const validProof = prove(game.values, game.cands, cell, trueDigit);
+    expect(validProof.verdict).toBe('valid');
+    expect(validProof.stages[0].marks.place).toEqual([{ cell, digit: trueDigit }]);
+
+    const conflictProof = prove(game.values, game.cands, cell, wrongDigit);
+    expect(conflictProof.verdict).toBe('conflict');
+    expect(conflictProof.stages.length).toBeGreaterThanOrEqual(2);
+    expect(conflictProof.stages[0].label).toBe('Assume');
+    expect(conflictProof.stages[conflictProof.stages.length - 1].label).toBe('Contradiction');
   });
 });
 
