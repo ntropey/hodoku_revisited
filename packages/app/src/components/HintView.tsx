@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { cellName } from '@hodoku/core';
 import { isGiven, type GameState } from '../game';
 import type { HintResult, ProofResult } from '../protocol';
@@ -132,6 +133,20 @@ export function HintView({
   onApply,
   onDismiss,
 }: Props) {
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const copyShareLink = (params: Record<string, string>, label: string) => {
+    const u = new URL(window.location.href);
+    u.search = new URLSearchParams(params).toString();
+    const text = `Hodoku Revisited · ${label}\n${u.toString()}`;
+    void navigator.clipboard?.writeText(text).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    });
+  };
+
+  const boardString = game ? game.values.map((v) => (v === 0 ? '.' : String(v))).join('') : '';
+
   if (solved) {
     return (
       <div className="hintview" aria-live="polite">
@@ -182,6 +197,14 @@ export function HintView({
           <button type="button" onClick={onDismissProof}>
             Dismiss
           </button>
+          {boardString.length === 81 && (
+            <button
+              type="button"
+              onClick={() => copyShareLink({ p: boardString, prove: `${cellName(proof.cell)}.${proof.digit}` }, `AI Coach Proof (${proof.headline})`)}
+            >
+              {copiedLink ? 'Proof link copied!' : 'Share proof'}
+            </button>
+          )}
         </div>
         <WhyNotBar game={game} selected={selected} proof={proof} busy={busy} onProve={onProve} />
       </div>
@@ -256,6 +279,11 @@ export function HintView({
                 <button type="button" onClick={onDismiss}>
                   Dismiss
                 </button>
+                {boardString.length === 81 && (
+                  <button type="button" onClick={() => copyShareLink({ p: boardString, coach: '1' }, `AI Coach Walkthrough (${hint.name})`)}>
+                    {copiedLink ? 'Link copied!' : 'Share step'}
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -286,6 +314,11 @@ export function HintView({
               <button onClick={() => onHint(false)} disabled={disabled || !!busy}>
                 Next hint
               </button>
+              {boardString.length === 81 && (
+                <button type="button" onClick={() => copyShareLink({ p: boardString, coach: '1' }, `AI Coach Walkthrough (${hint.name})`)}>
+                  {copiedLink ? 'Link copied!' : 'Share step'}
+                </button>
+              )}
             </div>
           )}
         </>

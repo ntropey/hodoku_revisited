@@ -10,8 +10,10 @@
  * banner is not shown again). All markup, CSS and JS are inlined into every generated page, so the
  * site keeps its "no extra assets" property. The app under /play/ is never touched.
  *
- * Caveat: this is a hand-rolled banner, NOT a Google-certified CMP. AdSense still expects a certified
- * consent management platform for its EU/UK consent requirements.
+ * Caveat: for EEA/UK/Switzerland traffic, enable Google's built-in IAB TCF v2.2 CMP under
+ * AdSense -> Privacy & messaging -> European regulations. This script initializes Google Consent Mode v2
+ * (`ad_storage`, `ad_user_data`, `ad_personalization`, `analytics_storage`) and hooks `window.googlefc`
+ * so the footer's "Cookie settings" button also triggers `googlefc.showRevocationMessage()` when active.
  */
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
@@ -44,6 +46,18 @@ function consentScript(root) {
   return `<script>(function(){
 var K='${CONSENT_KEY}',V=${CONSENT_VERSION},C='${ADSENSE_CLIENT}',choice=null;
 try{var raw=localStorage.getItem(K);if(raw){var o=JSON.parse(raw);if(o&&o.v===V&&(o.choice==='granted'||o.choice==='denied')){choice=o.choice}}}catch(e){}
+window.dataLayer=window.dataLayer||[];
+function gtag(){window.dataLayer.push(arguments)}
+window.gtag=window.gtag||gtag;
+window.googlefc=window.googlefc||{};
+window.googlefc.callbackQueue=window.googlefc.callbackQueue||[];
+function syncConsent(c){
+ var s=c==='granted'?'granted':'denied';
+ gtag('consent','update',{ad_storage:s,ad_user_data:s,ad_personalization:s,analytics_storage:'denied'});
+}
+var initState=choice==='granted'?'granted':'denied';
+gtag('consent','default',{ad_storage:initState,ad_user_data:initState,ad_personalization:initState,analytics_storage:'denied',wait_for_update:500});
+gtag('set','ads_data_redaction',true);
 function loadAd(){
  if(document.getElementById('hodoku-ad'))return;
  var s=document.createElement('script');
@@ -63,11 +77,12 @@ function openBanner(){
  if(document.getElementById('hodoku-consent'))return;
  addStyle();
  var box=document.createElement('div');
- box.innerHTML='<div id="hodoku-consent" role="dialog" aria-modal="true" aria-label="Cookie and advertising consent" tabindex="-1"><div class="hc-box"><p><strong>Cookies.</strong> This site uses Google AdSense. With your consent, Google and its partners may use cookies to show ads, including personalised ads. You can accept or reject, and change your mind at any time with the Cookie settings button in the footer. Read the <a href="${root}privacy.html">privacy policy</a>.</p><div class="hc-actions"><button type="button" class="hc-reject">Reject</button><button type="button" class="hc-accept">Accept</button></div></div></div>';
+ box.innerHTML='<div id="hodoku-consent" role="dialog" aria-modal="true" aria-label="Cookie and advertising consent" tabindex="-1"><div class="hc-box"><p><strong>Cookies.</strong> This site uses Google AdSense. With your consent, Google and its partners may use cookies to show ads, including personalized ads. You can accept or reject, and change your mind at any time with the Cookie settings button in the footer. Read the <a href="${root}privacy.html">privacy policy</a>.</p><div class="hc-actions"><button type="button" class="hc-reject">Reject</button><button type="button" class="hc-accept">Accept</button></div></div></div>';
  var d=box.firstChild;
  document.body.appendChild(d);
  function close(c){
   remember(c);
+  syncConsent(c);
   if(d.parentNode)d.parentNode.removeChild(d);
   var b=settingsButton();if(b&&b.focus)b.focus();
  }
@@ -80,7 +95,10 @@ function addSettings(){
  if(!f||settingsButton())return;
  var b=document.createElement('button');
  b.type='button';b.id='hodoku-consent-settings';b.className='hc-settings';b.textContent='Cookie settings';
- b.addEventListener('click',function(){forget();choice=null;openBanner()});
+ b.addEventListener('click',function(){
+  if(window.googlefc&&typeof window.googlefc.showRevocationMessage==='function'){window.googlefc.showRevocationMessage();return}
+  forget();choice=null;openBanner();
+ });
  f.appendChild(b);
 }
 function start(){addSettings();if(choice===null)openBanner()}

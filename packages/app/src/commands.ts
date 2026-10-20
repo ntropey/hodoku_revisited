@@ -22,6 +22,7 @@ export interface CommandContext {
   setMode: (m: Mode) => void;
   clearFilter: () => void;
   startNew: (level: number) => void;
+  startDaily?: () => void;
   openTraining: () => void;
   askHint: () => void;
   askCoach?: () => void;
@@ -56,6 +57,7 @@ export function buildCommands(c: CommandContext): Command[] {
     run: () => c.setSettings((s) => ({ ...s, [key]: !s[key] })),
   });
   return [
+    { label: 'Daily puzzle (today)', run: () => (c.startDaily ? c.startDaily() : c.startNew(2)) },
     ...[1, 2, 3, 4, 5].map((l) => ({ label: `New puzzle: ${LEVEL_NAMES[l]}`, run: () => c.startNew(l) })),
     { label: 'Playing mode', run: () => c.setSettings((s) => ({ ...s, gameMode: 'playing' as GameMode })) },
     { label: 'Learning mode…', run: c.openTraining },

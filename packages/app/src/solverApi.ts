@@ -77,6 +77,33 @@ export function fromBank(level: number, seen: readonly number[], rng: Rng = Math
   return { ...info, bankIndex: index };
 }
 
+/** Deterministic 32-bit PRNG (FNV-1a hash + Mulberry32) seeded from a string. */
+export function seededRng(seedText: string): Rng {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < seedText.length; i++) {
+    h ^= seedText.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  let state = (h || 1) >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Deterministic Daily Puzzle for `date` (YYYY-MM-DD) and `level` (1..5, default 2 = Medium).
+ * Every player who opens the same date and level receives the exact same board.
+ */
+export function daily(date: string, level = 2): PuzzleInfo {
+  const lv = Math.min(5, Math.max(1, Math.floor(level) || 2));
+  const rng = seededRng(`hodoku-daily:${date}:${lv}`);
+  const info = fromBank(lv, [], rng) ?? generate(lv);
+  return { ...info, daily: date };
+}
+
 /** Fisher–Yates shuffle in place; returns the same array for convenience. */
 function shuffle<T>(a: T[], rng: Rng): T[] {
   for (let i = a.length - 1; i > 0; i--) {

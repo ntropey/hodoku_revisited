@@ -3,7 +3,7 @@ import { LEVEL_NAMES } from '../protocol';
 import { formatTime, type CopyWhat, type GameMode } from '../ui';
 
 interface Props {
-  badge: { level: number; score: number } | null;
+  badge: { level: number; score: number; daily?: string } | null;
   filled: number;
   seconds: number;
   busy: boolean;
@@ -13,6 +13,7 @@ interface Props {
   onMode: (mode: GameMode) => void;
   onTraining: () => void;
   onNew: (level: number) => void;
+  onDaily: () => void;
   onCancel: () => void;
   onImport: () => void;
   onPuzzles: () => void;
@@ -120,6 +121,8 @@ export function TopBar(p: Props) {
   );
   const newItems = (close: () => void) => (
     <>
+      <Label>Daily challenge</Label>
+      {item(close, 'Daily puzzle (today)', p.onDaily)}
       <Label>New puzzle</Label>
       {[1, 2, 3, 4, 5].map((l) => item(close, LEVEL_NAMES[l], () => p.onNew(l)))}
     </>
@@ -147,8 +150,8 @@ export function TopBar(p: Props) {
       {p.busy && <button onClick={p.onCancel}>Cancel</button>}
       {p.mode !== 'playing' && <span className="chip-mode">{MODE_LABELS[p.mode]}</span>}
       {p.badge && (
-        <span className="badge">
-          {LEVEL_NAMES[p.badge.level]} <span className="dim">· {p.badge.score}</span>
+        <span className="badge" title={p.badge.daily ? `Daily puzzle for ${p.badge.daily}` : undefined}>
+          {p.badge.daily ? `Daily · ${LEVEL_NAMES[p.badge.level]}` : LEVEL_NAMES[p.badge.level]} <span className="dim">· {p.badge.score}</span>
         </span>
       )}
       <span className="progress wide" title="Cells filled">
