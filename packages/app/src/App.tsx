@@ -40,7 +40,6 @@ import {
   hiddenSingles,
   isGiven,
   isSolved,
-  newGame,
   notesOf,
   paintCand,
   paintCell,
@@ -62,7 +61,7 @@ import { usePrinting } from './hooks/usePrinting';
 import { usePuzzleText } from './hooks/usePuzzleText';
 import { useSolverPanel } from './hooks/useSolverPanel';
 import { useTimer } from './hooks/useTimer';
-import { LEVEL_NAMES, type HintLevel } from './protocol';
+import { LEVEL_NAMES, type HintLevel, type HintResult } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
 import { load, save, SAVE_KEY, SETTINGS_KEY } from './storage';
 import { STEP_LEVEL, TECHNIQUE_NAMES } from './techniqueLookup';
@@ -102,7 +101,7 @@ export function App() {
   const { seconds, secondsRef, resetTimer } = useTimer(game, solved);
   const collections = useCollections();
   const panel = useSolverPanel({ game, solved, solver, hintLevel, disabledTechniques, busy, setBusy, setMessage });
-  const { hint, setHint, pathSteps, pathDone, setPathDone, tab, clearPanel } = panel;
+  const { hint, setHint, coachStep, setCoachStep, proof, setProof, proofStep, setProofStep, pathSteps, pathDone, setPathDone, tab, clearPanel } = panel;
   const printing = usePrinting({ solver, settingsRef, setBusy, setMessage });
   const { copyPuzzle, savePuzzle } = usePuzzleText(game, solver, setMessage);
 
@@ -309,14 +308,18 @@ export function App() {
     blocked: importing || settingsOpen || commandsOpen || puzzlesOpen || trainingOpen || printing.extendedPrintOpen,
     tab,
     selected,
-    hasHint: !!hint,
+    hasHint: !!(hint || proof),
     toggleCommands: () => setCommandsOpen((o) => !o),
     input,
     eraseSelected,
     setMode,
     toggleFilter,
     clearFilter: () => setFilterDigit(0),
-    dismissHint: () => setHint(null),
+    dismissHint: () => {
+      setHint(null);
+      setCoachStep(null);
+      setProof(null);
+    },
     askHint: () => void panel.askHint(),
     applyHint,
     applyPathStep: () => applyPath(1),
@@ -330,6 +333,7 @@ export function App() {
       tab={tab}
       onTab={panel.openTab}
       game={game}
+      selected={selected}
       solved={solved}
       busy={busy}
       message={message}
@@ -339,10 +343,23 @@ export function App() {
         panel.invalidateSteps();
       }}
       hint={hint}
-      onHint={() => void panel.askHint()}
+      coachStep={coachStep}
+      onCoachStep={setCoachStep}
+      proof={proof}
+      proofStep={proofStep}
+      onProofStep={setProofStep}
+      onDismissProof={() => setProof(null)}
+      onProve={(cell, d) => void panel.askProof(cell, d)}
+      onHint={(startInCoach) => void panel.askHint(startInCoach)}
       onApplyHint={applyHint}
-      onDismissHint={() => setHint(null)}
-      onSelectStep={setHint}
+      onDismissHint={() => {
+        setHint(null);
+        setCoachStep(null);
+      }}
+      onSelectStep={(h) => {
+        setHint(h);
+        setCoachStep(null);
+      }}
       allSteps={panel.allSteps}
       onRefreshSteps={() => void panel.askAllSteps()}
       pathSteps={pathSteps}
@@ -353,8 +370,20 @@ export function App() {
     />
   );
 
-  // on the Path tab the board previews the next step of the solution path
-  const boardHint = tab === 'path' ? (pathSteps?.[pathDone] ?? null) : hint;
+  // What the board highlights: on the Path tab the next path step; during an AI Coach proof or walkthrough, that stage's marks
+  const boardHint = useMemo<HintResult | null>(() => {
+    if (tab === 'path') return pathSteps?.[pathDone] ?? null;
+    if (tab === 'hint' && proof) {
+      const stage = proof.stages[proofStep] ?? proof.stages[proof.stages.length - 1];
+      if (!stage) return null;
+      return { name: stage.label, type: 'PROOF', text: stage.text, summary: '', slug: null, marks: stage.marks, notation: [] };
+    }
+    if (hint && coachStep !== null && hint.coach?.[coachStep]) {
+      return { ...hint, marks: hint.coach[coachStep].marks };
+    }
+    return hint;
+  }, [tab, pathSteps, pathDone, proof, proofStep, hint, coachStep]);
+
   // coloring candidates needs to see them, so color mode turns them on for that target
   const showCandsNow = settings.showCands || (mode === 'color' && paintTarget === 'cand');
 
@@ -529,7 +558,8 @@ export function App() {
             clearFilter: () => setFilterDigit(0),
             startNew: (l) => void startNew(l),
             openTraining: () => setTrainingOpen(true),
-            askHint: () => void panel.askHint(),
+            askHint: () => void panel.askHint(false),
+            askCoach: () => void panel.askHint(true),
             askAllSteps: () => void panel.askAllSteps(),
             showPath: () => panel.openTab('path'),
             applyStep,

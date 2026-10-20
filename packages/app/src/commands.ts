@@ -24,6 +24,7 @@ export interface CommandContext {
   startNew: (level: number) => void;
   openTraining: () => void;
   askHint: () => void;
+  askCoach?: () => void;
   askAllSteps: () => void;
   showPath: () => void;
   applyStep: () => void;
@@ -61,6 +62,7 @@ export function buildCommands(c: CommandContext): Command[] {
     { label: 'Practicing mode…', run: c.openTraining },
     { label: 'Training techniques…', run: c.openTraining },
     { label: 'Get a hint', hint: 'H', run: c.askHint, disabled: !game || c.solved },
+    { label: 'Coach me (step-by-step hint)', run: () => (c.askCoach ? c.askCoach() : c.askHint()), disabled: !game || c.solved },
     { label: 'Find all steps', run: c.askAllSteps, disabled: !game || c.solved },
     { label: 'Show the solution path', run: c.showPath, disabled: !game },
     { label: 'Apply step', hint: 'Enter', run: c.applyStep, disabled: c.tab === 'path' ? !c.pathHasNext : !c.hint },

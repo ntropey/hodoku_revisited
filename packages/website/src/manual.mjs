@@ -17,12 +17,12 @@ export const MANUAL = [
 <li><strong>Top bar:</strong> <em>New puzzle</em> (pick a difficulty), <em>Mode</em> (Playing, Learning or Practicing), <em>Import</em>, <em>Copy</em>, <em>Save</em>, <em>Print</em>, the puzzle's difficulty and score, how many cells are filled, a timer, undo and redo, the command search, and <em>Settings</em>.</li>
 <li><strong>Board:</strong> Givens are set in the serif face. Your own digits are blue. With <em>ColorKu</em> on (see <em>Settings</em>), digits and candidates are shown as colored balls instead. <em>Cell zoom</em> (also under <em>Settings</em>) adds an enlarged view of the selected cell under the board.</li>
 <li><strong>Digit pad</strong> below the board, with <em>Value</em>, <em>Notes</em>, <em>Filter</em> and <em>Color</em> modes. The small number on each key is how many of that digit are still missing.</li>
-<li><strong>Side panel</strong> with <em>Hint</em>, <em>All steps</em> and <em>Summary</em> tabs. On a phone this is a sheet at the bottom that you drag up and down.</li>
+<li><strong>Side panel</strong> with <em>Hint</em> (and the AI Coach), <em>All steps</em>, <em>Path</em> and <em>Summary</em> tabs. On a phone this is a sheet at the bottom that you drag up and down.</li>
 </ul>
 <h2>Your first moves</h2>
 <ol>
 <li>Tap a cell, then a digit on the pad (or press 1 to 9 on a keyboard).</li>
-<li>Stuck? Choose <em>Get a hint</em> (or press <kbd>H</kbd>). The panel names the next step and the board shows the cells involved. <em>Apply step</em> carries it out.</li>
+<li>Stuck? Choose <em>Get a hint</em> (or press <kbd>H</kbd>) to see the next step right away, or choose <em>Coach me</em> to get progressive nudges without spoiling the answer. <em>Apply step</em> carries it out.</li>
 <li>Use <em>Undo</em> (<kbd>Z</kbd>) if you change your mind.</li>
 </ol>
 <h2>Install and offline use</h2>
@@ -98,10 +98,20 @@ export const MANUAL = [
   },
   {
     slug: 'hints',
-    title: 'Hints',
-    summary: 'What a hint shows, and how much it may give away.',
+    title: 'Hints and AI Coach',
+    summary: 'What a hint shows, progressive Socratic nudges, and the contradiction prover.',
     body: `
 <p>A hint is always a real technique, found the way the original HoDoKu finds it: the solver tries the techniques from easiest to hardest and reports the first step it finds.</p>
+<h2>AI Coach walkthrough</h2>
+<p>Choose <em>Coach me</em> to get progressive Socratic nudges instead of the full answer right away, or click any of the four stage pills on an open hint:</p>
+<ol>
+<li><strong>Where to look:</strong> Tints the house (row, column or box) or endpoints to scan without naming the exact cells or eliminations.</li>
+<li><strong>The pattern:</strong> Names the technique and highlights the key cells, fins or color groups that form it on your board.</li>
+<li><strong>The logic:</strong> Explains why the pattern forces the deduction, drawing any chain links on the board.</li>
+<li><strong>Conclusion:</strong> Shows the final placement or struck-through candidate eliminations.</li>
+</ol>
+<h2>“Why not?” contradiction prover</h2>
+<p>Select any empty cell on the board and look at the <em>AI Coach · Ask about rXcY</em> bar in the Hint tab. Click <em>Why not D?</em> for any candidate to test placing that digit in the cell. If the digit is wrong, the AI Coach traces the forced singles that ripple from it until a cell is left with no candidates or a house has nowhere left for a digit, and lets you step through the causal chain on the board.</p>
 <h2>Reading a hint</h2>
 <ul>
 <li>The <strong>name</strong> and a one-line explanation of the technique, with a link to its guide.</li>

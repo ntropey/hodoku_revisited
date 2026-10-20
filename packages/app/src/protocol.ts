@@ -1,6 +1,25 @@
 /** Messages between the UI and the solver worker. */
 import type { StepMarks } from '@hodoku/core';
 
+/** One interactive stage of the AI Coach walkthrough or contradiction proof. */
+export interface CoachStage {
+  /** Short title of the stage, e.g. 'Where to look', 'The pattern', 'The logic', 'Conclusion' */
+  label: string;
+  /** Conversational, board-specific narration for this stage */
+  text: string;
+  /** Cells, candidates and chains to highlight on the board at this stage */
+  marks: StepMarks;
+}
+
+/** Result of asking the AI Coach "Why not digit D in cell rXcY?" */
+export interface ProofResult {
+  cell: number;
+  digit: number;
+  verdict: 'valid' | 'conflict';
+  headline: string;
+  stages: CoachStage[];
+}
+
 export interface HintResult {
   /** Technique name, e.g. "Naked Pair" */
   name: string;
@@ -15,6 +34,8 @@ export interface HintResult {
   marks: StepMarks;
   /** Chains in the usual notation: 3r1c1 = 3r1c5 - ... */
   notation: string[];
+  /** Progressive Socratic nudges and board-specific walkthrough stages */
+  coach?: CoachStage[];
 }
 
 /** How hard a technique the hint may use: 0 = singles only, 1-5 = up to Easy ... Extreme */
@@ -32,6 +53,7 @@ export type WorkerRequest =
   | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
   | { id: number; kind: 'allHints'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
   | { id: number; kind: 'path'; values: number[]; cands: number[] }
+  | { id: number; kind: 'prove'; values: number[]; cands: number[]; cell: number; digit: number }
   | { id: number; kind: 'format'; values: number[]; cands: number[]; mode: CopyFormat }
   | { id: number; kind: 'book'; sections: PrintSection[]; techniques: string[] };
 
@@ -88,6 +110,7 @@ export type WorkerResponse =
   | { id: number; kind: 'hint'; hint: HintResult | null }
   | { id: number; kind: 'allHints'; results: HintResult[]; total: Record<string, number> }
   | { id: number; kind: 'path'; steps: HintResult[] }
+  | { id: number; kind: 'prove'; proof: ProofResult }
   | { id: number; kind: 'format'; text: string }
   | { id: number; kind: 'book'; puzzles: PrintSudoku[] }
   | { id: number; kind: 'error'; message: string };

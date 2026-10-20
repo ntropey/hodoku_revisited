@@ -99,6 +99,12 @@ test('manual chapters exist and every guide has an Open in app link with a valid
   const dist = new URL('../dist/', import.meta.url);
   assert.ok(existsSync(new URL('manual/hints.html', dist)));
   assert.ok(existsSync(new URL('manual/keyboard-shortcuts.html', dist)));
+  const home = readFileSync(new URL('index.html', dist), 'utf8');
+  assert.match(home, /AI Super Solver/);
+  assert.match(home, /AI Coach/);
+  const hintsManual = readFileSync(new URL('manual/hints.html', dist), 'utf8');
+  assert.match(hintsManual, /AI Coach walkthrough/);
+  assert.match(hintsManual, /contradiction prover/);
   const guide = readFileSync(new URL('techniques/x-wing.html', dist), 'utf8');
   assert.match(guide, /play\/\?p=[.0-9]{81}"/);
   assert.ok(readdirSync(new URL('fonts/', dist)).length >= 7);
@@ -122,7 +128,7 @@ test('user-facing text and docs use American spelling', async () => {
   const walk = (p) => (statSync(p).isDirectory() ? readdirSync(p).flatMap((n) => walk(`${p}/${n}`)) : [p]);
   const bad = [];
   for (const r of roots) {
-    for (const f of walk(new URL(r, repo).pathname)) {
+    for (const f of walk(fileURLToPath(new URL(r, repo))).map((p) => p.replaceAll('\\', '/'))) {
       if (skip.test(f) || !/\.(ts|tsx|mjs|md|css)$/.test(f)) continue;
       readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
         // the game mode identifier 'practising' is a stored value, kept as it is

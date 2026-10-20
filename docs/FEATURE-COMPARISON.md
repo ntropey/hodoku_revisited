@@ -101,10 +101,11 @@ in the port too, with its own palette (Color mode).
 
 ## Where the port leads
 
-Not in the original: installable **PWA with offline use**, **command search** (Ctrl/Cmd+K),
-responsive desktop/sheet layout, ARIA-labeled board, a timer, mistake marking, `?p=`/`?level=` links,
-a **precomputed puzzle bank** for instant starts, technique guides with solver-verified diagrams, an
-`analyze()`-driven Summary, and the site layer (downloads, ads, EU/UK consent banner).
+Not in the original: installable **PWA with offline use**, an **AI Coach & Super Solver** (progressive Socratic
+nudges, 4-stage interactive step walkthroughs on the board, and a "Why not?" contradiction prover that traces forced
+moves to a conflict), **command search** (Ctrl/Cmd+K), responsive desktop/sheet layout, ARIA-labeled board, a timer,
+mistake marking, `?p=`/`?level=` links, a **precomputed puzzle bank** for instant starts, technique guides with
+solver-verified diagrams, an `analyze()`-driven Summary, and the site layer (downloads, ads, EU/UK consent banner).
 
 ## Status of the gaps
 

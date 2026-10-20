@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import type { WorkerRequest, WorkerResponse } from './protocol';
-import { allHints, analyze, book, format, fromBank, generate, hint, path, train } from './solverApi';
+import { allHints, analyze, book, format, fromBank, generate, hint, path, prove, train } from './solverApi';
 
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -16,6 +16,7 @@ ctx.onmessage = (event: MessageEvent<WorkerRequest>) => {
     else if (req.kind === 'analyze') res = { id: req.id, kind: 'puzzle', info: analyze(req.puzzle) };
     else if (req.kind === 'allHints') res = { id: req.id, kind: 'allHints', ...allHints(req.values, req.cands, req.level, 12, req.disabled) };
     else if (req.kind === 'path') res = { id: req.id, kind: 'path', steps: path(req.values, req.cands) };
+    else if (req.kind === 'prove') res = { id: req.id, kind: 'prove', proof: prove(req.values, req.cands, req.cell, req.digit) };
     else if (req.kind === 'format') res = { id: req.id, kind: 'format', text: format(req.values, req.cands, req.mode) };
     else if (req.kind === 'book') res = { id: req.id, kind: 'book', puzzles: book(req.sections, req.techniques) };
     else res = { id: req.id, kind: 'hint', hint: hint(req.values, req.cands, req.level, req.disabled) };

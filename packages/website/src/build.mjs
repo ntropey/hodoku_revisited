@@ -121,11 +121,67 @@ const add = (path, content) => pages.push([path, content]);
 
 // ---- home
 const homeEx = examples.find((e) => e.slug === 'locked-candidates');
+const coachPuzzle = '.....1.......3597.7..4...23..7.1..6....57...8.28...7..9........6.2....91.4...738.';
+const coachCands = new Array(81).fill(0);
+coachCands[0] = (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 8);
+coachCands[7] = (1 << 4) | (1 << 5);
+coachCands[8] = (1 << 4) | (1 << 5) | (1 << 6);
+coachCands[17] = (1 << 4) | (1 << 6);
+coachCands[58] = (1 << 2) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 8);
+coachCands[59] = (1 << 2) | (1 << 3) | (1 << 4) | (1 << 6) | (1 << 8);
+coachCands[64] = (1 << 3) | (1 << 5) | (1 << 7) | (1 << 8);
+coachCands[66] = (1 << 3) | (1 << 8);
+coachCands[68] = (1 << 3) | (1 << 4) | (1 << 8);
+const coachEx = {
+  name: 'AI Coach · Why not 4 in r1c9?',
+  type: 'CONTRADICTION_PROOF',
+  values: [...coachPuzzle].map((c) => (c === '.' ? 0 : Number(c))),
+  cands: coachCands,
+  place: [],
+  key: [
+    { cell: 8, digit: 4 },
+    { cell: 7, digit: 5 },
+    { cell: 17, digit: 6 },
+    { cell: 0, digit: 2 },
+    { cell: 58, digit: 2 },
+    { cell: 59, digit: 3 },
+  ],
+  fins: [],
+  colors: [],
+  elim: [
+    { cell: 64, digit: 3 },
+    { cell: 66, digit: 3 },
+    { cell: 68, digit: 3 },
+  ],
+  tint: [
+    { cells: [8], tone: 'a' },
+    { cells: [63, 64, 65, 66, 67, 68, 69, 70, 71], tone: 'b' },
+  ],
+  chains: [
+    [
+      { cell: 8, digit: 4, strong: false },
+      { cell: 7, digit: 5, strong: true },
+    ],
+    [
+      { cell: 8, digit: 4, strong: false },
+      { cell: 17, digit: 6, strong: true },
+    ],
+    [
+      { cell: 58, digit: 2, strong: false },
+      { cell: 59, digit: 3, strong: true },
+      { cell: 68, digit: 3, strong: false },
+    ],
+    [
+      { cell: 59, digit: 3, strong: true },
+      { cell: 66, digit: 3, strong: false },
+    ],
+  ],
+};
 add(
   'index.html',
   page({
     title: 'Hodoku Revisited: the sudoku solver that explains every step',
-    description: 'Free sudoku solver and trainer in your browser: the HoDoKu hint engine, analyzer and technique library. It tells you which sudoku step comes next and why it works. No install, open source.',
+    description: 'Free sudoku solver and trainer in your browser, now with an AI Super Solver & Coach: progressive Socratic nudges, step-by-step walkthroughs, contradiction proofs, analyzer and technique library.',
     root: '',
     path: '',
     wide: true,
@@ -138,22 +194,40 @@ add(
           url: siteUrl,
           applicationCategory: 'GameApplication',
           operatingSystem: 'Any (web browser)',
-          description: 'Free sudoku solver and trainer with step-by-step logical hints, difficulty rating and technique guides.',
+          description: 'Free sudoku solver and trainer with AI Coach step-by-step logical hints, contradiction proofs, difficulty rating and technique guides.',
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
         }
       : undefined,
     body: `<section class="hero">
   <div>
-    <p class="eyebrow">The HoDoKu sudoku solver, now in your browser</p>
+    <p class="eyebrow">The HoDoKu sudoku solver, now with AI Super Solver &amp; Coach</p>
     <h1>Every sudoku step,<br>explained.</h1>
-    <p class="lead">A free sudoku solver and trainer: the hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript. No Java and no install. It tells you which sudoku step comes next and why it works.</p>
+    <p class="lead">A free sudoku solver and trainer: the hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript with an interactive AI Coach. No Java and no install. Get progressive nudges, step through every deduction on the board, or ask why any candidate fails.</p>
     <p><a class="btn" href="play/">Open the solver</a> <a class="btn alt" href="techniques/">Browse techniques</a></p>
     <p class="gen"><span>Generate:</span> ${['Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'].map((l, i) => `<a class="chip" href="play/?level=${i + 1}">${l}</a>`).join(' ')}</p>
   </div>
   ${homeEx ? `<figure class="example hero-board">${diagram(homeEx)}<figcaption><span class="mono">${esc(homeEx.name)}</span> · ${esc(caption(homeEx).replace(/^[^:]*: /, ''))}</figcaption></figure>` : ''}
 </section>
+<section class="spotlight">
+  <div>
+    <p class="eyebrow">New · AI Super Solver &amp; Coach</p>
+    <h2>Ask “Why not?” on any cell—and watch the proof unfold.</h2>
+    <p class="lead">Stuck between two candidates? Select any cell and ask the AI Coach <strong>“Why not 4?”</strong> It tests your hypothesis, traces the forced singles that ripple across the board, and highlights the exact contradiction.</p>
+    <div class="coach-quote">
+      <div class="mono"><strong>1. Assume</strong> → <strong>2. Forced moves</strong> → <strong>3. Contradiction</strong></div>
+      <p>“Suppose we place 4 in r1c9. That forces 5 into r1c8 and 6 into r2c9… leaving Row 8 with no valid cell where digit 3 can go. Therefore, r1c9 cannot be 4.”</p>
+    </div>
+    <p>Prefer not to spoil a hint? Click <strong>Coach me</strong> for progressive four-stage Socratic nudges—starting with <em>where to look</em> before revealing the pattern or the move.</p>
+    <p><a class="btn" href="play/?p=${coachPuzzle}">Try the AI Coach on this board →</a></p>
+  </div>
+  <figure class="example hero-board">
+    ${diagram(coachEx)}
+    <figcaption><span class="mono">AI Coach · Contradiction proof</span> · Assuming 4 in r1c9 eliminates every 3 in Row 8 (r8c2, r8c4, r8c6).</figcaption>
+  </figure>
+</section>
 <section class="cards">
-  <article><p class="eyebrow">Hints</p><h2>Vague, concrete or the full step</h2><p>You choose how much a sudoku hint gives away. It can just name the technique, or highlight every candidate involved.</p></article>
+  <article><p class="eyebrow">AI Super Solver</p><h2>Nudges, walkthroughs &amp; “Why not?”</h2><p>Let the AI Coach guide you in four stages—from where to look to the final move—or tap any cell candidate to watch the chain of forced moves that proves a contradiction.</p></article>
+  <article><p class="eyebrow">Hints</p><h2>Vague, concrete or the full step</h2><p>You choose how much a sudoku hint gives away. Start with a Socratic nudge, name the technique, or highlight every candidate involved.</p></article>
   <article><p class="eyebrow">Analyzer</p><h2>See the whole solution path</h2><p>Get the techniques the solver would use and the hardest one required, plus a difficulty rating for any sudoku puzzle you paste in.</p></article>
   <article><p class="eyebrow">Library</p><h2>From singles to last resort</h2><p>${TECHNIQUES.length} technique guides, written new. Every example is a board you can step through and open in the app.</p></article>
 </section>
@@ -393,6 +467,11 @@ main{max-width:760px;margin:0 auto;padding:16px}main.wide{max-width:1200px}
 .hero h1{font-size:clamp(2.2rem,4.6vw,3.6rem);margin:.1em 0 .3em}
 .gen{color:var(--muted)}.chip{display:inline-block;padding:2px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);text-decoration:none;font-size:.9rem}.chip:hover{background:var(--surface-2)}
 .hero-board{margin:0}
+.spotlight{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:center;margin:16px 0 32px;padding:28px 32px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.spotlight h2{font-size:clamp(1.6rem,3vw,2.2rem);margin:.15em 0 .4em}
+.coach-quote{margin:16px 0;padding:12px 16px;background:var(--surface-2);border-left:4px solid var(--accent);border-radius:4px 8px 8px 4px}
+.coach-quote .mono{font-size:.82rem;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
+.coach-quote p{margin:6px 0 0;font-size:.98rem}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:24px 0}
 .cards article{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 24px}.cards h2{font-size:1.35rem;margin:.2em 0 .4em}
 .trust{border-top:1px solid var(--line);margin-top:32px;color:var(--muted)}
@@ -441,7 +520,7 @@ figcaption{font-size:.9rem;color:var(--muted);margin-top:8px}
 .pager{display:flex;justify-content:space-between;gap:12px;margin:40px 0 24px;border-top:1px solid var(--line);padding-top:16px}.pager a{display:flex;flex-direction:column;text-decoration:none}.pager small{color:var(--muted);font:400 .75rem var(--font-mono);text-transform:uppercase}
 footer{max-width:1200px;margin:48px auto 0;padding:24px 16px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}footer p{margin:.2em 0}
 @media(max-width:959px){
-.hero{grid-template-columns:1fr;gap:24px;padding-top:24px}
+.hero,.spotlight{grid-template-columns:1fr;gap:24px;padding-top:24px}
 .with-rail{grid-template-columns:1fr;gap:8px}.rail{position:static}.railnav{display:none}
 .railselect{display:flex;flex-direction:column;gap:4px;color:var(--muted);font-size:.85rem}.railselect select{font:inherit;min-height:44px;padding:0 12px;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px}
 .guide-cols{grid-template-columns:1fr;gap:16px}.sticky{position:static}

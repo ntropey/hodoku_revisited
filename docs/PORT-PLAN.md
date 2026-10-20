@@ -210,6 +210,12 @@ bank only if its solve path uses at least one of them, and in Learning it is als
 where that technique applies (the board state comes back with the puzzle from the worker's `train`
 request; Practicing starts from the givens). The status line shows the mode and the techniques.
 
+AI Coach (`aiCoach.ts`): every hint includes a 4-stage Socratic walkthrough (*Where to look*, *The pattern*,
+*The logic*, *Conclusion*) whose `StepMarks` progressively reveal the deduction on the board; *Coach me*
+starts at Stage 1 without spoiling the answer. Selecting a cell also offers a *Why not?* contradiction
+prover (`prove` worker request) that places a candidate, propagates forced moves, prunes to the minimal
+causal chain, and steps through the resulting contradiction on the board.
+
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
 tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense (loaded only after consent,
 see below) and `ads.txt` are on the site pages, not in the app; the privacy page discloses advertising.

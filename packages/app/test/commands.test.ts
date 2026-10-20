@@ -33,6 +33,7 @@ function context(over: Partial<CommandContext> = {}): { ctx: CommandContext; cal
     startNew: (l) => void calls.push(`new:${l}`),
     openTraining: note('training'),
     askHint: note('hint'),
+    askCoach: note('coach'),
     askAllSteps: note('allSteps'),
     showPath: note('path'),
     applyStep: note('apply'),
@@ -78,6 +79,7 @@ describe('command list', () => {
     expect(byLabel(busy, 'Apply step').disabled).toBe(false);
     const solved = buildCommands(context({ solved: true }).ctx);
     expect(byLabel(solved, 'Get a hint').disabled).toBe(true);
+    expect(byLabel(solved, 'Coach me (step-by-step hint)').disabled).toBe(true);
   });
 
   it('the apply command follows the open tab', () => {
@@ -95,7 +97,8 @@ describe('command list', () => {
     byLabel(cmds, 'Save puzzle: candidates').run();
     byLabel(cmds, 'Notes mode').run();
     byLabel(cmds, 'Practicing mode…').run();
-    expect(calls).toEqual(['new:3', 'copy:library', 'save:pm', 'mode:notes', 'training']);
+    byLabel(cmds, 'Coach me (step-by-step hint)').run();
+    expect(calls).toEqual(['new:3', 'copy:library', 'save:pm', 'mode:notes', 'training', 'coach']);
   });
 
   it('toggles settings and names the state it will switch to', () => {

@@ -17,8 +17,9 @@ import {
   cellName,
   tables,
 } from '@hodoku/core';
+import { buildCoachStages, proveCandidate } from './aiCoach';
 import { bankPuzzle, bankSize, isomorph, pickBankIndex, type Rng } from './bank/bank';
-import type { CopyFormat, HintLevel, HintResult, PathEntry, PrintSection, PrintSudoku, PuzzleInfo } from './protocol';
+import type { CopyFormat, HintLevel, HintResult, PathEntry, PrintSection, PrintSudoku, ProofResult, PuzzleInfo } from './protocol';
 import { techniqueInfo } from './techniqueInfo';
 
 /** Rate a puzzle and find its solution. Throws if it is invalid or has no unique solution. */
@@ -209,14 +210,16 @@ function toHintResult(step: SolutionStep, before: Sudoku2): HintResult {
     text = `remove ${digits} from ${where(marks.elim)}`;
   }
   const info = techniqueInfo(step.type);
+  const summary = info?.summary ?? (step.type === 'BRUTE_FORCE' ? 'No logical technique applies here, so this digit comes from trial and error.' : '');
   return {
     name,
     type: step.type,
     text: `${name}: ${text}`,
-    summary: info?.summary ?? (step.type === 'BRUTE_FORCE' ? 'No logical technique applies here, so this digit comes from trial and error.' : ''),
+    summary,
     slug: info?.slug ?? null,
     marks,
     notation: marks.chains.map((c) => chainNotation(c)),
+    coach: buildCoachStages(step, before, marks, name, summary),
   };
 }
 
@@ -231,6 +234,13 @@ export function hint(values: number[], cands: number[], level: HintLevel = 5, di
   const step = solver.getHint(level === 0, configs);
   if (step === null || step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') return null;
   return toHintResult(step, before);
+}
+
+/**
+ * Prove why placing `digit` in `cell` works or leads to a contradiction ("Why not D in rXcY?").
+ */
+export function prove(values: number[], cands: number[], cell: number, digit: number): ProofResult {
+  return proveCandidate(values, cands, cell, digit);
 }
 
 /**
