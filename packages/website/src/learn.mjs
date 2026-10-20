@@ -107,4 +107,30 @@ ${lists}
 <h2>Writing a puzzle as text</h2>
 <p>A puzzle is commonly written as 81 characters, row by row, with a dot or a zero for each empty cell. The app copies and opens that format, and several others; see the <a href="../manual/import-export-formats.html">manual</a>.</p>`,
   },
+  {
+    slug: 'hodoku-online-no-java',
+    title: 'HoDoKu online (no Java)',
+    summary: 'How to run the HoDoKu 2.2.0 sudoku solver and trainer in your browser on Mac, Windows, iPhone, iPad and Android.',
+    body: () => `
+<p>Bernhard Hobiger's <strong>HoDoKu</strong> (released up to version 2.2.0 in 2012) became the standard open-source sudoku solver, generator and trainer: its difficulty ratings, 90+ logical step finders and candidate coloring are referenced across sudoku books and forums. Because the original program was written for desktop Java Swing, running it today on macOS, Windows 11, Linux, iPhones, iPads or Android phones usually means installing a legacy Java Runtime Environment—or not running it at all on mobile.</p>
+<p><strong>Hodoku Revisited</strong> brings the complete HoDoKu 2.2.0 solving engine into the browser as pure TypeScript, with an offline-capable progressive web app and an interactive AI Coach.</p>
+<p><a class="btn" href="../play/">Open HoDoKu in your browser</a> <a class="btn alt" href="../play/?daily=1">Play today's Daily Puzzle</a></p>
+<h2>100% verified against HoDoKu 2.2.0</h2>
+<p>The solver engine was ported module by module—from ${g('naked-single', 'Singles')} and ${g('locked-candidates', 'Locked Candidates')} to ${g('x-wing', 'Fish')}, ${g('xy-wing', 'Wings')}, ${g('als-xz', 'Almost Locked Sets')}, ${g('nice-loops', 'AIC / Nice Loops')}, ${g('forcing-chains', 'Forcing Chains & Nets')}, ${g('kraken-fish', 'Kraken Fish')} and ${g('templates', 'Templates')}. In automated golden tests against the original <code>hodoku.jar</code> across 587 puzzles and 34,672 solving steps, the port produces the exact same steps, in the same order, with the identical difficulty level and numerical score.</p>
+<h2>What is new in Hodoku Revisited</h2>
+<ul>
+<li><strong>AI Super Solver &amp; Coach:</strong> Instead of spoiling a step all at once, click <em>Coach me</em> to walk through four Socratic stages (<em>Where to look</em>, <em>The pattern</em>, <em>The logic</em>, and <em>Conclusion</em>).</li>
+<li><strong>“Why not?” Contradiction Prover:</strong> Select any empty cell on the board and click <em>Why not D?</em> for any candidate. The solver places that digit, propagates forced singles, prunes the trace to the shortest causal path, and draws the house-aligned chain that leads to a contradiction.</li>
+<li><strong>Shareable Proof &amp; Step Links:</strong> Share a direct URL to any puzzle, daily challenge, AI Coach walkthrough (<code>?coach=1</code>), or contradiction proof (<code>?prove=r1c9.4</code>).</li>
+<li><strong>HoDoKu Modes &amp; Formats:</strong> Supports <em>Playing</em>, <em>Learning</em> and <em>Practicing</em> modes, ColorKu balls, custom cell and candidate coloring, solution path stepping, extended booklet printing, and HoDoKu <code>:0000:x:...</code> library lines.</li>
+</ul>
+<h2>How to install on Mac, Windows, iOS and Android</h2>
+<p>You do not need an installer or Java:</p>
+<ol>
+<li>Open <a href="../play/">/play/</a> in Chrome, Edge, Safari or Firefox.</li>
+<li>On desktop (macOS, Windows, Linux, Chromebook), click the <em>Install Hodoku Revisited</em> icon in the address bar.</li>
+<li>On iPhone or iPad (Safari), tap <em>Share → Add to Home Screen</em>. On Android (Chrome), tap <em>Install app</em> from the browser menu.</li>
+</ol>
+<p>Once installed, a service worker caches the entire solver and puzzle bank on your device so you can generate, solve and analyze puzzles completely offline.</p>`,
+  },
 ];

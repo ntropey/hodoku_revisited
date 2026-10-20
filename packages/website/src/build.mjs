@@ -264,7 +264,7 @@ add(
   <article><p class="eyebrow">Analyzer</p><h2>See the whole solution path</h2><p>Get the techniques the solver would use and the hardest one required, plus a difficulty rating for any sudoku puzzle you paste in.</p></article>
   <article><p class="eyebrow">Library</p><h2>From singles to last resort</h2><p>${TECHNIQUES.length} technique guides, written new. Every example is a board you can step through and open in the app.</p></article>
 </section>
-<section class="learnhome"><p class="eyebrow">New to sudoku?</p><p>Read <a href="learn/how-to-solve-sudoku.html">how to solve sudoku</a> step by step, see <a href="learn/sudoku-difficulty-levels.html">what the difficulty levels mean</a>, or look up a word in the <a href="learn/sudoku-glossary.html">glossary</a>.</p></section>
+<section class="learnhome"><p class="eyebrow">New to sudoku or looking for HoDoKu?</p><p>Read <a href="learn/how-to-solve-sudoku.html">how to solve sudoku</a> step by step, see <a href="learn/sudoku-difficulty-levels.html">what the difficulty levels mean</a>, look up a word in the <a href="learn/sudoku-glossary.html">glossary</a>, or learn how to run <a href="learn/hodoku-online-no-java.html">HoDoKu online on Mac, Windows &amp; mobile (no Java)</a>.</p></section>
 <section class="trust">
   <p>This sudoku solver finds the same steps as HoDoKu 2.2.0 (we compare them step by step), so a hint is always a real technique, never a guess. It runs entirely in your browser and works offline once installed.</p>
 </section>`,
