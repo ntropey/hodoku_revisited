@@ -1,19 +1,14 @@
 /*
  * Hodoku Revisited. GPL-3.0-or-later; see LICENSE.
- * Cookie/ads consent for the marketing site (EU/UK GDPR + PECR).
+ * Cookie/ads consent for the marketing site (Google Consent Mode v2 + AdSense IAB TCF v2.2 CMP).
  *
- * The Google AdSense loader is NOT a static <script>. It is created and appended only after the
- * visitor accepts, so no request to pagead2.googlesyndication.com is made before consent. A banner
- * offers Accept and Reject (both equally reachable) and a privacy link; a "Cookie settings" button is
- * added to the footer so the choice can be changed or withdrawn at any time. The choice, with a
- * version, is kept in localStorage under `hodoku-consent` (a rejection is remembered as well, so the
- * banner is not shown again). All markup, CSS and JS are inlined into every generated page, so the
- * site keeps its "no extra assets" property. The app under /play/ is never touched.
- *
- * Caveat: for EEA/UK/Switzerland traffic, enable Google's built-in IAB TCF v2.2 CMP under
- * AdSense -> Privacy & messaging -> European regulations. This script initializes Google Consent Mode v2
- * (`ad_storage`, `ad_user_data`, `ad_personalization`, `analytics_storage`) and hooks `window.googlefc`
- * so the footer's "Cookie settings" button also triggers `googlefc.showRevocationMessage()` when active.
+ * Google's certified CMP (enabled in AdSense -> Privacy & messaging -> European regulations) prompts
+ * EEA/UK/Swiss visitors via `adsbygoogle.js`, while non-EEA visitors see ads without a redundant banner.
+ * Before `adsbygoogle.js` loads, this script sets Google Consent Mode v2 regional defaults (`denied` in
+ * EEA/UK/CH until consent is granted, `ads_data_redaction: true`). A "Cookie settings" button in the
+ * footer calls `googlefc.showRevocationMessage()` when Google's CMP is active, or opens a local
+ * Accept/Reject dialog stored under `hodoku-consent` in localStorage so any visitor can opt out at any
+ * time. The app under /play/ is never touched.
  */
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
@@ -55,8 +50,11 @@ function syncConsent(c){
  var s=c==='granted'?'granted':'denied';
  gtag('consent','update',{ad_storage:s,ad_user_data:s,ad_personalization:s,analytics_storage:'denied'});
 }
-var initState=choice==='granted'?'granted':'denied';
-gtag('consent','default',{ad_storage:initState,ad_user_data:initState,ad_personalization:initState,analytics_storage:'denied',wait_for_update:500});
+var EEA=['AT','BE','BG','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO','PL','PT','RO','SE','SI','SK','CH'];
+var eeaState=choice==='granted'?'granted':'denied';
+var rowState=choice==='denied'?'denied':'granted';
+gtag('consent','default',{ad_storage:eeaState,ad_user_data:eeaState,ad_personalization:eeaState,analytics_storage:'denied',region:EEA,wait_for_update:500});
+gtag('consent','default',{ad_storage:rowState,ad_user_data:rowState,ad_personalization:rowState,analytics_storage:'denied'});
 gtag('set','ads_data_redaction',true);
 function loadAd(){
  if(document.getElementById('hodoku-ad'))return;
@@ -101,8 +99,8 @@ function addSettings(){
  });
  f.appendChild(b);
 }
-function start(){addSettings();if(choice===null)openBanner()}
-if(choice==='granted')loadAd();
+function start(){addSettings()}
+if(choice!=='denied')loadAd();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();</script>`;
 }
