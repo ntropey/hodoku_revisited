@@ -402,7 +402,7 @@ export function buildCoachStages(
           ? `Whether the fish holds or a fin is true, the chains (${marks.chains.map((c) => chainNotation(c)).join('; ')}) prove the same elimination.`
           : hasFins
             ? `Either the fish places ${d0} in each of ${covers}, or one of the fins (${cellNames(finCells)}) is ${d0}. Any cell seeing both the cover units and all fins cannot be ${d0}.`
-            : `Because ${ step.baseEntities.length } base units must each get a ${d0}, they lock ${d0} into the ${step.coverEntities.length} cover units (${covers}).`,
+            : `Because ${step.baseEntities.length} base units must each get a ${d0}, they lock ${d0} into the ${step.coverEntities.length} cover units (${covers}).`,
         marks: stage3Marks,
       },
       {
@@ -561,6 +561,10 @@ interface ForcedMove {
   cell: number;
   digit: number;
   reason: string;
+  /** Which previous node (index in `placedNodes`, where 0 is the initial assumption) directly triggered this move */
+  parentIdx: number;
+  /** Optional intermediate eliminated candidate when a parent outside a Hidden Single's unit rules out a candidate inside that unit */
+  bridge?: StepMark;
 }
 
 interface Contradiction {
@@ -625,22 +629,105 @@ function findContradiction(board: Sudoku2, original: Sudoku2): Contradiction | n
 }
 
 /**
- * Filter a sequence of forced moves down to the causal chain that actually contributed to the contradiction,
- * walking backwards from `affectedCells` through peer relationships.
+ * Find the causal parent (and optional bridge candidate) for a candidate single `step` on `work`,
+ * given the list of nodes placed since our hypothesis `placed` (`placed[0]` is `{ cell, digit }`).
  */
-function pruneCausalMoves(moves: readonly ForcedMove[], rootCell: number, affectedCells: readonly number[]): ForcedMove[] {
-  const needed = new Set<number>(affectedCells);
-  const kept: ForcedMove[] = [];
-  for (let i = moves.length - 1; i >= 0; i--) {
-    const m = moves[i];
-    const seesNeeded = [...needed].some((c) => c === m.cell || tables.BUDDIES[m.cell].contains(c));
-    if (seesNeeded) {
-      kept.unshift(m);
-      needed.add(m.cell);
+function findParentLink(
+  step: SolutionStep,
+  work: Sudoku2,
+  original: Sudoku2,
+  placed: readonly { cell: number; digit: number }[],
+): { parentIdx: number; unitIdx: number; bridge?: StepMark } | null {
+  const sc = step.indices[0];
+  const sd = step.values[0];
+  if (step.type === 'FULL_HOUSE' || step.type === 'NAKED_SINGLE') {
+    for (let i = placed.length - 1; i >= 0; i--) {
+      const p = placed[i];
+      if (tables.BUDDIES[sc].contains(p.cell) && original.isCandidate(sc, p.digit)) {
+        const shared = sharedHouse([p.cell, sc]);
+        return { parentIdx: i, unitIdx: shared?.idx ?? -1 };
+      }
+    }
+    return null;
+  }
+  // HIDDEN_SINGLE: find the unit where `sc` is the sole remaining place for `sd`
+  const unitIdx = tables.ALL_UNITS.findIndex(
+    (u) => u.includes(sc) && u.filter((c) => work.values[c] === 0 && work.isCandidate(c, sd)).length === 1,
+  );
+  const unit = unitIdx >= 0 ? tables.ALL_UNITS[unitIdx] : [];
+  for (let i = placed.length - 1; i >= 0; i--) {
+    const p = placed[i];
+    // Direct peer inside the same unit (filled another spot that could hold `sd`)
+    if (unit.includes(p.cell) && original.isCandidate(p.cell, sd)) {
+      return { parentIdx: i, unitIdx };
+    }
+    // Or `p` placed `sd` outside `unit`, eliminating `sd` from a `bridgeCell` inside `unit`!
+    if (p.digit === sd) {
+      const bridgeCell = unit.find((uCell) => uCell !== sc && original.isCandidate(uCell, sd) && tables.BUDDIES[uCell].contains(p.cell));
+      if (bridgeCell !== undefined) {
+        return { parentIdx: i, unitIdx, bridge: { cell: bridgeCell, digit: sd, strong: false } };
+      }
     }
   }
-  // Keep at most 5 intermediate steps so the walkthrough stays crisp and readable
-  return kept.length <= 5 ? kept : [...kept.slice(0, 2), ...kept.slice(-3)];
+  return null;
+}
+
+/**
+ * Filter a sequence of forced moves down to the exact causal ancestor tree of the contradiction,
+ * walking backwards via parent pointers and peer relationships.
+ */
+function pruneCausalMoves(moves: readonly ForcedMove[], contradiction: Contradiction, original: Sudoku2): ForcedMove[] {
+  const keepIdx = new Set<number>();
+  if (contradiction.kind === 'empty-cell' && contradiction.cell !== undefined) {
+    const c = contradiction.cell;
+    moves.forEach((m, i) => {
+      if (tables.BUDDIES[c].contains(m.cell) && original.isCandidate(c, m.digit)) keepIdx.add(i);
+    });
+  } else if (contradiction.unitIdx !== undefined && contradiction.digit !== undefined) {
+    const unit = tables.ALL_UNITS[contradiction.unitIdx];
+    const d = contradiction.digit;
+    const origSpots = unit.filter((c) => original.values[c] === 0 && original.isCandidate(c, d));
+    moves.forEach((m, i) => {
+      if (origSpots.includes(m.cell) || (m.digit === d && origSpots.some((s) => tables.BUDDIES[s].contains(m.cell)))) {
+        keepIdx.add(i);
+      }
+    });
+  }
+  // Walk backwards through parent pointers (`m.parentIdx - 1` is index in `moves`; `0` is the root hypothesis)
+  for (let i = moves.length - 1; i >= 0; i--) {
+    if (!keepIdx.has(i)) continue;
+    const pMoveIdx = moves[i].parentIdx - 1;
+    if (pMoveIdx >= 0) keepIdx.add(pMoveIdx);
+  }
+  return moves.filter((_, i) => keepIdx.has(i));
+}
+
+/** Build peer-aligned chain segments (`StepMark[][]`) for a prefix of `causal` moves. */
+function buildCausalChains(
+  root: { cell: number; digit: number },
+  allMoves: readonly ForcedMove[],
+  causalPrefix: readonly ForcedMove[],
+): { keys: StepMark[]; chains: StepMark[][] } {
+  const placed = [root, ...allMoves.map((m) => ({ cell: m.cell, digit: m.digit }))];
+  const keys: StepMark[] = [{ cell: root.cell, digit: root.digit, strong: false }];
+  const chains: StepMark[][] = [];
+  for (const m of causalPrefix) {
+    const targetNode: StepMark = { cell: m.cell, digit: m.digit, strong: true };
+    if (m.parentIdx < 0) {
+      keys.push(targetNode);
+      continue;
+    }
+    const parent = placed[m.parentIdx] ?? root;
+    const parentNode: StepMark = { cell: parent.cell, digit: parent.digit, strong: false };
+    if (m.bridge) {
+      keys.push(m.bridge, targetNode);
+      chains.push([parentNode, m.bridge, targetNode]);
+    } else {
+      keys.push(targetNode);
+      chains.push([parentNode, targetNode]);
+    }
+  }
+  return { keys, chains };
 }
 
 /**
@@ -687,33 +774,57 @@ export function proveCandidate(values: readonly number[], cands: readonly number
   const finder = new SudokuStepFinder();
   const solver = new SudokuSolver();
   const moves: ForcedMove[] = [];
+  const placedNodes: { cell: number; digit: number }[] = [{ cell, digit }];
   let contradiction = findContradiction(work, baseBoard);
 
   for (let iter = 0; iter < 81 && !contradiction; iter++) {
-    const nextSingle =
-      finder.findAllFullHouses(work)[0] ?? finder.findAllNakedSingles(work)[0] ?? finder.findAllHiddenSingles(work)[0];
-    if (!nextSingle) break;
-    const sc = nextSingle.indices[0];
-    const sd = nextSingle.values[0];
-    let reason = 'only candidate left in the cell';
-    if (nextSingle.type === 'FULL_HOUSE' || nextSingle.type === 'HIDDEN_SINGLE') {
-      const unit = tables.ALL_UNITS.findIndex((u) => u.includes(sc) && u.filter((c) => work.values[c] === 0 && work.isCandidate(c, sd)).length === 1);
-      reason = unit >= 0 ? `only place left for ${sd} in ${unitIdxName(unit)}` : `only place left for ${sd}`;
+    const candidates = [
+      ...finder.findAllFullHouses(work),
+      ...finder.findAllNakedSingles(work),
+      ...finder.findAllHiddenSingles(work),
+    ];
+    if (candidates.length === 0) break;
+
+    // Prefer a single that is causally connected to our assumption tree `placedNodes`
+    let picked: SolutionStep = candidates[0];
+    let link = findParentLink(picked, work, baseBoard, placedNodes);
+    if (!link) {
+      for (const cand of candidates) {
+        const l = findParentLink(cand, work, baseBoard, placedNodes);
+        if (l) {
+          picked = cand;
+          link = l;
+          break;
+        }
+      }
     }
-    solver.doStep(work, nextSingle);
-    moves.push({ cell: sc, digit: sd, reason });
+
+    const sc = picked.indices[0];
+    const sd = picked.values[0];
+    const unitIdx = link?.unitIdx ?? -1;
+    let reason = 'only candidate left in the cell';
+    if (picked.type === 'FULL_HOUSE' || picked.type === 'HIDDEN_SINGLE') {
+      const u =
+        unitIdx >= 0
+          ? unitIdx
+          : tables.ALL_UNITS.findIndex((unit) => unit.includes(sc) && unit.filter((c) => work.values[c] === 0 && work.isCandidate(c, sd)).length === 1);
+      reason = u >= 0 ? `only place left for ${sd} in ${unitIdxName(u)}` : `only place left for ${sd}`;
+    }
+    solver.doStep(work, picked);
+    moves.push({
+      cell: sc,
+      digit: sd,
+      reason,
+      parentIdx: link ? link.parentIdx : -1,
+      bridge: link?.bridge,
+    });
+    placedNodes.push({ cell: sc, digit: sd });
     contradiction = findContradiction(work, baseBoard);
   }
 
   if (contradiction) {
-    const affected =
-      contradiction.kind === 'empty-cell' && contradiction.cell !== undefined
-        ? [contradiction.cell]
-        : contradiction.unitIdx !== undefined
-          ? [...tables.ALL_UNITS[contradiction.unitIdx]]
-          : [cell];
-    const causal = pruneCausalMoves(moves, cell, affected);
-    const chainNodes: StepMark[] = [{ cell, digit, strong: false }, ...causal.map((m) => ({ cell: m.cell, digit: m.digit, strong: true }))];
+    const causal = pruneCausalMoves(moves, contradiction, baseBoard);
+    const root = { cell, digit };
 
     const stages: CoachStage[] = [
       {
@@ -728,26 +839,49 @@ export function proveCandidate(values: readonly number[], cands: readonly number
     ];
 
     causal.forEach((m, idx) => {
-      const prefix = chainNodes.slice(0, idx + 2);
+      const prefix = causal.slice(0, idx + 1);
+      const { keys, chains } = buildCausalChains(root, moves, prefix);
+      const parent = m.parentIdx >= 0 ? placedNodes[m.parentIdx] : null;
+      const via = m.bridge ? ` (eliminating ${m.bridge.digit} in ${cellName(m.bridge.cell)})` : '';
       stages.push({
         label: `Forced move ${idx + 1}`,
-        text: `That forces ${m.digit} into ${cellName(m.cell)} (${m.reason}).`,
+        text: parent
+          ? `With ${parent.digit} in ${cellName(parent.cell)}${via}, ${cellName(m.cell)} must be ${m.digit} (${m.reason}).`
+          : `In parallel, ${cellName(m.cell)} must be ${m.digit} (${m.reason}).`,
         marks: {
           ...emptyMarks([digit, m.digit]),
-          key: prefix,
-          chains: [prefix],
+          key: keys,
+          chains,
           tint: [{ cells: [m.cell], tone: 'a' }],
         },
       });
     });
+
+    const { keys: allKeys, chains: allChains } = buildCausalChains(root, moves, causal);
+    // Also connect the final blocking move(s) to the contradiction's eliminated candidates inside the shared house
+    const finalChains = [...allChains];
+    for (const elimMark of contradiction.marks.elim) {
+      const blocker = [...causal].reverse().find((m) => m.digit === elimMark.digit && tables.BUDDIES[m.cell].contains(elimMark.cell));
+      if (blocker) {
+        finalChains.push([
+          { cell: blocker.cell, digit: blocker.digit, strong: true },
+          { cell: elimMark.cell, digit: elimMark.digit, strong: false },
+        ]);
+      } else if (tables.BUDDIES[cell].contains(elimMark.cell) && (elimMark.digit === digit || elimMark.cell === contradiction.cell)) {
+        finalChains.push([
+          { cell, digit, strong: false },
+          { cell: elimMark.cell, digit: elimMark.digit, strong: false },
+        ]);
+      }
+    }
 
     stages.push({
       label: 'Contradiction',
       text: `Contradiction! ${contradiction.text}. Therefore, ${cname} cannot be ${digit}.`,
       marks: {
         ...contradiction.marks,
-        key: [...chainNodes, ...contradiction.marks.key],
-        chains: chainNodes.length > 1 ? [chainNodes] : [],
+        key: [...allKeys, ...contradiction.marks.key],
+        chains: finalChains,
       },
     });
 
@@ -790,7 +924,7 @@ export function proveCandidate(values: readonly number[], cands: readonly number
   }
 
   // 4. `digit` in `cell` has 0 solutions, even though singles alone didn't finish the refutation:
-  // Run the full solver on `baseBoard` to see if the next logical step or a deeper contradiction refutes it.
+  // Run the full solver on `work` to see if deeper deductions expose a contradiction.
   const fullWork = work.clone();
   solver.setSudoku(fullWork);
   const configs = defaultSolverSteps();
@@ -800,7 +934,7 @@ export function proveCandidate(values: readonly number[], cands: readonly number
     solver.doStep(fullWork, step);
     for (const idx of step.indices) {
       if (fullWork.values[idx] !== 0) {
-        moves.push({ cell: idx, digit: fullWork.values[idx], reason: `by ${step.type}` });
+        moves.push({ cell: idx, digit: fullWork.values[idx], reason: `by ${step.type}`, parentIdx: 0 });
       }
     }
     contradiction = findContradiction(fullWork, baseBoard);

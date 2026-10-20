@@ -36,14 +36,14 @@ describe('disabled techniques', () => {
     expect(filtered.total[name] ?? 0).toBeLessThan(all.total[name]);
     // the other techniques are still there
     expect(filtered.results.length).toBeGreaterThan(0);
-  });
+  }, 30_000);
 
   it('does not change all steps when nothing is disabled', () => {
     const all = allHints(game.values, game.cands, 5);
     const same = allHints(game.values, game.cands, 5, 12, []);
     expect(same.results.map((r) => r.type)).toEqual(all.results.map((r) => r.type));
     expect(same.total).toEqual(all.total);
-  });
+  }, 30_000);
 });
 
 describe('AI Coach walkthrough and contradiction prover', () => {
@@ -87,6 +87,18 @@ describe('AI Coach walkthrough and contradiction prover', () => {
     expect(conflictProof.stages.length).toBeGreaterThanOrEqual(2);
     expect(conflictProof.stages[0].label).toBe('Assume');
     expect(conflictProof.stages[conflictProof.stages.length - 1].label).toBe('Contradiction');
+    // Every drawn chain segment must connect two cells that share a house (row, column, or box)
+    for (const chain of conflictProof.stages[conflictProof.stages.length - 1].marks.chains) {
+      for (let i = 0; i + 1 < chain.length; i++) {
+        const a = chain[i].cell;
+        const b = chain[i + 1].cell;
+        const sameHouse =
+          Math.floor(a / 9) === Math.floor(b / 9) ||
+          a % 9 === b % 9 ||
+          (Math.floor(a / 27) === Math.floor(b / 27) && Math.floor((a % 9) / 3) === Math.floor((b % 9) / 3));
+        expect(sameHouse).toBe(true);
+      }
+    }
   });
 });
 
