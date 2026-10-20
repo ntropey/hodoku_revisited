@@ -32,6 +32,8 @@ export interface GameState {
   solution: number[];
   level: number;
   score: number;
+  /** YYYY-MM-DD date string when playing a Daily Puzzle */
+  daily?: string;
   /** techniques of the solve path (missing in games saved by older versions) */
   path?: PathEntry[];
   /** hints applied (missing in older saves) */
@@ -59,6 +61,7 @@ export function newGame(info: PuzzleInfo): GameState {
     solution: info.solution,
     level: info.level,
     score: info.score,
+    daily: info.daily,
     path: info.path,
     past: [],
     future: [],

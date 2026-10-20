@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Sudoku2, SOLUTION_TYPE_INFO, parseSudoku, seededRng, type SolutionType } from '@hodoku/core';
 import { isSolved, newGame, removeCands, setValue } from '../src/game';
-import { allHints, analyze, book, format, hint, path, prove, train } from '../src/solverApi';
+import { allHints, analyze, book, daily, format, hint, path, prove, train } from '../src/solverApi';
 
 // Rater and hint are deterministic, so the same board always yields the same first technique.
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -198,5 +198,17 @@ describe('book', () => {
       expect(p.values).not.toEqual(givens);
       expect(p.values.some((v) => v === 0)).toBe(true);
     }
+  });
+});
+
+describe('daily', () => {
+  it('returns the exact same puzzle for the same date and level, and a different one for another date', () => {
+    const a = daily('2026-10-20', 2);
+    const b = daily('2026-10-20', 2);
+    const c = daily('2026-10-21', 2);
+    expect(a.daily).toBe('2026-10-20');
+    expect(a.puzzle).toBe(b.puzzle);
+    expect(a.solution).toEqual(b.solution);
+    expect(a.puzzle).not.toBe(c.puzzle);
   });
 });

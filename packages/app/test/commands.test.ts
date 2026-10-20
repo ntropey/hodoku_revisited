@@ -31,6 +31,7 @@ function context(over: Partial<CommandContext> = {}): { ctx: CommandContext; cal
     setMode: (m) => void calls.push(`mode:${m}`),
     clearFilter: note('clearFilter'),
     startNew: (l) => void calls.push(`new:${l}`),
+    startDaily: note('daily'),
     openTraining: note('training'),
     askHint: note('hint'),
     askCoach: note('coach'),
@@ -92,13 +93,14 @@ describe('command list', () => {
   it('runs what it says', () => {
     const { ctx, calls } = context();
     const cmds = buildCommands(ctx);
+    byLabel(cmds, 'Daily puzzle (today)').run();
     byLabel(cmds, 'New puzzle: Hard').run();
     byLabel(cmds, 'Copy library line').run();
     byLabel(cmds, 'Save puzzle: candidates').run();
     byLabel(cmds, 'Notes mode').run();
     byLabel(cmds, 'Practicing mode…').run();
     byLabel(cmds, 'Coach me (step-by-step hint)').run();
-    expect(calls).toEqual(['new:3', 'copy:library', 'save:pm', 'mode:notes', 'training', 'coach']);
+    expect(calls).toEqual(['daily', 'new:3', 'copy:library', 'save:pm', 'mode:notes', 'training', 'coach']);
   });
 
   it('toggles settings and names the state it will switch to', () => {

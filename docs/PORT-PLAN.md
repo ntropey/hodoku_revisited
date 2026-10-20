@@ -214,18 +214,24 @@ AI Coach (`aiCoach.ts`): every hint includes a 4-stage Socratic walkthrough (*Wh
 *The logic*, *Conclusion*) whose `StepMarks` progressively reveal the deduction on the board; *Coach me*
 starts at Stage 1 without spoiling the answer. Selecting a cell also offers a *Why not?* contradiction
 prover (`prove` worker request) that places a candidate, propagates forced moves, prunes to the minimal
-causal chain, and steps through the resulting contradiction on the board.
+causal chain, and steps through the resulting contradiction on the board. Both contradiction proofs and
+walkthroughs have 1-click share links (`?p=...&prove=rXcY.D` and `?p=...&coach=1`) that open directly into
+that proof or walkthrough on start.
+
+Daily puzzle (`daily` worker request): a date-seeded daily challenge (`?daily=1` or `?daily=YYYY-MM-DD`)
+picks and transforms a deterministic bank puzzle for the UTC date so every player gets the same board,
+with a *Share result* button in the completion dialog.
 
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
 tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense (loaded only after consent,
 see below) and `ads.txt` are on the site pages, not in the app; the privacy page discloses advertising.
 
-Consent banner (EU/UK): a dependency-free banner (`src/consent.mjs`) is in place. It asks on the
-first visit, remembers accept or reject in localStorage (`hodoku-consent`), and loads the AdSense
-script only after accept, so nothing is requested before consent. A "Cookie settings" button in the
-footer clears the choice and asks again. It is not a Google-certified CMP: AdSense still expects a
-certified consent management platform for its EU/UK consent requirements. The custom domain is done
-(`CNAME` is written by the site build).
+Consent banner (EU/UK): a dependency-free banner (`src/consent.mjs`) is in place. It initializes Google
+Consent Mode v2 (`ad_storage`, `ad_user_data`, `ad_personalization`, `analytics_storage` defaulting to
+denied), asks on the first visit, remembers accept or reject in localStorage (`hodoku-consent`), and loads
+the AdSense script only after accept, so nothing is requested before consent. A "Cookie settings" button in
+the footer clears the choice and asks again (or calls `googlefc.showRevocationMessage()` when Google's
+certified IAB TCF v2.2 CMP is enabled in AdSense). The custom domain is done (`CNAME` is written by the site build).
 
 ## Business notes (GPL)
 

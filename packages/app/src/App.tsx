@@ -56,7 +56,7 @@ import {
 } from './game';
 import { useCollections } from './hooks/useCollections';
 import { useHotkeys } from './hooks/useHotkeys';
-import { useNewGame } from './hooks/useNewGame';
+import { useNewGame, type AutoAction } from './hooks/useNewGame';
 import { usePrinting } from './hooks/usePrinting';
 import { usePuzzleText } from './hooks/usePuzzleText';
 import { useSolverPanel } from './hooks/useSolverPanel';
@@ -149,9 +149,10 @@ export function App() {
   );
 
   const startGame = useCallback(
-    (g: GameState) => {
+    (g: GameState, auto: AutoAction | null = null) => {
+      pendingAutoRef.current = auto;
       setGame(g);
-      setSelected(null);
+      setSelected(auto?.kind === 'prove' ? auto.cell : null);
       setFilterDigit(0);
       clearPanel();
       resetTimer(g.givens);
@@ -160,7 +161,17 @@ export function App() {
     [clearPanel, resetTimer, collections.recordStart],
   );
 
-  const { startNew, startFromText } = useNewGame({ solver, settingsRef, setSettings, setBusy, setMessage, startGame, hasGame: !!game });
+  const pendingAutoRef = useRef<AutoAction | null>(null);
+  const { startNew, startDaily, startFromText } = useNewGame({ solver, settingsRef, setSettings, setBusy, setMessage, startGame, hasGame: !!game });
+
+  // Run an automatic AI Coach action requested by a shared URL (?prove=rXcY.D or ?coach=1) once the game is loaded.
+  useEffect(() => {
+    if (!game || !pendingAutoRef.current) return;
+    const action = pendingAutoRef.current;
+    pendingAutoRef.current = null;
+    if (action.kind === 'prove') void panel.askProof(action.cell, action.digit);
+    else if (action.kind === 'coach') void panel.askHint(true);
+  }, [game, panel]);
 
   const input = useCallback(
     (d: number) => {
@@ -390,7 +401,7 @@ export function App() {
   return (
     <div className="shell">
       <TopBar
-        badge={game ? { level: game.level, score: game.score } : null}
+        badge={game ? { level: game.level, score: game.score, daily: game.daily } : null}
         filled={filled}
         seconds={seconds}
         busy={!!busy}
@@ -400,6 +411,7 @@ export function App() {
         onMode={(m) => setSettings((s) => ({ ...s, gameMode: m }))}
         onTraining={() => setTrainingOpen(true)}
         onNew={(l) => void startNew(l)}
+        onDaily={() => void startDaily()}
         onCancel={() => (solver.current.cancel(), setBusy(null))}
         onImport={() => (setImportError(null), setImporting(true))}
         onPuzzles={() => setPuzzlesOpen(true)}
@@ -526,6 +538,8 @@ export function App() {
       )}
       {solvedOpen && game && (
         <SolvedDialog
+          givens={game.givens}
+          daily={game.daily}
           seconds={seconds}
           level={game.level}
           score={game.score}
@@ -557,6 +571,7 @@ export function App() {
             setMode,
             clearFilter: () => setFilterDigit(0),
             startNew: (l) => void startNew(l),
+            startDaily: () => void startDaily(),
             openTraining: () => setTrainingOpen(true),
             askHint: () => void panel.askHint(false),
             askCoach: () => void panel.askHint(true),

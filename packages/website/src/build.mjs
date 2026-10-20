@@ -188,14 +188,47 @@ add(
     jsonld: siteUrl
       ? {
           '@context': 'https://schema.org',
-          '@type': 'WebApplication',
-          name: 'Hodoku Revisited',
-          alternateName: 'Hodoku Revisited sudoku solver',
-          url: siteUrl,
-          applicationCategory: 'GameApplication',
-          operatingSystem: 'Any (web browser)',
-          description: 'Free sudoku solver and trainer with AI Coach step-by-step logical hints, contradiction proofs, difficulty rating and technique guides.',
-          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+          '@graph': [
+            {
+              '@type': 'WebApplication',
+              name: 'Hodoku Revisited',
+              alternateName: 'Hodoku Revisited sudoku solver',
+              url: siteUrl,
+              applicationCategory: 'GameApplication',
+              operatingSystem: 'Any (web browser)',
+              description:
+                'Free sudoku solver and trainer with AI Coach step-by-step logical hints, contradiction proofs, daily puzzles, difficulty rating and technique guides.',
+              featureList: [
+                'AI Coach four-stage Socratic hints',
+                'Why not? candidate contradiction prover',
+                'Daily sudoku puzzle with shareable results',
+                'HoDoKu 2.2.0 exact logical step engine (90+ techniques)',
+                'Offline-ready progressive web app',
+              ],
+              offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            },
+            {
+              '@type': 'FAQPage',
+              mainEntity: [
+                {
+                  '@type': 'Question',
+                  name: 'How does the AI Sudoku Coach explain steps without spoiling the answer?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Click Coach me to walk through the next logical deduction in four Socratic stages: Where to look, The pattern, The logic, and Conclusion.',
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'How can I check why a candidate cannot go in a specific sudoku cell?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Select any cell and click Why not D? in the AI Coach panel. The solver places that candidate, propagates forced singles, and highlights the exact house or cell where a contradiction occurs.',
+                  },
+                },
+              ],
+            },
+          ],
         }
       : undefined,
     body: `<section class="hero">
@@ -203,8 +236,8 @@ add(
     <p class="eyebrow">The HoDoKu sudoku solver, now with AI Super Solver &amp; Coach</p>
     <h1>Every sudoku step,<br>explained.</h1>
     <p class="lead">A free sudoku solver and trainer: the hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript with an interactive AI Coach. No Java and no install. Get progressive nudges, step through every deduction on the board, or ask why any candidate fails.</p>
-    <p><a class="btn" href="play/">Open the solver</a> <a class="btn alt" href="techniques/">Browse techniques</a></p>
-    <p class="gen"><span>Generate:</span> ${['Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'].map((l, i) => `<a class="chip" href="play/?level=${i + 1}">${l}</a>`).join(' ')}</p>
+    <p><a class="btn" href="play/">Open the solver</a> <a class="btn alt" href="play/?daily=1">Daily puzzle</a> <a class="btn alt" href="techniques/">Browse techniques</a></p>
+    <p class="gen"><span>Generate:</span> <a class="chip" href="play/?daily=1"><strong>Daily</strong></a> ${['Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'].map((l, i) => `<a class="chip" href="play/?level=${i + 1}">${l}</a>`).join(' ')}</p>
   </div>
   ${homeEx ? `<figure class="example hero-board">${diagram(homeEx)}<figcaption><span class="mono">${esc(homeEx.name)}</span> · ${esc(caption(homeEx).replace(/^[^:]*: /, ''))}</figcaption></figure>` : ''}
 </section>
@@ -218,7 +251,7 @@ add(
       <p>“Suppose we place 4 in r1c9. That forces 5 into r1c8 and 6 into r2c9… leaving Row 8 with no valid cell where digit 3 can go. Therefore, r1c9 cannot be 4.”</p>
     </div>
     <p>Prefer not to spoil a hint? Click <strong>Coach me</strong> for progressive four-stage Socratic nudges—starting with <em>where to look</em> before revealing the pattern or the move.</p>
-    <p><a class="btn" href="play/?p=${coachPuzzle}">Try the AI Coach on this board →</a></p>
+    <p><a class="btn" href="play/?p=${coachPuzzle}&amp;prove=r1c9.4">Try the AI Coach on this board →</a></p>
   </div>
   <figure class="example hero-board">
     ${diagram(coachEx)}
@@ -247,6 +280,25 @@ add(
     root: '../',
     path: 'techniques/',
     wide: true,
+    jsonld: siteUrl
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Sudoku solving techniques explained',
+          url: `${siteUrl}techniques/`,
+          description: 'Guides to the 32 sudoku solving techniques used by Hodoku Revisited.',
+          mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: ORDERED.length,
+            itemListElement: ORDERED.map((t, idx) => ({
+              '@type': 'ListItem',
+              position: idx + 1,
+              name: t.name,
+              url: `${siteUrl}techniques/${t.slug}.html`,
+            })),
+          },
+        }
+      : undefined,
     body: `<div class="with-rail">
 ${rail('../', null)}
 <div class="content">
@@ -277,6 +329,29 @@ ORDERED.forEach((t, i) => {
       root: '../',
       path: `techniques/${t.slug}.html`,
       wide: true,
+      jsonld: siteUrl
+        ? {
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'TechArticle',
+                headline: `${t.name}: sudoku solving technique`,
+                description: t.summary,
+                proficiencyLevel: t.level,
+                url: `${siteUrl}techniques/${t.slug}.html`,
+                author: { '@type': 'Organization', name: 'Hodoku Revisited', url: siteUrl },
+              },
+              {
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+                  { '@type': 'ListItem', position: 2, name: 'Techniques', item: `${siteUrl}techniques/` },
+                  { '@type': 'ListItem', position: 3, name: t.name, item: `${siteUrl}techniques/${t.slug}.html` },
+                ],
+              },
+            ],
+          }
+        : undefined,
       body: `<div class="with-rail">
 ${rail('../', t)}
 <article class="content guide">
@@ -341,6 +416,28 @@ LEARN.forEach((c, i) => {
       root: '../',
       path: `learn/${c.slug}.html`,
       wide: true,
+      jsonld: siteUrl
+        ? {
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'Article',
+                headline: c.title,
+                description: c.summary,
+                url: `${siteUrl}learn/${c.slug}.html`,
+                author: { '@type': 'Organization', name: 'Hodoku Revisited', url: siteUrl },
+              },
+              {
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+                  { '@type': 'ListItem', position: 2, name: 'Learn', item: `${siteUrl}learn/` },
+                  { '@type': 'ListItem', position: 3, name: c.title, item: `${siteUrl}learn/${c.slug}.html` },
+                ],
+              },
+            ],
+          }
+        : undefined,
       body: `<div class="with-rail">${learnRail(c)}<article class="content guide"><p class="crumbs"><a href="./">Learn</a></p><h1>${esc(c.title)}</h1><p class="lead">${esc(c.summary)}</p><div class="prose">${c.body(TECHNIQUES)}</div>
 <nav class="pager">${prev ? `<a href="${prev.slug}.html"><small>Previous</small>← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a href="${next.slug}.html"><small>Next</small>${esc(next.title)} →</a>` : '<span></span>'}</nav></article></div>`,
     }),
@@ -410,7 +507,7 @@ add(
     body: `<h1>Privacy</h1>
 <p>The app runs entirely in your browser. Puzzles are generated and solved on your device. Your current game and settings are saved in your browser's local storage so you can continue later; they are never sent to a server.</p>
 <h2>Advertising</h2>
-<p>This site shows ads served by Google AdSense. On your first visit a consent banner asks whether you accept these ads. The advertising script, and the cookies Google and its partners use to select and measure ads (including personalised ads), load only after you accept; if you reject, no advertising script is loaded and no ads are shown. Your choice, with a version, is stored in your browser's local storage under <code>hodoku-consent</code> and is never sent to a server. You can change or withdraw it at any time with the "Cookie settings" button in the footer, which reopens the banner.</p>
+<p>This site shows ads served by Google AdSense. For visitors in the EEA, the UK and Switzerland, Google Consent Mode v2 (<code>ad_storage</code>, <code>ad_user_data</code>, <code>ad_personalization</code> and <code>analytics_storage</code>) defaults to denied and Google's certified IAB TCF v2.2 consent banner asks whether you accept cookies and personalized ads. Any visitor can also review, change or withdraw consent at any time with the "Cookie settings" button in the footer, which opens Google's consent manager (or stores your local preference under <code>hodoku-consent</code> in your browser's local storage, so rejecting disables the advertising script).</p>
 <p>You can also manage or turn off personalized ads in <a href="https://adssettings.google.com/">Google's ad settings</a>, and learn how Google uses data at <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>.</p>
 <p>The solver app under <a href="play/">/play/</a> does not load ads or any third-party scripts and shows no consent banner. Your games and settings stay in your browser.</p>
 <p>This site has no accounts and uses no analytics of its own.</p>

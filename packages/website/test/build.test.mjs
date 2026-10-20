@@ -49,6 +49,9 @@ test('the consent script gates AdSense, remembers accept/reject, and can be reop
   assert.match(html, /localStorage/, 'stores the choice in localStorage');
   assert.match(html, /'granted'/, 'accept is stored');
   assert.match(html, /'denied'/, 'reject is stored too (no re-prompt)');
+  assert.match(html, /ad_user_data/, 'Google Consent Mode v2 parameters are initialized and updated');
+  assert.match(html, /ad_personalization/, 'Google Consent Mode v2 ad_personalization signal');
+  assert.match(html, /googlefc/, 'hooks Google Funding Choices / AdSense CMP');
   assert.match(html, /Cookie settings/, 'footer control to withdraw consent');
   // The AdSense URL is built into a script element at runtime, never a static tag.
   assert.ok(!/<script[^>]*src="https:\/\/pagead2\.googlesyndication\.com/.test(html));
@@ -102,11 +105,16 @@ test('manual chapters exist and every guide has an Open in app link with a valid
   const home = readFileSync(new URL('index.html', dist), 'utf8');
   assert.match(home, /AI Super Solver/);
   assert.match(home, /AI Coach/);
+  assert.match(home, /play\/\?daily=1/);
+  assert.match(home, /prove=r1c9\.4/);
+  assert.match(home, /"FAQPage"/);
   const hintsManual = readFileSync(new URL('manual/hints.html', dist), 'utf8');
   assert.match(hintsManual, /AI Coach walkthrough/);
   assert.match(hintsManual, /contradiction prover/);
   const guide = readFileSync(new URL('techniques/x-wing.html', dist), 'utf8');
   assert.match(guide, /play\/\?p=[.0-9]{81}"/);
+  assert.match(guide, /"TechArticle"/);
+  assert.match(guide, /"BreadcrumbList"/);
   assert.ok(readdirSync(new URL('fonts/', dist)).length >= 7);
 });
 

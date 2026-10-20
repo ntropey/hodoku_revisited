@@ -44,6 +44,7 @@ export const MANUAL = [
 <p>Anything with fewer or more than 81 cells is rejected with a message. The puzzle also has to have exactly one solution; if it has none or several, the app says so and does not load it.</p>
 <h2>Sharing a puzzle</h2>
 <p><em>Copy</em> offers four formats: the 81-character line of the <em>givens</em>, the <em>puzzle with candidates</em> (a candidate/PM grid), a HoDoKu <em>library line</em>, and a <em>formatted grid</em>. <em>Save</em> writes the same four formats to a file, which the browser downloads. Paste the givens anywhere, or into <em>Import</em> on another device. A link of the form <code>/play/?p=&lt;81 characters&gt;</code> opens that puzzle directly. The technique guides use this for their <em>Open in app</em> buttons.</p>
+<p><em>New puzzle → Daily puzzle (today)</em> opens a date-seeded daily challenge (<code>/play/?daily=1</code>) where every player gets the same board for that UTC date. When you solve a puzzle, the completion dialog offers <em>Share result</em> to copy your time, hints used and a direct link.</p>
 <h2>Printing</h2>
 <p><em>Print</em> prints the board with the givens only, without candidates or the side panel; <em>Print solution</em> prints the board and the solved grid after it. <em>Export PNG</em> saves the board as a <code>.png</code> image file.</p>
 <p><em>Extended print</em> builds a book of puzzles. Add up to five sections; for each, choose how many puzzles (0 to 30), the level, the mode (Playing, Learning or Practicing) and whether to print the candidates. A Learning section uses the techniques from the Training dialog. Then pick a layout: one, two or four puzzles per page, portrait or landscape. <em>Print the rating</em> writes the level and score under each puzzle. <em>Booklet</em> is offered for the landscape layouts only; it imposes the pages so that printing them double-sided and folding in the middle makes a booklet.</p>`,
@@ -111,7 +112,7 @@ export const MANUAL = [
 <li><strong>Conclusion:</strong> Shows the final placement or struck-through candidate eliminations.</li>
 </ol>
 <h2>“Why not?” contradiction prover</h2>
-<p>Select any empty cell on the board and look at the <em>AI Coach · Ask about rXcY</em> bar in the Hint tab. Click <em>Why not D?</em> for any candidate to test placing that digit in the cell. If the digit is wrong, the AI Coach traces the forced singles that ripple from it until a cell is left with no candidates or a house has nowhere left for a digit, and lets you step through the causal chain on the board.</p>
+<p>Select any empty cell on the board and look at the <em>AI Coach · Ask about rXcY</em> bar in the Hint tab. Click <em>Why not D?</em> for any candidate to test placing that digit in the cell. If the digit is wrong, the AI Coach traces the forced singles that ripple from it until a cell is left with no candidates or a house has nowhere left for a digit, and lets you step through the causal chain on the board. Choose <em>Share proof</em> (or <em>Share step</em> on a hint walkthrough) to copy a direct link that opens that exact board state and proof in the app.</p>
 <h2>Reading a hint</h2>
 <ul>
 <li>The <strong>name</strong> and a one-line explanation of the technique, with a link to its guide.</li>

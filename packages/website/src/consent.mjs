@@ -1,17 +1,14 @@
 /*
  * Hodoku Revisited. GPL-3.0-or-later; see LICENSE.
- * Cookie/ads consent for the marketing site (EU/UK GDPR + PECR).
+ * Cookie/ads consent for the marketing site (Google Consent Mode v2 + AdSense IAB TCF v2.2 CMP).
  *
- * The Google AdSense loader is NOT a static <script>. It is created and appended only after the
- * visitor accepts, so no request to pagead2.googlesyndication.com is made before consent. A banner
- * offers Accept and Reject (both equally reachable) and a privacy link; a "Cookie settings" button is
- * added to the footer so the choice can be changed or withdrawn at any time. The choice, with a
- * version, is kept in localStorage under `hodoku-consent` (a rejection is remembered as well, so the
- * banner is not shown again). All markup, CSS and JS are inlined into every generated page, so the
- * site keeps its "no extra assets" property. The app under /play/ is never touched.
- *
- * Caveat: this is a hand-rolled banner, NOT a Google-certified CMP. AdSense still expects a certified
- * consent management platform for its EU/UK consent requirements.
+ * Google's certified CMP (enabled in AdSense -> Privacy & messaging -> European regulations) prompts
+ * EEA/UK/Swiss visitors via `adsbygoogle.js`, while non-EEA visitors see ads without a redundant banner.
+ * Before `adsbygoogle.js` loads, this script sets Google Consent Mode v2 regional defaults (`denied` in
+ * EEA/UK/CH until consent is granted, `ads_data_redaction: true`). A "Cookie settings" button in the
+ * footer calls `googlefc.showRevocationMessage()` when Google's CMP is active, or opens a local
+ * Accept/Reject dialog stored under `hodoku-consent` in localStorage so any visitor can opt out at any
+ * time. The app under /play/ is never touched.
  */
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
@@ -44,6 +41,21 @@ function consentScript(root) {
   return `<script>(function(){
 var K='${CONSENT_KEY}',V=${CONSENT_VERSION},C='${ADSENSE_CLIENT}',choice=null;
 try{var raw=localStorage.getItem(K);if(raw){var o=JSON.parse(raw);if(o&&o.v===V&&(o.choice==='granted'||o.choice==='denied')){choice=o.choice}}}catch(e){}
+window.dataLayer=window.dataLayer||[];
+function gtag(){window.dataLayer.push(arguments)}
+window.gtag=window.gtag||gtag;
+window.googlefc=window.googlefc||{};
+window.googlefc.callbackQueue=window.googlefc.callbackQueue||[];
+function syncConsent(c){
+ var s=c==='granted'?'granted':'denied';
+ gtag('consent','update',{ad_storage:s,ad_user_data:s,ad_personalization:s,analytics_storage:'denied'});
+}
+var EEA=['AT','BE','BG','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MT','NL','NO','PL','PT','RO','SE','SI','SK','CH'];
+var eeaState=choice==='granted'?'granted':'denied';
+var rowState=choice==='denied'?'denied':'granted';
+gtag('consent','default',{ad_storage:eeaState,ad_user_data:eeaState,ad_personalization:eeaState,analytics_storage:'denied',region:EEA,wait_for_update:500});
+gtag('consent','default',{ad_storage:rowState,ad_user_data:rowState,ad_personalization:rowState,analytics_storage:'denied'});
+gtag('set','ads_data_redaction',true);
 function loadAd(){
  if(document.getElementById('hodoku-ad'))return;
  var s=document.createElement('script');
@@ -63,11 +75,12 @@ function openBanner(){
  if(document.getElementById('hodoku-consent'))return;
  addStyle();
  var box=document.createElement('div');
- box.innerHTML='<div id="hodoku-consent" role="dialog" aria-modal="true" aria-label="Cookie and advertising consent" tabindex="-1"><div class="hc-box"><p><strong>Cookies.</strong> This site uses Google AdSense. With your consent, Google and its partners may use cookies to show ads, including personalised ads. You can accept or reject, and change your mind at any time with the Cookie settings button in the footer. Read the <a href="${root}privacy.html">privacy policy</a>.</p><div class="hc-actions"><button type="button" class="hc-reject">Reject</button><button type="button" class="hc-accept">Accept</button></div></div></div>';
+ box.innerHTML='<div id="hodoku-consent" role="dialog" aria-modal="true" aria-label="Cookie and advertising consent" tabindex="-1"><div class="hc-box"><p><strong>Cookies.</strong> This site uses Google AdSense. With your consent, Google and its partners may use cookies to show ads, including personalized ads. You can accept or reject, and change your mind at any time with the Cookie settings button in the footer. Read the <a href="${root}privacy.html">privacy policy</a>.</p><div class="hc-actions"><button type="button" class="hc-reject">Reject</button><button type="button" class="hc-accept">Accept</button></div></div></div>';
  var d=box.firstChild;
  document.body.appendChild(d);
  function close(c){
   remember(c);
+  syncConsent(c);
   if(d.parentNode)d.parentNode.removeChild(d);
   var b=settingsButton();if(b&&b.focus)b.focus();
  }
@@ -80,11 +93,14 @@ function addSettings(){
  if(!f||settingsButton())return;
  var b=document.createElement('button');
  b.type='button';b.id='hodoku-consent-settings';b.className='hc-settings';b.textContent='Cookie settings';
- b.addEventListener('click',function(){forget();choice=null;openBanner()});
+ b.addEventListener('click',function(){
+  if(window.googlefc&&typeof window.googlefc.showRevocationMessage==='function'){window.googlefc.showRevocationMessage();return}
+  forget();choice=null;openBanner();
+ });
  f.appendChild(b);
 }
-function start(){addSettings();if(choice===null)openBanner()}
-if(choice==='granted')loadAd();
+function start(){addSettings()}
+if(choice!=='denied')loadAd();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();</script>`;
 }
