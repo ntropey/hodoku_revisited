@@ -510,7 +510,7 @@ add(
 <h2>Advertising</h2>
 <p>This site shows ads served by Google AdSense. For visitors in the EEA, the UK and Switzerland, Google Consent Mode v2 (<code>ad_storage</code>, <code>ad_user_data</code>, <code>ad_personalization</code> and <code>analytics_storage</code>) defaults to denied and Google's certified IAB TCF v2.2 consent banner asks whether you accept cookies and personalized ads. Any visitor can also review, change or withdraw consent at any time with the "Cookie settings" button in the footer, which opens Google's consent manager (or stores your local preference under <code>hodoku-consent</code> in your browser's local storage, so rejecting disables the advertising script).</p>
 <p>You can also manage or turn off personalized ads in <a href="https://adssettings.google.com/">Google's ad settings</a>, and learn how Google uses data at <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>.</p>
-<p>The solver app under <a href="play/">/play/</a> does not load ads or any third-party scripts and shows no consent banner. Your games and settings stay in your browser.</p>
+<p>The solver app under <a href="play/">/play/</a> shares the same consent preference (and offers "Cookie settings" under <em>Settings → About and license</em>). Your games, history and settings stay in your browser.</p>
 <p>This site has no accounts and uses no analytics of its own.</p>
 <p>Questions: open an issue at <a href="${REPO}/issues">${REPO}/issues</a>.</p>`,
   }),
@@ -638,15 +638,15 @@ for (const [path, content] of pages) {
 }
 writeFileSync(join(out, 'site.css'), css);
 
-// Consent banner + consent-gated AdSense on the generated marketing pages only (never /play/, which is copied below).
-console.log(`consent banner added to ${applyConsent(out)} pages`);
-
 for (const f of ['icon.svg', 'favicon.svg', 'apple-touch-icon.png', 'icon-512.png']) cpSync(join(here, '..', '..', 'app', 'public', f), join(out, f));
 const fontSrc = join(here, '..', '..', 'app', 'node_modules', '@fontsource');
 mkdirSync(join(out, 'fonts'), { recursive: true });
 for (const [id, , w] of FONTS) cpSync(join(fontSrc, id, 'files', `${id}-latin-${w}-normal.woff2`), join(out, 'fonts', `${id}-latin-${w}-normal.woff2`));
 if (existsSync(appDist)) cpSync(appDist, join(out, 'play'), { recursive: true });
 else console.warn('packages/app/dist not found: the site is built without /play/');
+
+// Consent banner + consent-gated AdSense on all generated pages (including /play/index.html when built).
+console.log(`consent banner added to ${applyConsent(out)} pages`);
 
 // a custom domain (anything but github.io) gets a CNAME file so Pages keeps serving it
 if (siteUrl && siteUrl !== '/' && !new URL(siteUrl).hostname.endsWith('github.io')) writeFileSync(join(out, 'CNAME'), new URL(siteUrl).hostname + '\n');

@@ -270,6 +270,7 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .cmd li button.on { background: var(--accent-soft); }
 .about summary { cursor: pointer; color: var(--accent); margin-top: 12px; }
 .about p { margin: 6px 0 0; font-size: 13px; }
+.linkbtn { border: 0; background: none; padding: 0; min-height: 0; color: var(--accent); text-decoration: underline; font: inherit; cursor: pointer; }
 .techniques .techscroll { max-height: 42vh; overflow: auto; margin-top: 4px; }
 .techniques h3 { font: 600 11px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 12px 0 0; }
 .techniques .field { padding: 6px 0; font-size: 14px; }

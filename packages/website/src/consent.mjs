@@ -88,15 +88,17 @@ function openBanner(){
  d.querySelector('.hc-reject').addEventListener('click',function(){close('denied');if(document.getElementById('hodoku-ad'))location.reload()});
  d.focus();
 }
+function reopenConsent(){
+ if(window.googlefc&&typeof window.googlefc.showRevocationMessage==='function'){window.googlefc.showRevocationMessage();return}
+ forget();choice=null;openBanner();
+}
+window.hodokuOpenConsent=reopenConsent;
 function addSettings(){
  var f=document.querySelector('footer');
  if(!f||settingsButton())return;
  var b=document.createElement('button');
  b.type='button';b.id='hodoku-consent-settings';b.className='hc-settings';b.textContent='Cookie settings';
- b.addEventListener('click',function(){
-  if(window.googlefc&&typeof window.googlefc.showRevocationMessage==='function'){window.googlefc.showRevocationMessage();return}
-  forget();choice=null;openBanner();
- });
+ b.addEventListener('click',reopenConsent);
  f.appendChild(b);
 }
 function start(){addSettings()}
@@ -106,8 +108,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 }
 
 /**
- * Add the consent banner + consent-gated AdSense loader to every .html file below `dir`, skipping the
- * `play` directory (the app stays ad-free and banner-free). Returns the number of pages changed.
+ * Add the consent banner + consent-gated AdSense loader to every .html file below `dir`, including `/play/`.
+ * Returns the number of pages changed.
  *
  * The script is injected right after the charset declaration (not before it, as gate.mjs does): it is
  * ~4 KB, and HTML only honors a <meta charset> that appears within the first 1024 bytes, which matters
@@ -121,7 +123,7 @@ export function applyConsent(dir) {
     for (const e of readdirSync(d, { withFileTypes: true })) {
       const p = join(d, e.name);
       if (e.isDirectory()) {
-        if (e.name !== 'play') walk(p);
+        walk(p);
       } else if (e.name.endsWith('.html')) {
         const rel = relative(dir, dirname(p));
         const root = rel === '' ? '' : '../'.repeat(rel.split(sep).length);

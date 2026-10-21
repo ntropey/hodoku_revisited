@@ -245,6 +245,11 @@ platform may still be needed. Check its policy for installed PWAs before relying
 
 ## Backlog
 
+- **Supporter & Cloud Sync Backend (no paywalls on solving/techniques):**
+  - Optional user accounts with cross-device sync (current board, pencil marks, colors, timer, library, history, and named save points synced between phone and desktop).
+  - Personal progression & training telemetry: Daily Puzzle streak tracking, personal best times by difficulty level, and a per-technique mastery breakdown (steps spotted solo vs. with the AI Coach).
+  - Ad-free experience across both the guide pages and `/play/` for logged-in supporters.
+  - Optional "Bring Your Own / Cloud LLM" free-form chat tier alongside the local symbolic AI Coach.
 - Siamese and dual fish variants, ALS nodes in tabling chains (core).
 - Multi-lingual support (i18n): extract the UI strings and add locales together. A single extra
   language (e.g. German) was dropped on purpose; do the whole thing when we get to it.
