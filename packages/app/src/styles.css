@@ -126,7 +126,7 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .cands .keyc { color: var(--accent); font-weight: 600; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 2px; }
 .cands .fin { color: var(--fin); font-weight: 600; font-style: italic; }
 .cands .keep { color: var(--user); font-weight: 600; }
-.cands .del { color: var(--elim); background: var(--elim-bg); text-decoration: line-through; font-weight: 600; }
+.cands .del { color: var(--elim); background: var(--elim-bg); text-decoration: line-through; font-weight: 600; cursor: pointer; }
 .cands .col-0 { background: var(--c0); }
 .cands .col-1 { background: var(--c1); }
 .cands .fd { color: var(--fg); font-weight: 600; }
@@ -290,6 +290,12 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
 .puzzles .puzzleinfo small { font-family: var(--font-mono); font-size: 12px; }
 .puzzles .puzzlelist button { min-height: 34px; padding: 0 12px; }
 
+/* completion and full-board conflict notice banners under the board */
+.notice-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-top: 10px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 14px; }
+.notice-banner.solved-banner { background: var(--place); border-color: var(--place-ring); }
+.notice-banner.conflict-banner { background: var(--elim-bg); border-color: var(--elim); color: var(--elim); }
+.notice-banner .row { margin-top: 0; }
+
 /* cell zoom: an enlarged view of the selected cell, under the board */
 .zoom { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
 .zoom .zoomcell { flex: none; width: 72px; height: 72px; display: grid; place-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
@@ -309,16 +315,18 @@ kbd { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border: 
   .boardcol { --board: calc(100vw - 20px); width: 100%; max-width: 640px; }
   .sidecol { display: none; }
   .sheetcol { display: block; }
+  .sheet-backdrop { position: fixed; inset: 0; z-index: 24; background: rgb(0 0 0 / 0.35); }
   .sheet {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; background: var(--card); border-top: 1px solid var(--line);
     border-radius: 10px 10px 0 0; box-shadow: 0 -6px 24px rgb(0 0 0 / 0.15); display: flex; flex-direction: column;
-    height: var(--sheet-h, 96px); max-height: 92vh; transition: height 200ms ease; padding-bottom: env(safe-area-inset-bottom);
+    height: var(--sheet-h, 96px); max-height: min(82vh, 82dvh); transition: height 200ms ease; padding-bottom: env(safe-area-inset-bottom);
   }
   .sheet.snap-peek { --sheet-h: 96px; }
-  .sheet.snap-half { --sheet-h: 50vh; }
-  .sheet.snap-full { --sheet-h: 90vh; }
-  .grab { min-height: 28px; width: 100%; border: 0; background: transparent; display: grid; place-items: center; flex: none; touch-action: none; }
-  .grab span { width: 40px; height: 4px; border-radius: 2px; background: var(--line); }
+  .sheet.snap-half { --sheet-h: min(48vh, 48dvh); }
+  .sheet.snap-full { --sheet-h: min(76vh, 76dvh); }
+  .grab { min-height: 32px; width: 100%; padding: 4px 14px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; gap: 8px; flex: none; touch-action: none; position: relative; }
+  .grab .grab-bar { width: 40px; height: 4px; border-radius: 2px; background: var(--line); }
+  .grab .grab-label { position: absolute; right: 14px; font: 600 11px/1 var(--font-mono); color: var(--accent); letter-spacing: 0.04em; text-transform: uppercase; }
   .sheet .panel { border: 0; border-radius: 0; max-height: none; flex: 1; min-height: 0; }
   .sheet.snap-peek .hintuse { display: none; }
   .sheet.snap-peek .panelbody { padding-top: 8px; }

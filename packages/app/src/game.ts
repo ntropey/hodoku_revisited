@@ -169,6 +169,38 @@ export function toggleNote(g: GameState, i: number, d: number): GameState {
   return push(g, g.values.slice(), g.cands.slice(), notes);
 }
 
+/**
+ * Toggle a candidate/note in Notes mode so removing a candidate shown by a hint or status line works
+ * even when "Show candidates" is off.
+ */
+export function toggleNoteOrCand(g: GameState, i: number, d: number, showCands: boolean, hintShowingCell = false): GameState {
+  if (g.values[i] !== 0) return g;
+  const bit = 1 << d;
+  const cands = g.cands.slice();
+  const notes = notesOf(g).slice();
+  if (showCands) {
+    cands[i] ^= bit;
+    if ((cands[i] & bit) === 0) notes[i] &= ~bit;
+    return push(g, g.values.slice(), cands, notes);
+  }
+  // If a hint/coach is currently showing the solver's candidates in this cell (and the player hasn't written custom notes here yet),
+  // start from the solver's candidates so tapping the eliminated digit removes it and keeps the remaining candidates visible.
+  if (hintShowingCell && notes[i] === 0 && (cands[i] & bit) !== 0) {
+    const nextMask = cands[i] & ~bit;
+    cands[i] = nextMask;
+    notes[i] = nextMask;
+    return push(g, g.values.slice(), cands, notes);
+  }
+  notes[i] ^= bit;
+  // If the player removed a note, also remove it from solver candidates; if they added it back (and it's valid), restore it.
+  if ((notes[i] & bit) === 0) {
+    cands[i] &= ~bit;
+  } else if ((validCands(g.values)[i] & bit) !== 0) {
+    cands[i] |= bit;
+  }
+  return push(g, g.values.slice(), cands, notes);
+}
+
 /** Remove the pencil marks of one cell. */
 export function clearNotesAt(g: GameState, i: number): GameState {
   if (notesOf(g)[i] === 0) return g;
@@ -185,8 +217,12 @@ export function clearNotes(g: GameState): GameState {
 /** Remove candidates (used when a hint is applied). */
 export function removeCands(g: GameState, list: { cell: number; digit: number }[]): GameState {
   const cands = g.cands.slice();
-  for (const { cell, digit } of list) cands[cell] &= ~(1 << digit);
-  return push(g, g.values.slice(), cands);
+  const notes = notesOf(g).slice();
+  for (const { cell, digit } of list) {
+    cands[cell] &= ~(1 << digit);
+    notes[cell] &= ~(1 << digit);
+  }
+  return push(g, g.values.slice(), cands, notes);
 }
 
 /** Reset all candidates to what the placed values allow. */

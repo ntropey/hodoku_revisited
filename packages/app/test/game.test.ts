@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_CANDS, autoFillLastDigit, candColorAt, cellColorAt, clearColors, clearNotes, deviations, fillHiddenSingles, hiddenSingles, isGiven, notesOf, paintCand, paintCell, restart, setGivens, toggleNote, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells, type GameState } from '../src/game';
+import { ALL_CANDS, autoFillLastDigit, candColorAt, cellColorAt, clearColors, clearNotes, deviations, fillHiddenSingles, hiddenSingles, isGiven, notesOf, paintCand, paintCell, restart, setGivens, toggleNote, toggleNoteOrCand, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells, type GameState } from '../src/game';
 import { allHints, analyze, hint } from '../src/solverApi';
 
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -80,6 +80,17 @@ describe('game', () => {
     const d = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((x) => g.cands[cell] & (1 << x))!;
     g = toggleCand(g, cell, d);
     expect(g.cands[cell] & (1 << d)).toBe(0);
+  });
+
+  it('removes a hint-displayed candidate in Notes mode even when showCands is off', () => {
+    let g = newGame(info());
+    const cell = g.values.indexOf(0);
+    const initialMask = g.cands[cell];
+    const d = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((x) => initialMask & (1 << x))!;
+    // showCands is false, but a hint is currently displaying the cell's candidates on the board
+    g = toggleNoteOrCand(g, cell, d, false, true);
+    expect(g.cands[cell] & (1 << d)).toBe(0);
+    expect(notesOf(g)[cell]).toBe(initialMask & ~(1 << d));
   });
 
   it('is solved when all values match the solution', () => {
