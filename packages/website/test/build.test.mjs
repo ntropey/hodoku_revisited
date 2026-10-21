@@ -30,8 +30,8 @@ test('internal links resolve', () => {
   }
 });
 
-test('every marketing page shows the consent banner and never loads AdSense statically', () => {
-  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (e.name === 'play' ? [] : walk(join(d, e.name))) : e.name.endsWith('.html') ? [join(d, e.name)] : []));
+test('every page (including /play/) has the consent-aware AdSense loader and never loads AdSense statically', () => {
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : e.name.endsWith('.html') ? [join(d, e.name)] : []));
   const files = walk(dist);
   assert.ok(files.length > TECHNIQUES.length, 'found the marketing pages');
   for (const file of files) {

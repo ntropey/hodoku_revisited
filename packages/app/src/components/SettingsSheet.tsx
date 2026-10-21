@@ -129,7 +129,17 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
           </p>
           <p>
             <a href="https://www.gnu.org/licenses/gpl-3.0.html">License text</a> ·{' '}
-            <a href="https://github.com/ntropey/hodoku_revisited">Source code</a>
+            <a href="https://github.com/ntropey/hodoku_revisited">Source code</a> · <a href="../privacy.html">Privacy</a> ·{' '}
+            <button
+              type="button"
+              className="linkbtn"
+              onClick={() => {
+                onClose();
+                (window as unknown as { hodokuOpenConsent?: () => void }).hodokuOpenConsent?.();
+              }}
+            >
+              Cookie settings
+            </button>
           </p>
         </details>
       </div>
