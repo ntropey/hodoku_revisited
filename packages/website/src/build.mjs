@@ -56,6 +56,7 @@ function page({ title, description, root, body, path, wide, jsonld }) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="msvalidate.01" content="154ADF6C231F0A051ADFE027C55A9FFF">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <meta property="og:type" content="website">
