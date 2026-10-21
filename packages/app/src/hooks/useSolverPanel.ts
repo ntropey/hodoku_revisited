@@ -53,11 +53,20 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
     setProof(null);
   }, []);
 
-  /** Open a tab; on a phone a collapsed sheet opens halfway so the content is visible. */
-  const openTab = useCallback((t: Tab) => {
-    setTab(t);
-    setSnap((s) => (s === 'peek' ? 'half' : s));
-  }, []);
+  /** Open a tab; on a phone tapping the already-active tab toggles the sheet closed/open. */
+  const openTab = useCallback(
+    (t: Tab, toggleIfSame = false) => {
+      setTab((prev) => {
+        if (toggleIfSame && prev === t) {
+          setSnap((s) => (s === 'peek' ? 'half' : 'peek'));
+        } else {
+          setSnap((s) => (s === 'peek' ? 'half' : s));
+        }
+        return t;
+      });
+    },
+    [],
+  );
 
   const askHint = useCallback(
     async (startInCoach = false) => {

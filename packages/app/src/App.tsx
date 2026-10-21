@@ -48,8 +48,7 @@ import {
   removeCands,
   restart,
   setValue,
-  toggleCand,
-  toggleNote,
+  toggleNoteOrCand,
   undo,
   wrongCells,
   type GameState,
@@ -65,7 +64,7 @@ import { LEVEL_NAMES, type HintLevel, type HintResult } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
 import { load, save, SAVE_KEY, SETTINGS_KEY } from './storage';
 import { STEP_LEVEL, TECHNIQUE_NAMES } from './techniqueLookup';
-import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, PALETTE, type Mode, type Settings } from './ui';
+import { DEFAULT_COLORKU_COLORS, DEFAULT_SETTINGS, formatTime, PALETTE, type Mode, type Settings } from './ui';
 
 /** Stable fallback so the "no technique disabled" case keeps the same array reference across renders. */
 const NO_TECHNIQUES: string[] = [];
@@ -128,6 +127,7 @@ export function App() {
   useEffect(() => {
     if (solved && !wasSolved.current) {
       setSolvedOpen(true);
+      panel.setSnap('peek');
       collections.markSolved(game?.givens, secondsRef.current);
     }
     if (!solved) setSolvedOpen(false);
@@ -173,6 +173,61 @@ export function App() {
     else if (action.kind === 'coach') void panel.askHint(true);
   }, [game, panel]);
 
+  // What the board highlights: on the Path tab the next path step; during an AI Coach proof or walkthrough, that stage's marks
+  const boardHint = useMemo<HintResult | null>(() => {
+    if (tab === 'path') return pathSteps?.[pathDone] ?? null;
+    if (tab === 'hint' && proof) {
+      const stage = proof.stages[proofStep] ?? proof.stages[proof.stages.length - 1];
+      if (!stage) return null;
+      return { name: stage.label, type: 'PROOF', text: stage.text, summary: '', slug: null, marks: stage.marks, notation: [] };
+    }
+    if (hint && coachStep !== null && hint.coach?.[coachStep]) {
+      return { ...hint, marks: hint.coach[coachStep].marks };
+    }
+    return hint;
+  }, [tab, pathSteps, pathDone, proof, proofStep, hint, coachStep]);
+
+  /** True when the active hint/coach/path step is displaying the solver's candidates inside `cell`. */
+  const isCellInHint = useCallback(
+    (cell: number) => {
+      const m = boardHint?.marks;
+      if (!m) return false;
+      return (
+        m.elim.some((x) => x.cell === cell) ||
+        m.key.some((x) => x.cell === cell) ||
+        m.fins.some((x) => x.cell === cell) ||
+        m.colors.some((x) => x.cell === cell) ||
+        m.place.some((x) => x.cell === cell)
+      );
+    },
+    [boardHint],
+  );
+
+  /**
+   * Toggle a candidate/note on `cell` for `digit` (via Notes mode or by tapping a red eliminated candidate on the board).
+   * If an open elimination hint still has other candidates left to remove, keep the hint open for the remaining ones.
+   */
+  const toggleCandidateAt = useCallback(
+    (cell: number, d: number) => {
+      if (!game || game.values[cell] !== 0) return;
+      const inHint = isCellInHint(cell);
+      setGame((g) => (g ? toggleNoteOrCand(g, cell, d, settingsRef.current.showCands, inHint) : g));
+      if (hint && hint.marks.place.length === 0 && hint.marks.elim.some((e) => e.cell === cell && e.digit === d)) {
+        const rest = hint.marks.elim.filter((e) => !(e.cell === cell && e.digit === d));
+        if (rest.length > 0) {
+          setHint({
+            ...hint,
+            marks: { ...hint.marks, elim: rest },
+            coach: hint.coach?.map((s) => ({ ...s, marks: { ...s.marks, elim: s.marks.elim.filter((e) => !(e.cell === cell && e.digit === d)) } })),
+          });
+          return;
+        }
+      }
+      clearPanel();
+    },
+    [game, hint, isCellInHint, setHint, clearPanel],
+  );
+
   const input = useCallback(
     (d: number) => {
       if (!game) return;
@@ -186,16 +241,20 @@ export function App() {
         return;
       }
       if (selected === null) return;
-      // pencil marks are what you see: the solver's candidates when they are shown, otherwise your own notes
-      if (mode === 'notes' && game.values[selected] === 0) update((g) => (settingsRef.current.showCands ? toggleCand(g, selected, d) : toggleNote(g, selected, d)));
+      if (mode === 'notes' && game.values[selected] === 0) toggleCandidateAt(selected, d);
       else update((g) => setValue(g, selected, d), true);
     },
-    [game, selected, mode, update],
+    [game, selected, mode, toggleCandidateAt, update],
   );
 
-  const wrong = useMemo(() => new Set(game && settings.checkMistakes ? wrongCells(game) : []), [game, settings.checkMistakes]);
   const left = useMemo(() => (game ? remaining(game) : []), [game]);
   const filled = game ? game.values.filter((v) => v !== 0).length : 0;
+  const allFilled = filled === 81;
+  // When all 81 cells are filled and the puzzle is not solved, always highlight the conflicting cells even if "Mark mistakes" was off
+  const wrong = useMemo(
+    () => new Set(game && (settings.checkMistakes || (allFilled && !solved)) ? wrongCells(game) : []),
+    [game, settings.checkMistakes, allFilled, solved],
+  );
 
   // puzzle tools: work out up front whether each command would do anything, so none is offered as a no-op
   const hasOwnValues = useMemo(() => !!game && game.values.some((v, i) => v !== 0 && !isGiven(game, i)), [game]);
@@ -216,7 +275,8 @@ export function App() {
       if (hint.marks.elim.length > 0) next = removeCands(next, hint.marks.elim);
       return { ...next, hints: (g.hints ?? 0) + 1 };
     }, true);
-  }, [hint, update]);
+    panel.setSnap('peek');
+  }, [hint, update, panel]);
 
   // apply the next `count` steps of the (cached) solution path; this does not clear the path, it advances it
   const applyPath = useCallback(
@@ -342,7 +402,7 @@ export function App() {
   const panelNode = (
     <SolverPanel
       tab={tab}
-      onTab={panel.openTab}
+      onTab={(t) => panel.openTab(t, true)}
       game={game}
       selected={selected}
       solved={solved}
@@ -359,13 +419,17 @@ export function App() {
       proof={proof}
       proofStep={proofStep}
       onProofStep={setProofStep}
-      onDismissProof={() => setProof(null)}
+      onDismissProof={() => {
+        setProof(null);
+        panel.setSnap('peek');
+      }}
       onProve={(cell, d) => void panel.askProof(cell, d)}
       onHint={(startInCoach) => void panel.askHint(startInCoach)}
       onApplyHint={applyHint}
       onDismissHint={() => {
         setHint(null);
         setCoachStep(null);
+        panel.setSnap('peek');
       }}
       onSelectStep={(h) => {
         setHint(h);
@@ -380,20 +444,6 @@ export function App() {
       onRefreshPath={() => void panel.askPath()}
     />
   );
-
-  // What the board highlights: on the Path tab the next path step; during an AI Coach proof or walkthrough, that stage's marks
-  const boardHint = useMemo<HintResult | null>(() => {
-    if (tab === 'path') return pathSteps?.[pathDone] ?? null;
-    if (tab === 'hint' && proof) {
-      const stage = proof.stages[proofStep] ?? proof.stages[proof.stages.length - 1];
-      if (!stage) return null;
-      return { name: stage.label, type: 'PROOF', text: stage.text, summary: '', slug: null, marks: stage.marks, notation: [] };
-    }
-    if (hint && coachStep !== null && hint.coach?.[coachStep]) {
-      return { ...hint, marks: hint.coach[coachStep].marks };
-    }
-    return hint;
-  }, [tab, pathSteps, pathDone, proof, proofStep, hint, coachStep]);
 
   // coloring candidates needs to see them, so color mode turns them on for that target
   const showCandsNow = settings.showCands || (mode === 'color' && paintTarget === 'cand');
@@ -448,8 +498,40 @@ export function App() {
               paintTarget={paintTargetNow}
               onPaintCell={onPaintCell}
               onPaintCand={onPaintCand}
-              onSelect={setSelected}
+              onElimCand={toggleCandidateAt}
+              onSelect={(i) => {
+                setSelected(i);
+                if (panel.snap === 'full') panel.setSnap('half');
+              }}
             />
+          )}
+          {game && solved && (
+            <div className="notice-banner solved-banner" role="status">
+              <span>
+                <strong>Puzzle solved!</strong> Completed in {formatTime(seconds)}.
+              </span>
+              <div className="row">
+                <button type="button" onClick={() => setSolvedOpen(true)}>
+                  Summary &amp; Share
+                </button>
+                <button type="button" className="primary" onClick={() => void startNew(game.level)}>
+                  New puzzle
+                </button>
+              </div>
+            </div>
+          )}
+          {game && allFilled && !solved && (
+            <div className="notice-banner conflict-banner" role="alert">
+              <span>
+                <strong>Almost there!</strong> All 81 cells are filled, but {wrong.size} {wrong.size === 1 ? 'cell does' : 'cells do'} not match the solution
+                (highlighted in red).
+              </span>
+              <div className="row">
+                <button type="button" onClick={() => update(undo)} disabled={!game.past.length}>
+                  Undo
+                </button>
+              </div>
+            </div>
           )}
           {printing.printSolution && game && <PrintSolution game={game} />}
           {printing.bookPages && <BookPrint pages={printing.bookPages.pages} layout={printing.bookPages.layout} rating={printing.bookPages.rating} />}

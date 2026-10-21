@@ -28,6 +28,7 @@ interface Props {
   paintTarget?: 'cell' | 'cand' | null;
   onPaintCell?: (i: number) => void;
   onPaintCand?: (i: number, d: number) => void;
+  onElimCand?: (i: number, d: number) => void;
   onSelect: (i: number) => void;
 }
 
@@ -43,7 +44,7 @@ function candidateLabel(mask: number): string {
   return list.length ? `, candidates ${list.join(' ')}` : ', empty';
 }
 
-export function Board({ game, selected, showCands, hint, wrong, deviate, filter = 0, colorKu = false, colors, cellColors, candColors, palette, paintTarget = null, onPaintCell, onPaintCand, onSelect }: Props) {
+export function Board({ game, selected, showCands, hint, wrong, deviate, filter = 0, colorKu = false, colors, cellColors, candColors, palette, paintTarget = null, onPaintCell, onPaintCand, onElimCand, onSelect }: Props) {
   const notes = notesOf(game);
   const selValue = selected !== null ? game.values[selected] : 0;
   const peers = selected !== null ? new Set(PEERS[selected]) : new Set<number>();
@@ -128,7 +129,19 @@ export function Board({ game, selected, showCands, hint, wrong, deviate, filter 
                             key={d}
                             className={c.join(' ')}
                             style={cc ? { background: cc } : undefined}
-                            onClick={paintTarget === 'cand' ? (e) => { e.stopPropagation(); onPaintCand?.(i, d); } : undefined}
+                            onClick={
+                              paintTarget === 'cand'
+                                ? (e) => {
+                                    e.stopPropagation();
+                                    onPaintCand?.(i, d);
+                                  }
+                                : on && elimSet.has(k) && onElimCand
+                                  ? (e) => {
+                                      e.stopPropagation();
+                                      onElimCand(i, d);
+                                    }
+                                  : undefined
+                            }
                           >
                             {on ? colorKu ? <span className="kudot" style={{ background: colorKuColor(colors, d) }} aria-hidden="true" /> : d : ''}
                           </span>
