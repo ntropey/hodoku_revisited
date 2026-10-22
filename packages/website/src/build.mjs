@@ -93,9 +93,9 @@ ${body}
   <p>Free sudoku solver, based on HoDoKu by Bernhard Hobiger. Free software under the GPL (GPL-3.0-or-later), with no warranty.</p>
   <p style="font-size:.75rem;color:var(--muted);margin-top:8px">
     More tools:
-    <a href="https://ntropey.github.io/hodoku_revisited" target="_blank" rel="noopener noreferrer">Hodoku Revisited</a> ·
-    <a href="https://ntropey.github.io/kakuro_revisited" target="_blank" rel="noopener noreferrer">Kakuro Revisited</a> ·
-    <a href="https://ntropey.github.io/nonogram_revisited" target="_blank" rel="noopener noreferrer">Nonogram Revisited</a>
+    <a href="https://hodokurevisited.com/" target="_blank" rel="noopener noreferrer">Hodoku Revisited</a> ·
+    <a href="https://kakurorevisited.com/" target="_blank" rel="noopener noreferrer">Kakuro Revisited</a> ·
+    <a href="https://nonogramrevisited.com/" target="_blank" rel="noopener noreferrer">Nonogram Revisited</a>
   </p>
   <p><a href="${REPO}">GitHub</a> · <a href="${REPO}/commits/main">Changelog</a> · <a href="https://hodoku.sourceforge.net/">Original site</a> · <a href="${root}about.html">About and license</a> · <a href="${root}privacy.html">Privacy</a></p>
 </footer>
