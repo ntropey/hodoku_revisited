@@ -224,7 +224,7 @@ with a *Share result* button in the completion dialog.
 
 Deployment: `.github/workflows/pages.yml` deploys to https://hodokurevisited.com/ on every push to `main` (website
 tests first) and by hand; the password gate is off (a manual run can tick "gate"). AdSense (loaded only after consent,
-see below) and `ads.txt` are on the site pages, not in the app; the privacy page discloses advertising.
+see below) and `ads.txt` are on the site pages and on `/play/`; the privacy page discloses advertising.
 
 Consent banner (EU/UK): a dependency-free banner (`src/consent.mjs`) is in place. It initializes Google
 Consent Mode v2 (`ad_storage`, `ad_user_data`, `ad_personalization`, `analytics_storage` defaulting to

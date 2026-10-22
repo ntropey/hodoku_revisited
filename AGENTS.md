@@ -61,8 +61,9 @@ Before finishing a change, run `pnpm typecheck` and `pnpm test`, and the affecte
   it.
 - **The website is generated.** `packages/website/src/build.mjs` writes every page from string
   literals and emits no separate JS assets (scripts are inlined, e.g. `gate.mjs`, `consent.mjs`).
-  `/play/` is the app's own Vite build copied verbatim — never add site-only scripts or banners to
-  the app.
+  `/play/` is the app's own Vite build copied verbatim. The one site-only addition is the consent
+  banner and consent-gated AdSense loader, which `consent.mjs` injects into `/play/` too. Don't add
+  anything else to the app.
 - **The manual documents the app.** `packages/website/src/manual.mjs` must be kept in step with the
   app's behavior.
 - **Stored values are a contract.** Settings, saved games, the library and the game mode live in the
@@ -70,8 +71,9 @@ Before finishing a change, run `pnpm typecheck` and `pnpm test`, and the affecte
   is shown as "Practicing") resets people's data; change the label, not the value, or migrate.
 - **The service worker** (`packages/app/public/sw.js`) fetches pages network-first and hashed assets
   cache-first, so a deploy shows on the next visit and the app works offline. Keep that split if you touch it.
-- **Ads load only after consent.** `consent.mjs` adds the banner to every site page; the AdSense script is
-  injected only after Accept. The app under `/play/` has no ads and no third-party scripts.
+- **Ads load only after consent.** `consent.mjs` adds the banner to every site page, including `/play/`;
+  the AdSense script is injected only after Accept. Ads run on the guide pages and in the app under
+  `/play/`. Keep ad slots out of the game's own UI (board, dialogs, solver panel).
 
 ## Do not edit generated files
 
