@@ -506,7 +506,7 @@ export function App() {
             />
           )}
           {game && solved && (
-            <div className="notice-banner solved-banner" role="status">
+            <div className="notice-banner solved-banner" role="status" aria-live="polite">
               <span>
                 <strong>Puzzle solved!</strong> Completed in {formatTime(seconds)}.
               </span>
