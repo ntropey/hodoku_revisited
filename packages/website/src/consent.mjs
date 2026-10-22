@@ -8,7 +8,7 @@
  * EEA/UK/CH until consent is granted, `ads_data_redaction: true`). A "Cookie settings" button in the
  * footer calls `googlefc.showRevocationMessage()` when Google's CMP is active, or opens a local
  * Accept/Reject dialog stored under `hodoku-consent` in localStorage so any visitor can opt out at any
- * time. The app under /play/ is never touched.
+ * time. The app under /play/ gets the same banner and loader, and nothing else.
  */
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
