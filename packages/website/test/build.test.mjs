@@ -146,3 +146,12 @@ test('user-facing text and docs use American spelling', async () => {
   }
   assert.deepEqual(bad, [], 'British spellings found');
 });
+
+test('every page has a skip link that lands on the main landmark', () => {
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (e.name === 'play' ? [] : walk(join(d, e.name))) : [join(d, e.name)]));
+  for (const file of walk(dist).filter((f) => f.endsWith('.html') && !f.endsWith('404.html'))) {
+    const html = readFileSync(file, 'utf8');
+    assert.ok(html.includes('<a class="skip" href="#main">'), `${file} has a skip link`);
+    assert.ok(/<main id="main"/.test(html), `${file} main is the skip target`);
+  }
+});
