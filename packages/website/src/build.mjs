@@ -75,6 +75,7 @@ ${canonical}
 ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(/</g, '\\u003c')}</script>` : ''}
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="top">
   ${LOGO(root)}
   <nav aria-label="Main">
@@ -86,7 +87,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(
     <a class="btn small" href="${root}play/">Open solver</a>
   </nav>
 </header>
-<main${wide ? ' class="wide"' : ''}>
+<main id="main"${wide ? ' class="wide"' : ''}>
 ${body}
 </main>
 <footer>
@@ -558,6 +559,7 @@ code,kbd,.mono{font-family:var(--font-mono);font-size:.88em}
 kbd{padding:1px 6px;border:1px solid var(--line);border-radius:3px;background:var(--card)}
 code{background:var(--surface-2);padding:1px 5px;border-radius:3px;overflow-wrap:anywhere}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;left:-9999px;top:8px;background:var(--card);color:var(--fg);padding:8px 14px;border-radius:6px;z-index:99}.skip:focus{left:8px}
 .top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 24px;padding:12px max(16px,calc((100vw - 1200px)/2));border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:10px;color:var(--fg);text-decoration:none}
 .wordmark{font:500 1.5rem/1 var(--font-display);display:flex;flex-direction:column}.wordmark small{font:400 .6rem/1.4 var(--font-mono);letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
