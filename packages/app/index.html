@@ -12,14 +12,42 @@
     <meta property="og:title" content="Hodoku Revisited · Sudoku Solver &amp; AI Coach" />
     <meta property="og:description" content="Play the daily puzzle, get four-stage Socratic nudges from the AI Coach, or prove why any candidate fails." />
     <meta property="og:image" content="https://hodokurevisited.com/icon-512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:url" content="https://hodokurevisited.com/play/" />
     <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Sudoku Solver &amp; Trainer — Hodoku Revisited" />
+    <meta name="twitter:description" content="Free browser sudoku solver with step-by-step hints, technique guides, daily puzzles, and a symbolic AI Coach." />
+    <meta name="twitter:image" content="https://hodokurevisited.com/icon-512.png" />
+    <link rel="canonical" href="https://hodokurevisited.com/play/" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <title>Hodoku Revisited</title>
+    <title>Sudoku Solver &amp; Trainer — Hodoku Revisited</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Hodoku Revisited",
+        "url": "https://hodokurevisited.com/play/",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
+        "description": "Free browser sudoku solver and trainer with step-by-step hints, an AI Coach, and 32 technique guides.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main style="max-width:44rem;margin:10vh auto;padding:0 1.5rem;font-family:system-ui,sans-serif;line-height:1.6">
+        <h1>Sudoku Solver, Trainer &amp; AI Coach</h1>
+        <p>Hodoku Revisited is a free browser sudoku solver with step-by-step hints, human technique guides, daily puzzles, and a symbolic AI Coach. It runs locally and works offline.</p>
+        <p><a href="../">Read the guides and manual</a> or <a href="../play/?daily=1">open the daily puzzle</a>.</p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
