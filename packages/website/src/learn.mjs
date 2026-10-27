@@ -5,7 +5,7 @@
  * returns trusted HTML; links to guides are written relative to /learn/.
  */
 
-const g = (slug, name) => `<a href="../techniques/${slug}.html">${name}</a>`;
+const g = (slug, name) => `<a href="../techniques/${slug}">${name}</a>`;
 
 export const LEARN = [
   {
@@ -88,7 +88,7 @@ ${lists}
 <dt>Forcing chain, forcing net</dt><dd>Assume a candidate is true (or false), follow what must follow, and see what holds in every case (${g('forcing-chains', 'guide')}).</dd>
 <dt>Backdoor</dt><dd>A small set of cells that, once solved, lets the puzzle finish with only singles.</dd>
 </dl>
-<p>How the app writes cells and steps is explained on the <a href="sudoku-notation.html">notation page</a>.</p>`,
+<p>How the app writes cells and steps is explained on the <a href="sudoku-notation">notation page</a>.</p>`,
   },
   {
     slug: 'sudoku-notation',
@@ -105,7 +105,7 @@ ${lists}
 <p>On paper, candidates are written small in the cell. Writing every candidate in every cell is called <em>full notation</em>; it is thorough and cluttered. <em>Snyder notation</em> (the name varies by author) writes a digit in a box only where it fits in exactly two cells of that box: a short list that already shows where pairs and locked candidates are hiding.</p>
 <p>In the app, <em>Notes</em> mode lets you write your own marks, in whatever style you like, and <em>Settings → Show candidates</em> shows all the candidates the solver keeps. Your marks and the solver's candidates are separate, so you can compare them.</p>
 <h2>Writing a puzzle as text</h2>
-<p>A puzzle is commonly written as 81 characters, row by row, with a dot or a zero for each empty cell. The app copies and opens that format, and several others; see the <a href="../manual/import-export-formats.html">manual</a>.</p>`,
+<p>A puzzle is commonly written as 81 characters, row by row, with a dot or a zero for each empty cell. The app copies and opens that format, and several others; see the <a href="../manual/import-export-formats">manual</a>.</p>`,
   },
   {
     slug: 'hodoku-online-no-java',

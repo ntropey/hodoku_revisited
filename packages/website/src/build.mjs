@@ -50,7 +50,7 @@ const LOGO = (root) => `<a class="brand" href="${root}"><img src="${root}icon.sv
 
 /** `root` is the path back to the site root from the page, e.g. '../' */
 function page({ title, description, root, body, path, wide, jsonld }) {
-  const canonical = siteUrl && path ? `<link rel="canonical" href="${siteUrl}${path}">` : '';
+  const canonical = siteUrl && path != null ? `<link rel="canonical" href="${siteUrl}${path}">` : '';
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -82,7 +82,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(
     <a href="${root}learn/">Learn</a>
     <a href="${root}techniques/">Techniques</a>
     <a href="${root}manual/">Manual</a>
-    <a href="${root}about.html">About</a>
+    <a href="${root}about">About</a>
     <a href="${REPO}">GitHub</a>
     <a class="btn small" href="${root}play/">Open solver</a>
   </nav>
@@ -99,7 +99,7 @@ ${body}
     <a href="https://nonogramrevisited.com/" target="_blank" rel="noopener noreferrer">Nonogram Revisited</a> ·
     <a href="https://logisimrevisited.com/" target="_blank" rel="noopener noreferrer">Logisim Revisited</a>
   </p>
-  <p><a href="${REPO}">GitHub</a> · <a href="${REPO}/commits/main">Changelog</a> · <a href="https://hodoku.sourceforge.net/">Original site</a> · <a href="${root}about.html">About and license</a> · <a href="${root}privacy.html">Privacy</a></p>
+  <p><a href="${REPO}">GitHub</a> · <a href="${REPO}/commits/main">Changelog</a> · <a href="https://hodoku.sourceforge.net/">Original site</a> · <a href="${root}about">About and license</a> · <a href="${root}privacy">Privacy</a></p>
 </footer>
 </body>
 </html>
@@ -112,12 +112,12 @@ function rail(root, current) {
   return `<aside class="rail">
 <label class="railselect"><span>Technique</span><select onchange="location.href=this.value" aria-label="Jump to a technique">
 <option value="${root}techniques/">All techniques</option>
-${GROUPS.map((g) => `<optgroup label="${esc(g.name)}">${g.items.map((t) => `<option value="${root}techniques/${t.slug}.html"${t === current ? ' selected' : ''}>${esc(t.name)}</option>`).join('')}</optgroup>`).join('\n')}
+${GROUPS.map((g) => `<optgroup label="${esc(g.name)}">${g.items.map((t) => `<option value="${root}techniques/${t.slug}"${t === current ? ' selected' : ''}>${esc(t.name)}</option>`).join('')}</optgroup>`).join('\n')}
 </select></label>
 <nav class="railnav" aria-label="Techniques"><h2><a href="${root}techniques/">Techniques</a></h2>
 ${GROUPS.map(
   (g) => `<details${g === cur ? ' open' : ''}><summary>${esc(g.name)} <span>${g.num}</span></summary>
-<ul>${g.items.map((t) => `<li><a href="${root}techniques/${t.slug}.html"${t === current ? ' aria-current="page"' : ''}>${esc(t.name)}</a></li>`).join('')}</ul></details>`,
+<ul>${g.items.map((t) => `<li><a href="${root}techniques/${t.slug}"${t === current ? ' aria-current="page"' : ''}>${esc(t.name)}</a></li>`).join('')}</ul></details>`,
 ).join('\n')}
 </nav>
 </aside>`;
@@ -273,7 +273,7 @@ add(
   <article><p class="eyebrow">Analyzer</p><h2>See the whole solution path</h2><p>Get the techniques the solver would use and the hardest one required, plus a difficulty rating for any sudoku puzzle you paste in.</p></article>
   <article><p class="eyebrow">Library</p><h2>From singles to last resort</h2><p>${TECHNIQUES.length} technique guides, written new. Every example is a board you can step through and open in the app.</p></article>
 </section>
-<section class="learnhome"><p class="eyebrow">New to sudoku or looking for HoDoKu?</p><p>Read <a href="learn/how-to-solve-sudoku.html">how to solve sudoku</a> step by step, see <a href="learn/sudoku-difficulty-levels.html">what the difficulty levels mean</a>, look up a word in the <a href="learn/sudoku-glossary.html">glossary</a>, or learn how to run <a href="learn/hodoku-online-no-java.html">HoDoKu online on Mac, Windows &amp; mobile (no Java)</a>.</p></section>
+<section class="learnhome"><p class="eyebrow">New to sudoku or looking for HoDoKu?</p><p>Read <a href="learn/how-to-solve-sudoku">how to solve sudoku</a> step by step, see <a href="learn/sudoku-difficulty-levels">what the difficulty levels mean</a>, look up a word in the <a href="learn/sudoku-glossary">glossary</a>, or learn how to run <a href="learn/hodoku-online-no-java">HoDoKu online on Mac, Windows &amp; mobile (no Java)</a>.</p></section>
 <section class="trust">
   <p>This sudoku solver finds the same steps as HoDoKu 2.2.0 (we compare them step by step), so a hint is always a real technique, never a guess. It runs entirely in your browser and works offline once installed.</p>
 </section>`,
@@ -303,7 +303,7 @@ add(
               '@type': 'ListItem',
               position: idx + 1,
               name: t.name,
-              url: `${siteUrl}techniques/${t.slug}.html`,
+              url: `${siteUrl}techniques/${t.slug}`,
             })),
           },
         }
@@ -316,7 +316,7 @@ ${rail('../', null)}
 ${GROUPS.map(
   (g) => `<section class="group"><h2><span class="num">${g.num}</span> ${esc(g.name)}</h2>
 <div class="tgrid">
-${g.items.map((t) => `<a class="tcard" href="${t.slug}.html"><span class="band lv-${t.level.toLowerCase()}">${t.level}</span><strong>${esc(t.name)}</strong><span>${esc(t.summary)}</span></a>`).join('\n')}
+${g.items.map((t) => `<a class="tcard" href="${t.slug}"><span class="band lv-${t.level.toLowerCase()}">${t.level}</span><strong>${esc(t.name)}</strong><span>${esc(t.summary)}</span></a>`).join('\n')}
 </div></section>`,
 ).join('\n')}
 </div></div>`,
@@ -336,7 +336,7 @@ ORDERED.forEach((t, i) => {
       title: `${t.name}: sudoku technique | Hodoku Revisited`,
       description: `${t.name} sudoku technique: ${t.summary}`,
       root: '../',
-      path: `techniques/${t.slug}.html`,
+      path: `techniques/${t.slug}`,
       wide: true,
       jsonld: siteUrl
         ? {
@@ -347,7 +347,7 @@ ORDERED.forEach((t, i) => {
                 headline: `${t.name}: sudoku solving technique`,
                 description: t.summary,
                 proficiencyLevel: t.level,
-                url: `${siteUrl}techniques/${t.slug}.html`,
+                url: `${siteUrl}techniques/${t.slug}`,
                 author: { '@type': 'Organization', name: 'Hodoku Revisited', url: siteUrl },
               },
               {
@@ -355,7 +355,7 @@ ORDERED.forEach((t, i) => {
                 itemListElement: [
                   { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
                   { '@type': 'ListItem', position: 2, name: 'Techniques', item: `${siteUrl}techniques/` },
-                  { '@type': 'ListItem', position: 3, name: t.name, item: `${siteUrl}techniques/${t.slug}.html` },
+                  { '@type': 'ListItem', position: 3, name: t.name, item: `${siteUrl}techniques/${t.slug}` },
                 ],
               },
             ],
@@ -388,8 +388,8 @@ ${exs.length ? '' : `<p><a class="btn" href="../play/">Practice in the app</a></
 </div>
 </div>
 <nav class="pager">
-${prev ? `<a href="${prev.slug}.html"><small>Previous</small>← ${esc(prev.name)}</a>` : '<span></span>'}
-${next ? `<a href="${next.slug}.html"><small>Next</small>${esc(next.name)} →</a>` : '<span></span>'}
+${prev ? `<a href="${prev.slug}"><small>Previous</small>← ${esc(prev.name)}</a>` : '<span></span>'}
+${next ? `<a href="${next.slug}"><small>Next</small>${esc(next.name)} →</a>` : '<span></span>'}
 </nav>
 </article></div>
 ${exs.length ? STEP_SCRIPT : ''}`,
@@ -398,8 +398,8 @@ ${exs.length ? STEP_SCRIPT : ''}`,
 });
 
 // ---- learn
-const learnRail = (current) => `<aside class="rail"><label class="railselect"><span>Page</span><select onchange="location.href=this.value" aria-label="Jump to a page">${LEARN.map((c) => `<option value="${c.slug}.html"${c === current ? ' selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>
-<nav class="railnav" aria-label="Learn"><h2><a href="./">Learn</a></h2><ul class="flat">${LEARN.map((c) => `<li><a href="${c.slug}.html"${c === current ? ' aria-current="page"' : ''}>${esc(c.title)}</a></li>`).join('')}</ul></nav></aside>`;
+const learnRail = (current) => `<aside class="rail"><label class="railselect"><span>Page</span><select onchange="location.href=this.value" aria-label="Jump to a page">${LEARN.map((c) => `<option value="${c.slug}"${c === current ? ' selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>
+<nav class="railnav" aria-label="Learn"><h2><a href="./">Learn</a></h2><ul class="flat">${LEARN.map((c) => `<li><a href="${c.slug}"${c === current ? ' aria-current="page"' : ''}>${esc(c.title)}</a></li>`).join('')}</ul></nav></aside>`;
 add(
   'learn/index.html',
   page({
@@ -410,7 +410,7 @@ add(
     wide: true,
     body: `<div class="with-rail">${learnRail(null)}<div class="content"><h1>Learn sudoku</h1>
 <p class="lead">Start here if you are new, or if a guide uses a word you do not know.</p>
-<div class="tgrid">${LEARN.map((c, i) => `<a class="tcard" href="${c.slug}.html"><span class="band">${String(i + 1).padStart(2, '0')}</span><strong>${esc(c.title)}</strong><span>${esc(c.summary)}</span></a>`).join('\n')}</div>
+<div class="tgrid">${LEARN.map((c, i) => `<a class="tcard" href="${c.slug}"><span class="band">${String(i + 1).padStart(2, '0')}</span><strong>${esc(c.title)}</strong><span>${esc(c.summary)}</span></a>`).join('\n')}</div>
 <p>When you are ready for the techniques themselves, see the <a href="../techniques/">technique guides</a>, or <a href="../play/">open the solver</a> and ask it for a hint.</p></div></div>`,
   }),
 );
@@ -423,7 +423,7 @@ LEARN.forEach((c, i) => {
       title: `${c.title}: sudoku help | Hodoku Revisited`,
       description: c.summary,
       root: '../',
-      path: `learn/${c.slug}.html`,
+      path: `learn/${c.slug}`,
       wide: true,
       jsonld: siteUrl
         ? {
@@ -433,7 +433,7 @@ LEARN.forEach((c, i) => {
                 '@type': 'Article',
                 headline: c.title,
                 description: c.summary,
-                url: `${siteUrl}learn/${c.slug}.html`,
+                url: `${siteUrl}learn/${c.slug}`,
                 author: { '@type': 'Organization', name: 'Hodoku Revisited', url: siteUrl },
               },
               {
@@ -441,21 +441,21 @@ LEARN.forEach((c, i) => {
                 itemListElement: [
                   { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
                   { '@type': 'ListItem', position: 2, name: 'Learn', item: `${siteUrl}learn/` },
-                  { '@type': 'ListItem', position: 3, name: c.title, item: `${siteUrl}learn/${c.slug}.html` },
+                  { '@type': 'ListItem', position: 3, name: c.title, item: `${siteUrl}learn/${c.slug}` },
                 ],
               },
             ],
           }
         : undefined,
       body: `<div class="with-rail">${learnRail(c)}<article class="content guide"><p class="crumbs"><a href="./">Learn</a></p><h1>${esc(c.title)}</h1><p class="lead">${esc(c.summary)}</p><div class="prose">${c.body(TECHNIQUES)}</div>
-<nav class="pager">${prev ? `<a href="${prev.slug}.html"><small>Previous</small>← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a href="${next.slug}.html"><small>Next</small>${esc(next.title)} →</a>` : '<span></span>'}</nav></article></div>`,
+<nav class="pager">${prev ? `<a href="${prev.slug}"><small>Previous</small>← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a href="${next.slug}"><small>Next</small>${esc(next.title)} →</a>` : '<span></span>'}</nav></article></div>`,
     }),
   );
 });
 
 // ---- manual
-const manualRail = (current) => `<aside class="rail"><label class="railselect"><span>Chapter</span><select onchange="location.href=this.value" aria-label="Jump to a chapter">${MANUAL.map((c) => `<option value="${c.slug}.html"${c === current ? ' selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>
-<nav class="railnav" aria-label="Manual"><h2><a href="./">Manual</a></h2><ul class="flat">${MANUAL.map((c) => `<li><a href="${c.slug}.html"${c === current ? ' aria-current="page"' : ''}>${esc(c.title)}</a></li>`).join('')}</ul></nav></aside>`;
+const manualRail = (current) => `<aside class="rail"><label class="railselect"><span>Chapter</span><select onchange="location.href=this.value" aria-label="Jump to a chapter">${MANUAL.map((c) => `<option value="${c.slug}"${c === current ? ' selected' : ''}>${esc(c.title)}</option>`).join('')}</select></label>
+<nav class="railnav" aria-label="Manual"><h2><a href="./">Manual</a></h2><ul class="flat">${MANUAL.map((c) => `<li><a href="${c.slug}"${c === current ? ' aria-current="page"' : ''}>${esc(c.title)}</a></li>`).join('')}</ul></nav></aside>`;
 add(
   'manual/index.html',
   page({
@@ -466,7 +466,7 @@ add(
     wide: true,
     body: `<div class="with-rail">${manualRail(null)}<div class="content"><h1>Manual</h1>
 <p class="lead">How to use the solver, one chapter at a time.</p>
-<div class="tgrid">${MANUAL.map((c, i) => `<a class="tcard" href="${c.slug}.html"><span class="band">${String(i + 1).padStart(2, '0')}</span><strong>${esc(c.title)}</strong><span>${esc(c.summary)}</span></a>`).join('\n')}</div></div></div>`,
+<div class="tgrid">${MANUAL.map((c, i) => `<a class="tcard" href="${c.slug}"><span class="band">${String(i + 1).padStart(2, '0')}</span><strong>${esc(c.title)}</strong><span>${esc(c.summary)}</span></a>`).join('\n')}</div></div></div>`,
   }),
 );
 MANUAL.forEach((c, i) => {
@@ -478,10 +478,10 @@ MANUAL.forEach((c, i) => {
       title: `${c.title} | Sudoku solver manual | Hodoku Revisited`,
       description: `${c.summary} Part of the Hodoku Revisited sudoku solver manual.`,
       root: '../',
-      path: `manual/${c.slug}.html`,
+      path: `manual/${c.slug}`,
       wide: true,
       body: `<div class="with-rail">${manualRail(c)}<article class="content guide"><p class="crumbs"><a href="./">Manual</a></p><h1>${esc(c.title)}</h1><p class="lead">${esc(c.summary)}</p><div class="prose">${c.body}</div>
-<nav class="pager">${prev ? `<a href="${prev.slug}.html"><small>Previous</small>← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a href="${next.slug}.html"><small>Next</small>${esc(next.title)} →</a>` : '<span></span>'}</nav></article></div>`,
+<nav class="pager">${prev ? `<a href="${prev.slug}"><small>Previous</small>← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a href="${next.slug}"><small>Next</small>${esc(next.title)} →</a>` : '<span></span>'}</nav></article></div>`,
     }),
   );
 });
@@ -493,7 +493,7 @@ add(
     title: 'About Hodoku Revisited, a free sudoku solver | License',
     description: 'Hodoku Revisited is a free, open source sudoku solver and trainer based on HoDoKu. Where it comes from, how it is licensed, and how to get the source.',
     root: '',
-    path: 'about.html',
+    path: 'about',
     body: `<h1>About</h1>
 <p>Hodoku Revisited is a free sudoku solver and trainer. It is a TypeScript port of <a href="https://hodoku.sourceforge.net/">HoDoKu</a>, the Sudoku generator, solver and trainer by Bernhard Hobiger (2008-2012). HoDoKu has not been updated since 2013 and runs only as a Java desktop program. This project brings its solving engine to the web and mobile with a new interface.</p>
 <h2>Accuracy</h2>
@@ -512,7 +512,7 @@ add(
     title: 'Privacy | Hodoku Revisited',
     description: 'What data Hodoku Revisited stores and what it does not.',
     root: '',
-    path: 'privacy.html',
+    path: 'privacy',
     body: `<h1>Privacy</h1>
 <p>The app runs entirely in your browser. Puzzles are generated and solved on your device. Your current game and settings are saved in your browser's local storage so you can continue later; they are never sent to a server.</p>
 <h2>Advertising</h2>
@@ -664,7 +664,7 @@ writeFileSync(join(out, 'ads.txt'), `google.com, pub-${ADSENSE_CLIENT.replace('c
 
 const gated = Boolean(process.env.SITE_PASSWORD);
 if (!gated && siteUrl !== '/') {
-  const urls = pages.map(([p]) => p).filter((p) => p !== '404.html').map((p) => siteUrl + p.replace(/index\.html$/, ''));
+  const urls = pages.map(([p]) => p).filter((p) => p !== '404.html').map((p) => siteUrl + p.replace(/index\.html$/, '').replace(/\.html$/, ''));
   if (existsSync(appDist)) urls.push(siteUrl + 'play/');
   writeFileSync(
     join(out, 'sitemap.xml'),
