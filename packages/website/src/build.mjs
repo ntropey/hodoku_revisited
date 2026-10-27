@@ -520,7 +520,7 @@ add(
 <p>You can also manage or turn off personalized ads in <a href="https://adssettings.google.com/">Google's ad settings</a>, and learn how Google uses data at <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>.</p>
 <p>The solver app under <a href="play/">/play/</a> shares the same consent preference (and offers "Cookie settings" under <em>Settings → About and license</em>). Your games, history and settings stay in your browser.</p>
 <p>This site has no accounts and uses no analytics of its own.</p>
-<p>Questions: open an issue at <a href="${REPO}/issues">${REPO}/issues</a>.</p>`,
+<p>Questions: email <a href="mailto:support@revisitedlabs.com">support@revisitedlabs.com</a> or open an issue at <a href="${REPO}/issues">${REPO}/issues</a>.</p>`,
   }),
 );
 
