@@ -1,4 +1,4 @@
-# Publishes the website (with the app under /play/) to GitHub Pages at https://hodokurevisited.com/.
+# Publishes the website (with the app under /play/) to GitHub Pages and Cloudflare Pages at https://hodokurevisited.com/.
 # Runs on every push to main (after the website tests pass) and can be started by hand.
 # Requires Settings > Pages > Source: GitHub Actions, and `main` allowed in Settings > Environments > github-pages
 # > Deployment branches.
@@ -24,6 +24,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -51,6 +53,19 @@ jobs:
         env:
           SITE_URL: https://hodokurevisited.com/
           SITE_PASSWORD: ${{ inputs.gate && secrets.SITE_PASSWORD || '' }}
+      - name: Ensure Cloudflare Pages project exists
+        if: ${{ env.CF_TOKEN != '' }}
+        run: npx --yes wrangler pages project create hodoku-revisited --production-branch=main || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 6c9d1596276c79e822640d0a8d429c60
+      - name: Deploy to Cloudflare Pages
+        if: ${{ env.CF_TOKEN != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 6c9d1596276c79e822640d0a8d429c60
+          command: pages deploy packages/website/dist --project-name=hodoku-revisited --branch=main
       - uses: actions/upload-pages-artifact@v5
         with:
           path: packages/website/dist
