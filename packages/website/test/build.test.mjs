@@ -14,7 +14,7 @@ test('every technique has a page, listed on the index', () => {
   const index = readFileSync(join(dist, 'techniques/index.html'), 'utf8');
   for (const t of TECHNIQUES) {
     assert.ok(existsSync(join(dist, `techniques/${t.slug}.html`)), t.slug);
-    assert.ok(index.includes(`href="${t.slug}.html"`), t.slug);
+    assert.ok(index.includes(`href="${t.slug}"`), t.slug);
   }
 });
 
@@ -25,7 +25,8 @@ test('internal links resolve', () => {
     for (const m of html.matchAll(/(?:href|src)="([^"#:]+)"/g)) {
       const target = join(dirname(file), m[1]);
       if (m[1].startsWith('play/') || m[1].startsWith('../play/')) continue;
-      assert.ok(existsSync(target) || existsSync(join(target, 'index.html')), `${file} -> ${m[1]}`);
+      assert.ok(!m[1].endsWith('.html'), `${file} links to .html: ${m[1]}`);
+      assert.ok(existsSync(target) || existsSync(`${target}.html`) || existsSync(join(target, 'index.html')), `${file} -> ${m[1]}`);
     }
   }
 });
@@ -69,7 +70,22 @@ test('privacy page explains the consent banner and the locally stored choice', (
 });
 
 test('sitemap and robots are written when SITE_URL is set', () => {
-  assert.match(readFileSync(join(dist, 'sitemap.xml'), 'utf8'), /https:\/\/example\.org\/techniques\/x-wing\.html/);
+  const sitemap = readFileSync(join(dist, 'sitemap.xml'), 'utf8');
+  assert.match(sitemap, /<loc>https:\/\/example\.org\/<\/loc>/);
+  assert.match(sitemap, /<loc>https:\/\/example\.org\/techniques\/<\/loc>/);
+  assert.match(sitemap, /<loc>https:\/\/example\.org\/techniques\/x-wing<\/loc>/);
+  assert.match(sitemap, /<loc>https:\/\/example\.org\/about<\/loc>/);
+  assert.match(sitemap, /<loc>https:\/\/example\.org\/privacy<\/loc>/);
+  assert.ok(!sitemap.includes('.html'), 'sitemap URLs never end in .html');
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (e.name === 'play' ? [] : walk(join(d, e.name))) : [join(d, e.name)]));
+  for (const file of walk(dist).filter((f) => f.endsWith('.html') && !f.endsWith('404.html'))) {
+    const html = readFileSync(file, 'utf8');
+    const canonical = html.match(/<link rel="canonical" href="([^"]+)"/);
+    const ogUrl = html.match(/<meta property="og:url" content="([^"]+)"/);
+    assert.ok(canonical && !canonical[1].endsWith('.html'), `${file}: canonical never ends in .html`);
+    assert.ok(ogUrl && !ogUrl[1].endsWith('.html'), `${file}: og:url never ends in .html`);
+    assert.ok(!/"(?:url|item)":"[^"]*\.html"/.test(html), `${file}: JSON-LD URLs never end in .html`);
+  }
   assert.match(readFileSync(join(dist, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/example\.org\/sitemap\.xml/);
 });
 
@@ -124,7 +140,7 @@ test('learn pages exist and the level page lists every technique under its level
     assert.ok(existsSync(new URL(f, dist)), f);
   }
   const levels = readFileSync(new URL('learn/sudoku-difficulty-levels.html', dist), 'utf8');
-  for (const t of TECHNIQUES) assert.ok(levels.includes(`techniques/${t.slug}.html`), `${t.slug} on the level page`);
+  for (const t of TECHNIQUES) assert.ok(levels.includes(`techniques/${t.slug}"`), `${t.slug} on the level page`);
 });
 
 test('user-facing text and docs use American spelling', async () => {

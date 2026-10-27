@@ -125,7 +125,7 @@ export const MANUAL = [
 <p>This setting limits how hard a hint may be: <em>Singles only</em>, <em>Up to Easy</em>, Medium, Hard, Unfair, or <em>Everything</em>. A puzzle that needs more than the limit allows gets the answer that no such step exists, which is a useful result in itself.</p>
 <p>Individual techniques can be switched off as well, under <em>Settings → Techniques a hint may use</em>. The level is the upper cap; unticking a technique narrows it further, so a hint never uses a technique you would rather spot yourself. With every technique ticked (the default) nothing changes.</p>
 <h2>All steps</h2>
-<p>The <em>All steps</em> tab lists every step available right now, grouped by technique with counts. Select the steps you want and choose <em>Apply selected</em>, or <em>Refresh</em> after you have changed the board. The <em>Path</em> tab goes further and walks the solver's whole route from here (see <a href="solution-path.html">Solution path</a>).</p>`,
+<p>The <em>All steps</em> tab lists every step available right now, grouped by technique with counts. Select the steps you want and choose <em>Apply selected</em>, or <em>Refresh</em> after you have changed the board. The <em>Path</em> tab goes further and walks the solver's whole route from here (see <a href="solution-path">Solution path</a>).</p>`,
   },
   {
     slug: 'training',
@@ -249,6 +249,6 @@ export const MANUAL = [
 <dt>Clear pencil marks</dt><dd>Remove all the notes you wrote.</dd>\n<dt>Reset candidates</dt><dd>Restore the solver's candidates to everything the placed values allow.</dd>
 <dt>About and license</dt><dd>Where the project comes from, and the GPL text.</dd>
 </dl>
-<p>All data stays on your device. See <a href="../privacy.html">Privacy</a>.</p>`,
+<p>All data stays on your device. See <a href="../privacy">Privacy</a>.</p>`,
   },
 ];

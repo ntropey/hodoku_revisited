@@ -75,7 +75,7 @@ function openBanner(){
  if(document.getElementById('hodoku-consent'))return;
  addStyle();
  var box=document.createElement('div');
- box.innerHTML='<div id="hodoku-consent" role="dialog" aria-modal="true" aria-label="Cookie and advertising consent" tabindex="-1"><div class="hc-box"><p><strong>Cookies.</strong> This site uses Google AdSense. With your consent, Google and its partners may use cookies to show ads, including personalized ads. You can accept or reject, and change your mind at any time with the Cookie settings button in the footer. Read the <a href="${root}privacy.html">privacy policy</a>.</p><div class="hc-actions"><button type="button" class="hc-reject">Reject</button><button type="button" class="hc-accept">Accept</button></div></div></div>';
+ box.innerHTML='<div id="hodoku-consent" role="dialog" aria-modal="true" aria-label="Cookie and advertising consent" tabindex="-1"><div class="hc-box"><p><strong>Cookies.</strong> This site uses Google AdSense. With your consent, Google and its partners may use cookies to show ads, including personalized ads. You can accept or reject, and change your mind at any time with the Cookie settings button in the footer. Read the <a href="${root}privacy">privacy policy</a>.</p><div class="hc-actions"><button type="button" class="hc-reject">Reject</button><button type="button" class="hc-accept">Accept</button></div></div></div>';
  var d=box.firstChild;
  document.body.appendChild(d);
  function close(c){
