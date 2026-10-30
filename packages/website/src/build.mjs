@@ -672,5 +672,24 @@ if (!gated && siteUrl !== '/') {
   );
   writeFileSync(join(out, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${siteUrl}sitemap.xml\n`);
 }
+// Android App Links: template with placeholder package name and SHA256 signing fingerprint.
+mkdirSync(join(out, '.well-known'), { recursive: true });
+writeFileSync(
+  join(out, '.well-known', 'assetlinks.json'),
+  JSON.stringify(
+    [
+      {
+        relation: ['delegate_permission/common.handle_all_urls'],
+        target: {
+          namespace: 'android_app',
+          package_name: 'com.revisitedlabs.hodoku',
+          sha256_cert_fingerprints: ['PLACEHOLDER_SHA256_CERT_FINGERPRINT'],
+        },
+      },
+    ],
+    null,
+    2,
+  ) + '\n',
+);
 if (gated) console.log(`password gate added to ${applyGate(out, process.env.SITE_PASSWORD)} pages`);
 console.log(`wrote ${pages.length} pages to ${out}`);
