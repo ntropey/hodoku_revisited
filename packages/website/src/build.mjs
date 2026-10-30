@@ -63,7 +63,7 @@ function page({ title, description, root, body, path, wide, jsonld }) {
 <meta property="og:site_name" content="Hodoku Revisited">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
-${siteUrl ? `<meta property="og:url" content="${siteUrl}${path ?? ''}">\n<meta property="og:image" content="${siteUrl}icon-512.png">` : ''}
+${siteUrl ? `<meta property="og:url" content="${siteUrl}${path ?? ''}">\n<meta property="og:image" content="${siteUrl}og-image.png">\n<meta name="twitter:image" content="${siteUrl}og-image.png">` : ''}
 <meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#F5F2EA" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#15171B" media="(prefers-color-scheme: dark)">
@@ -647,7 +647,7 @@ for (const [path, content] of pages) {
 }
 writeFileSync(join(out, 'site.css'), css);
 
-for (const f of ['icon.svg', 'favicon.svg', 'apple-touch-icon.png', 'icon-512.png']) cpSync(join(here, '..', '..', 'app', 'public', f), join(out, f));
+for (const f of ['icon.svg', 'favicon.svg', 'apple-touch-icon.png', 'icon-512.png', 'og-image.png']) cpSync(join(here, '..', '..', 'app', 'public', f), join(out, f));
 const fontSrc = join(here, '..', '..', 'app', 'node_modules', '@fontsource');
 mkdirSync(join(out, 'fonts'), { recursive: true });
 for (const [id, , w] of FONTS) cpSync(join(fontSrc, id, 'files', `${id}-latin-${w}-normal.woff2`), join(out, 'fonts', `${id}-latin-${w}-normal.woff2`));
