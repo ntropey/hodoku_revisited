@@ -3,7 +3,7 @@
   "name": "Hodoku Revisited",
   "short_name": "Hodoku",
   "description": "A sudoku trainer with logical hints, based on HoDoKu.",
-  "start_url": "/",
+  "start_url": "/play/",
   "scope": "/",
   "display": "standalone",
   "theme_color": "#F5F2EA",
