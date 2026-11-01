@@ -45,7 +45,7 @@ jobs:
           SITE_URL: https://hodokurevisited.com/
           SITE_PASSWORD: ${{ inputs.gate && secrets.SITE_PASSWORD || '' }}
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: 6c9d1596276c79e822640d0a8d429c60
