@@ -89,6 +89,15 @@ test('sitemap and robots are written when SITE_URL is set', () => {
   const robots = readFileSync(join(dist, 'robots.txt'), 'utf8');
   assert.match(robots, /Sitemap: https:\/\/example\.org\/sitemap\.xml/);
   assert.match(robots, /Disallow: \/play\/\?p=/, 'puzzle permalinks stay out of the crawl');
+  assert.ok(existsSync(join(dist, '_headers')), '_headers must exist');
+  const headers = readFileSync(join(dist, '_headers'), 'utf8');
+  assert.ok(headers.includes('max-age=31536000, immutable'), '_headers configures immutable cache');
+});
+
+test('the home page links to Microsoft Store and Google Play', () => {
+  const page = readFileSync(join(dist, 'index.html'), 'utf8');
+  assert.ok(page.includes('https://apps.microsoft.com/detail/9NHH9PLSQ0M4'), 'links to Microsoft Store');
+  assert.ok(page.includes('https://play.google.com/store/apps/details?id=com.revisitedlabs.hodoku'), 'links to Google Play');
 });
 
 test('technique pages with a worked example contain a diagram', () => {

@@ -100,7 +100,7 @@ ${body}
     <a href="https://nonogramrevisited.com/" target="_blank" rel="noopener noreferrer">Nonogram Revisited</a> ·
     <a href="https://dolcecolore.com/" target="_blank" rel="noopener noreferrer">Dolce Colore</a>
   </p>
-  <p><a href="${REPO}">GitHub</a> · <a href="${REPO}/commits/main">Changelog</a> · <a href="https://hodoku.sourceforge.net/">Original site</a> · <a href="${root}about">About and license</a> · <a href="${root}privacy">Privacy</a></p>
+  <p><a href="${REPO}">GitHub</a> · <a href="${REPO}/commits/main">Changelog</a> · <a href="https://apps.microsoft.com/detail/9NHH9PLSQ0M4" target="_blank" rel="noopener noreferrer">Microsoft Store</a> · <a href="https://play.google.com/store/apps/details?id=com.revisitedlabs.hodoku" target="_blank" rel="noopener noreferrer">Google Play</a> · <a href="https://hodoku.sourceforge.net/">Original site</a> · <a href="${root}about">About and license</a> · <a href="${root}privacy">Privacy</a></p>
 </footer>
 </body>
 </html>
@@ -246,7 +246,7 @@ add(
     <p class="eyebrow">The HoDoKu sudoku solver, now with AI Super Solver &amp; Coach</p>
     <h1>Every sudoku step,<br>explained.</h1>
     <p class="lead">A free sudoku solver and trainer: the hint engine, analyzer and technique library from HoDoKu, rebuilt in TypeScript with an interactive AI Coach. No Java and no install. Get progressive nudges, step through every deduction on the board, or ask why any candidate fails.</p>
-    <p><a class="btn" href="play/">Open the solver</a> <a class="btn alt" href="play/?daily=1">Daily puzzle</a> <a class="btn alt" href="techniques/">Browse techniques</a></p>
+    <p><a class="btn" href="play/">Open the solver</a> <a class="btn alt" href="play/?daily=1">Daily puzzle</a> <a class="btn alt" href="https://apps.microsoft.com/detail/9NHH9PLSQ0M4" target="_blank" rel="noopener noreferrer" title="Get Hodoku Revisited on Microsoft Store"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px;margin-right:6px" aria-hidden="true"><path d="M0 2.222L6.5 1.333v6.222H0V2.222zm7.5-1.469L16 0v7.556H7.5V.753zM0 8.444h6.5v6.223L0 13.778V8.444zm7.5 0H16V16l-8.5-.753V8.444z"/></svg>Microsoft Store</a> <a class="btn alt" href="https://play.google.com/store/apps/details?id=com.revisitedlabs.hodoku" target="_blank" rel="noopener noreferrer" title="Get Hodoku Revisited on Google Play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:6px" aria-hidden="true"><path d="M3.609 1.814L13.792 12 3.61 22.186a2.158 2.158 0 0 1-.61-.925V2.739c.143-.377.362-.693.609-.925zm11.235 11.238L5.352 22.544l10.97-6.326-1.478-3.166zm1.052-2.104l2.062 1.192c.792.457.792 1.201 0 1.658l-2.062 1.192-1.39-2.021 1.39-2.021zM5.352 1.456l9.492 9.492 1.478-3.166L5.352 1.456z"/></svg>Google Play</a> <a class="btn alt" href="techniques/">Browse techniques</a></p>
     <p class="gen"><span>Generate:</span> <a class="chip" href="play/?daily=1"><strong>Daily</strong></a> ${['Easy', 'Medium', 'Hard', 'Unfair', 'Extreme'].map((l, i) => `<a class="chip" href="play/?level=${i + 1}">${l}</a>`).join(' ')}</p>
   </div>
   ${homeEx ? `<figure class="example hero-board">${diagram(homeEx)}<figcaption><span class="mono">${esc(homeEx.name)}</span> · ${esc(caption(homeEx).replace(/^[^:]*: /, ''))}</figcaption></figure>` : ''}
@@ -660,6 +660,41 @@ console.log(`consent banner added to ${applyConsent(out)} pages`);
 
 // a custom domain (anything but github.io) gets a CNAME file so Pages keeps serving it
 if (siteUrl && siteUrl !== '/' && !new URL(siteUrl).hostname.endsWith('github.io')) writeFileSync(join(out, 'CNAME'), new URL(siteUrl).hostname + '\n');
+
+// Cloudflare Pages edge cache headers & security policies
+writeFileSync(
+  join(out, '_headers'),
+  `/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+/site.css
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/play/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icon.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+/og-image.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/icon-512.png
+  Cache-Control: public, max-age=31536000, immutable
+`,
+);
 
 writeFileSync(join(out, 'ads.txt'), `google.com, pub-${ADSENSE_CLIENT.replace('ca-pub-', '')}, DIRECT, f08c47fec0942fa0\n`);
 
