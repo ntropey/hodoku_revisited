@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_CANDS, autoFillLastDigit, candColorAt, cellColorAt, clearColors, clearNotes, deviations, fillHiddenSingles, hiddenSingles, isGiven, notesOf, paintCand, paintCell, restart, setGivens, toggleNote, toggleNoteOrCand, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells, type GameState } from '../src/game';
+import { ALL_CANDS, autoFillLastDigit, candColorAt, candidateContradictions, cellColorAt, clearColors, clearNotes, deviations, fillHiddenSingles, hiddenSingles, isGiven, notesOf, paintCand, paintCell, restart, setGivens, stepContradictsSolution, toggleNote, toggleNoteOrCand, erase, fillCands, removeCands, isSolved, newGame, redo, remaining, setValue, toggleCand, undo, wrongCells, type GameState } from '../src/game';
 import { allHints, analyze, hint } from '../src/solverApi';
 
 const PUZZLE = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
@@ -393,5 +393,62 @@ describe('deviations', () => {
     const cell = g.values.indexOf(0);
     const d = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((x) => (g.cands[cell] & (1 << x)) !== 0)!;
     expect(deviations(removeCands(g, [{ cell, digit: d }]))).toEqual([cell]);
+  });
+});
+
+describe('candidateContradictions and stepContradictsSolution', () => {
+  it('detects when an empty cell is missing its solution digit in candidates', () => {
+    const g = newGame(info());
+    expect(candidateContradictions(g)).toEqual([]);
+
+    const cell = g.values.indexOf(0);
+    const solDigit = g.solution[cell];
+    // removing a non-solution candidate does not contradict the solution
+    const nonSol = [1, 2, 3, 4, 5, 6, 7, 8, 9].find((d) => d !== solDigit && (g.cands[cell] & (1 << d)) !== 0)!;
+    const gNonSol = removeCands(g, [{ cell, digit: nonSol }]);
+    expect(candidateContradictions(gNonSol)).toEqual([]);
+
+    // removing the true solution digit flags a contradiction
+    const gContradict = removeCands(g, [{ cell, digit: solDigit }]);
+    expect(candidateContradictions(gContradict)).toEqual([cell]);
+
+    // resetting candidates restores the valid state
+    expect(candidateContradictions(fillCands(gContradict))).toEqual([]);
+  });
+
+  it('checks if a hint step contradicts the solution', () => {
+    const g = newGame(info());
+    const cell = g.values.indexOf(0);
+    const solDigit = g.solution[cell];
+    const wrongDigit = solDigit === 9 ? 1 : solDigit + 1;
+
+    const correctPlace = {
+      name: 'Naked Single',
+      type: 'NAKED_SINGLE',
+      text: `${solDigit} goes in cell`,
+      summary: '',
+      slug: null,
+      marks: { place: [{ cell, digit: solDigit }], elim: [], key: [], fins: [], colors: [], chains: [] },
+      notation: [],
+    };
+    expect(stepContradictsSolution(correctPlace, g.solution)).toBe(false);
+
+    const wrongPlace = {
+      ...correctPlace,
+      marks: { ...correctPlace.marks, place: [{ cell, digit: wrongDigit }] },
+    };
+    expect(stepContradictsSolution(wrongPlace, g.solution)).toBe(true);
+
+    const badElim = {
+      ...correctPlace,
+      marks: { place: [], elim: [{ cell, digit: solDigit }], key: [], fins: [], colors: [], chains: [] },
+    };
+    expect(stepContradictsSolution(badElim, g.solution)).toBe(true);
+
+    const goodElim = {
+      ...correctPlace,
+      marks: { place: [], elim: [{ cell, digit: wrongDigit }], key: [], fins: [], colors: [], chains: [] },
+    };
+    expect(stepContradictsSolution(goodElim, g.solution)).toBe(false);
   });
 });

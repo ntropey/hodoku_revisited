@@ -250,8 +250,14 @@ function toHintResult(step: SolutionStep, before: Sudoku2): HintResult {
   };
 }
 
+function stepContradicts(marks: { place: { cell: number; digit: number }[]; elim: { cell: number; digit: number }[] }, solution: readonly number[]): boolean {
+  for (const p of marks.place) if (solution[p.cell] !== p.digit) return true;
+  for (const e of marks.elim) if (solution[e.cell] === e.digit) return true;
+  return false;
+}
+
 /** The next logical step for the given board (values and candidate bitmasks, bit d = digit d). */
-export function hint(values: number[], cands: number[], level: HintLevel = 5, disabled: readonly string[] = []): HintResult | null {
+export function hint(values: number[], cands: number[], level: HintLevel = 5, disabled: readonly string[] = [], solution?: readonly number[]): HintResult | null {
   const s = boardToSudoku(values, cands);
   const before = s.clone();
   const solver = new SudokuSolver();
@@ -260,7 +266,9 @@ export function hint(values: number[], cands: number[], level: HintLevel = 5, di
   const configs = defaultSolverSteps().map((c) => ({ ...c, enabled: c.enabled && (level === 0 || c.level <= level) && !off.has(c.type) }));
   const step = solver.getHint(level === 0, configs);
   if (step === null || step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') return null;
-  return toHintResult(step, before);
+  const res = toHintResult(step, before);
+  if (solution && stepContradicts(res.marks, solution)) return null;
+  return res;
 }
 
 /**
@@ -276,7 +284,7 @@ export function prove(values: number[], cands: number[], cell: number, digit: nu
  * the board as it is and applying the steps one by one walks the solution path. Always uses the full
  * technique set (not the hint filters).
  */
-export function path(values: number[], cands: number[]): HintResult[] {
+export function path(values: number[], cands: number[], solution?: readonly number[]): HintResult[] {
   const solver = new SudokuSolver();
   solver.setSudoku(boardToSudoku(values, cands));
   solver.solve();
@@ -284,7 +292,9 @@ export function path(values: number[], cands: number[]): HintResult[] {
   const steps: HintResult[] = [];
   for (const step of solver.getSteps()) {
     if (step.type === 'GIVE_UP' || step.type === 'INCOMPLETE') break;
-    steps.push(toHintResult(step, replay));
+    const res = toHintResult(step, replay);
+    if (solution && stepContradicts(res.marks, solution)) break;
+    steps.push(res);
     solver.doStep(replay, step);
   }
   return steps;
@@ -307,6 +317,7 @@ export function allHints(
   level: HintLevel = 5,
   perType = 12,
   disabled: readonly string[] = [],
+  solution?: readonly number[],
 ): { results: HintResult[]; total: Record<string, number> } {
   const s = boardToSudoku(values, cands);
   const finder = new SudokuStepFinder();
@@ -350,10 +361,12 @@ export function allHints(
   const counts: Record<string, number> = {};
   const results: HintResult[] = [];
   for (const st of sorted) {
+    const res = toHintResult(st, s);
+    if (solution && stepContradicts(res.marks, solution)) continue;
     const name = SOLUTION_TYPE_INFO[st.type].stepName;
     total[name] = (total[name] ?? 0) + 1;
     if ((counts[name] = (counts[name] ?? 0) + 1) > perType) continue;
-    results.push(toHintResult(st, s));
+    results.push(res);
   }
   return { results, total };
 }

@@ -212,3 +212,58 @@ describe('daily', () => {
     expect(a.puzzle).not.toBe(c.puzzle);
   });
 });
+
+describe('contradiction protection (issue #70)', () => {
+  it('refuses to return a hint that contradicts the solution when candidates are inconsistent', () => {
+    // Puzzle from issue #70 (Medium, score 806)
+    const puzzle = '..92.18...2..6..97678..4..5.9...7.....4.1........831....6.....3.4....7......3.9.8';
+    const info = analyze(puzzle);
+    const g = newGame(info);
+
+    // Place the first few singles as done during play
+    let curr = g;
+    // Solve cells up to the point of issue 70:
+    // r4c7 has solution 3, but simulate the candidate 3 being erroneously removed
+    const r4c7 = 3 * 9 + 6;
+    expect(info.solution[r4c7]).toBe(3);
+
+    // Set up board with missing candidate 3 at r4c7
+    const corruptedCands = curr.cands.slice();
+    corruptedCands[r4c7] &= ~(1 << 3);
+
+    // Without solution check, the solver might suggest placing 3 in r2c7 (where solution is 4)
+    // With solution passed, hint() must reject that contradicting step and return null
+    const safeHint = hint(curr.values, corruptedCands, 5, [], info.solution);
+    if (safeHint) {
+      // If a hint is returned, verify that it does not contradict the solution in any way
+      for (const p of safeHint.marks.place) {
+        expect(info.solution[p.cell]).toBe(p.digit);
+      }
+      for (const e of safeHint.marks.elim) {
+        expect(info.solution[e.cell]).not.toBe(e.digit);
+      }
+    }
+
+    // allHints with solution should never contain a step contradicting the solution
+    const all = allHints(curr.values, corruptedCands, 5, 12, [], info.solution);
+    for (const h of all.results) {
+      for (const p of h.marks.place) {
+        expect(info.solution[p.cell]).toBe(p.digit);
+      }
+      for (const e of h.marks.elim) {
+        expect(info.solution[e.cell]).not.toBe(e.digit);
+      }
+    }
+
+    // path with solution should never contain a step contradicting the solution
+    const pSteps = path(curr.values, corruptedCands, info.solution);
+    for (const h of pSteps) {
+      for (const p of h.marks.place) {
+        expect(info.solution[p.cell]).toBe(p.digit);
+      }
+      for (const e of h.marks.elim) {
+        expect(info.solution[e.cell]).not.toBe(e.digit);
+      }
+    }
+  });
+});

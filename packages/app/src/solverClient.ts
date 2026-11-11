@@ -95,23 +95,23 @@ export class SolverClient {
   }
 
   /** Every step available now, grouped by technique (at most a dozen per technique are returned). */
-  async allHints(values: number[], cands: number[], level: HintLevel, disabled: string[] = []): Promise<{ results: HintResult[]; total: Record<string, number> }> {
-    const r = await this.call({ kind: 'allHints', values, cands, level, disabled });
+  async allHints(values: number[], cands: number[], level: HintLevel, disabled: string[] = [], solution?: number[]): Promise<{ results: HintResult[]; total: Record<string, number> }> {
+    const r = await this.call({ kind: 'allHints', values, cands, level, disabled, solution });
     if (r.kind === 'error') throw new Error(r.message);
     if (r.kind !== 'allHints') throw new Error('unexpected response');
     return { results: r.results, total: r.total };
   }
 
-  async hint(values: number[], cands: number[], level: HintLevel, disabled: string[] = []): Promise<HintResult | null> {
-    const r = await this.call({ kind: 'hint', values, cands, level, disabled });
+  async hint(values: number[], cands: number[], level: HintLevel, disabled: string[] = [], solution?: number[]): Promise<HintResult | null> {
+    const r = await this.call({ kind: 'hint', values, cands, level, disabled, solution });
     if (r.kind === 'error') throw new Error(r.message);
     if (r.kind !== 'hint') throw new Error('unexpected response');
     return r.hint;
   }
 
   /** The solver's remaining steps from this board, in order (the "solution path"). */
-  async path(values: number[], cands: number[]): Promise<HintResult[]> {
-    const r = await this.call({ kind: 'path', values, cands });
+  async path(values: number[], cands: number[], solution?: number[]): Promise<HintResult[]> {
+    const r = await this.call({ kind: 'path', values, cands, solution });
     if (r.kind === 'error') throw new Error(r.message);
     if (r.kind !== 'path') throw new Error('unexpected response');
     return r.steps;

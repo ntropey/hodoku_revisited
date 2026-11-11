@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import type { Snap } from '../components/BottomSheet';
-import type { GameState } from '../game';
+import { candidateContradictions, stepContradictsSolution, wrongCells, type GameState } from '../game';
 import type { HintLevel, HintResult, ProofResult } from '../protocol';
 import { isCancelled, type SolverClient } from '../solverClient';
 import type { Tab } from '../ui';
@@ -72,11 +72,31 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
     async (startInCoach = false) => {
       if (!game) return;
       openTab('hint');
+      if (wrongCells(game).length > 0) {
+        setHint(null);
+        setCoachStep(null);
+        setProof(null);
+        setMessage('The board contains incorrect digits. Correct mistakes before requesting a hint.');
+        return;
+      }
+      if (candidateContradictions(game).length > 0) {
+        setHint(null);
+        setCoachStep(null);
+        setProof(null);
+        setMessage('Candidate marks contradict the solution. Reset candidates to get accurate hints.');
+        return;
+      }
       setBusy(startInCoach ? 'AI Coach is analyzing the board...' : 'Looking for a hint...');
       setMessage(null);
       setProof(null);
       try {
-        const h = await solver.current.hint(game.values, game.cands, hintLevel, disabledTechniques);
+        const h = await solver.current.hint(game.values, game.cands, hintLevel, disabledTechniques, game.solution);
+        if (h && stepContradictsSolution(h, game.solution)) {
+          setHint(null);
+          setCoachStep(null);
+          setMessage('Candidate marks contradict the solution. Reset candidates to get accurate hints.');
+          return;
+        }
         setHint(h);
         setCoachStep(h && startInCoach && h.coach?.length ? 0 : null);
         setMessage(h ? null : hintLevel < 5 ? 'No hint at this hint level. Raise "Hints use" above.' : 'No logical hint found.');
@@ -94,6 +114,14 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
     async (cell: number, digit: number) => {
       if (!game) return;
       openTab('hint');
+      if (wrongCells(game).length > 0) {
+        setMessage('The board contains incorrect digits. Correct mistakes before testing candidates.');
+        return;
+      }
+      if (candidateContradictions(game).length > 0) {
+        setMessage('Candidate marks contradict the solution. Reset candidates before testing candidates.');
+        return;
+      }
       setBusy('Tracing consequences...');
       setMessage(null);
       try {
@@ -114,15 +142,35 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
       if (!game) return;
       if (auto) setTab('steps');
       else openTab('steps');
+      if (wrongCells(game).length > 0) {
+        setAllSteps({ results: [], total: {} });
+        setHint(null);
+        setMessage('The board contains incorrect digits. Correct mistakes before looking for steps.');
+        return;
+      }
+      if (candidateContradictions(game).length > 0) {
+        setAllSteps({ results: [], total: {} });
+        setHint(null);
+        setMessage('Candidate marks contradict the solution. Reset candidates to get accurate steps.');
+        return;
+      }
       setBusy('Looking for all steps...');
       try {
-        const data = await solver.current.allHints(game.values, game.cands, hintLevel, disabledTechniques);
-        setAllSteps(data);
+        const data = await solver.current.allHints(game.values, game.cands, hintLevel, disabledTechniques, game.solution);
+        const validResults = data.results.filter((s) => !stepContradictsSolution(s, game.solution));
+        const filteredTotal = { ...data.total };
+        for (const r of data.results) {
+          if (stepContradictsSolution(r, game.solution) && filteredTotal[r.type]) {
+            filteredTotal[r.type]--;
+            if (filteredTotal[r.type] <= 0) delete filteredTotal[r.type];
+          }
+        }
+        setAllSteps({ results: validResults, total: filteredTotal });
         // the top step is shown on the board right away
-        setHint(data.results[0] ?? null);
+        setHint(validResults[0] ?? null);
         setCoachStep(null);
         setProof(null);
-        setMessage(null);
+        setMessage(validResults.length === 0 ? 'No logical steps found.' : null);
       } catch (e) {
         setAllSteps({ results: [], total: {} });
         if (!isCancelled(e)) setMessage((e as Error).message);
@@ -136,10 +184,26 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
   /** The solver's remaining steps from the current board (the "solution path"). */
   const askPath = useCallback(async () => {
     if (!game) return;
+    if (wrongCells(game).length > 0) {
+      setPathSteps(null);
+      setMessage('The board contains incorrect digits. Correct mistakes to view the solution path.');
+      return;
+    }
+    if (candidateContradictions(game).length > 0) {
+      setPathSteps(null);
+      setMessage('Candidate marks contradict the solution. Reset candidates to view the solution path.');
+      return;
+    }
     setBusy('Finding the solution path...');
     setMessage(null);
     try {
-      setPathSteps(await solver.current.path(game.values, game.cands));
+      const steps = await solver.current.path(game.values, game.cands, game.solution);
+      if (steps.some((s) => stepContradictsSolution(s, game.solution))) {
+        setPathSteps([]);
+        setMessage('Candidate marks contradict the solution. Reset candidates to view the solution path.');
+        return;
+      }
+      setPathSteps(steps);
       setPathDone(0);
     } catch (e) {
       if (!isCancelled(e)) setMessage((e as Error).message);

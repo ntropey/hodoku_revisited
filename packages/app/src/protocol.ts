@@ -51,9 +51,9 @@ export type WorkerRequest =
   | { id: number; kind: 'daily'; date: string; level: number }
   | { id: number; kind: 'train'; level: number; techniques: string[]; autoSolve: boolean; seen: number[] }
   | { id: number; kind: 'analyze'; puzzle: string }
-  | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
-  | { id: number; kind: 'allHints'; values: number[]; cands: number[]; level: HintLevel; disabled: string[] }
-  | { id: number; kind: 'path'; values: number[]; cands: number[] }
+  | { id: number; kind: 'hint'; values: number[]; cands: number[]; level: HintLevel; disabled: string[]; solution?: number[] }
+  | { id: number; kind: 'allHints'; values: number[]; cands: number[]; level: HintLevel; disabled: string[]; solution?: number[] }
+  | { id: number; kind: 'path'; values: number[]; cands: number[]; solution?: number[] }
   | { id: number; kind: 'prove'; values: number[]; cands: number[]; cell: number; digit: number }
   | { id: number; kind: 'format'; values: number[]; cands: number[]; mode: CopyFormat }
   | { id: number; kind: 'book'; sections: PrintSection[]; techniques: string[] };

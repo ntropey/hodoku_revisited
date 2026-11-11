@@ -3,7 +3,7 @@
  * Game state: pure functions, no React, no DOM.
  */
 import { tables } from '@hodoku/core';
-import type { PathEntry, PuzzleInfo } from './protocol';
+import type { HintResult, PathEntry, PuzzleInfo } from './protocol';
 
 const PEERS: readonly (readonly number[])[] = tables.BUDDIES.map((b) => [...b.values()]);
 export const ALL_CANDS = 0b1111111110;
@@ -249,6 +249,32 @@ export function wrongCells(g: GameState): number[] {
     if (v !== 0 && v !== g.solution[i]) out.push(i);
   });
   return out;
+}
+
+/**
+ * Empty cells where the candidate mask does not include the cell's solution digit,
+ * meaning candidate state contradicts the puzzle solution.
+ */
+export function candidateContradictions(g: GameState): number[] {
+  const out: number[] = [];
+  g.values.forEach((v, i) => {
+    if (v === 0 && (g.cands[i] & (1 << g.solution[i])) === 0) out.push(i);
+  });
+  return out;
+}
+
+/** Check whether a hint step contradicts the puzzle solution (wrong placement or eliminating solution digit). */
+export function stepContradictsSolution(
+  step: { marks: { place: readonly { cell: number; digit: number }[]; elim: readonly { cell: number; digit: number }[] } },
+  solution: readonly number[],
+): boolean {
+  for (const p of step.marks.place) {
+    if (solution[p.cell] !== p.digit) return true;
+  }
+  for (const e of step.marks.elim) {
+    if (solution[e.cell] === e.digit) return true;
+  }
+  return false;
 }
 
 /** How many times each digit is still needed (9 minus correctly placed). */

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { cellName } from '@hodoku/core';
-import { isGiven, type GameState } from '../game';
+import { candidateContradictions, isGiven, type GameState } from '../game';
 import type { HintResult, ProofResult } from '../protocol';
 
 interface Props {
@@ -21,6 +21,7 @@ interface Props {
   onHint: (startInCoach?: boolean) => void;
   onApply: () => void;
   onDismiss: () => void;
+  onResetCandidates?: () => void;
 }
 
 const cells = (list: { cell: number }[]) => [...new Set(list.map((x) => cellName(x.cell)))].join(', ');
@@ -132,6 +133,7 @@ export function HintView({
   onHint,
   onApply,
   onDismiss,
+  onResetCandidates,
 }: Props) {
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -223,6 +225,11 @@ export function HintView({
           <button onClick={() => onHint(true)} disabled={disabled || !!busy}>
             Coach me
           </button>
+          {onResetCandidates && game && candidateContradictions(game).length > 0 && !busy && (
+            <button type="button" onClick={onResetCandidates}>
+              Reset candidates
+            </button>
+          )}
         </div>
         {(busy || message) && <p className="note">{busy ?? message}</p>}
         <WhyNotBar game={game} selected={selected} proof={proof} busy={busy} onProve={onProve} />

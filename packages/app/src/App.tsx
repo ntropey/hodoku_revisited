@@ -443,6 +443,10 @@ export function App() {
       onNextStep={() => applyPath(1)}
       onSolveUpTo={applyUpTo}
       onRefreshPath={() => void panel.askPath()}
+      onResetCandidates={() => {
+        update(fillCands);
+        setMessage(null);
+      }}
     />
   );
 

@@ -36,6 +36,7 @@ interface Props {
   onNextStep: () => void;
   onSolveUpTo: (level: HintLevel) => void;
   onRefreshPath: () => void;
+  onResetCandidates?: () => void;
 }
 
 /** The side panel with its four tabs (Hint, All steps, Path, Summary). App renders it twice: beside the board and in the phone sheet. */
@@ -61,6 +62,7 @@ export function SolverPanel(p: Props) {
           onHint={p.onHint}
           onApply={p.onApplyHint}
           onDismiss={p.onDismissHint}
+          onResetCandidates={p.onResetCandidates}
         />
       )}
       {p.tab === 'steps' && (
