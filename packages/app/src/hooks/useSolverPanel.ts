@@ -160,9 +160,9 @@ export function useSolverPanel({ game, solved, solver, hintLevel, disabledTechni
         const validResults = data.results.filter((s) => !stepContradictsSolution(s, game.solution));
         const filteredTotal = { ...data.total };
         for (const r of data.results) {
-          if (stepContradictsSolution(r, game.solution) && filteredTotal[r.type]) {
-            filteredTotal[r.type]--;
-            if (filteredTotal[r.type] <= 0) delete filteredTotal[r.type];
+          if (stepContradictsSolution(r, game.solution) && filteredTotal[r.name]) {
+            filteredTotal[r.name]--;
+            if (filteredTotal[r.name] <= 0) delete filteredTotal[r.name];
           }
         }
         setAllSteps({ results: validResults, total: filteredTotal });
