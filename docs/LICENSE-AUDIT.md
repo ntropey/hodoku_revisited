@@ -23,6 +23,7 @@ need follow-up (below).
 | 8 | Website/manual is GFDL 1.3 | "All material on this page is licensed under the GNU FDLv1.3" | GFDL and GPL are not compatible for mixing. Write new docs. If we reuse manual text, keep it in a separate GFDL-labeled area. |
 | 9 | Name | No trademark statement found, not verified against trademark registries | Use "Hodoku Revisited" plus the "not affiliated" notice. |
 | 10 | `trunk` is unfinished (r147 "Tabling new, work in progress...") | `trunk/ToDo.txt`, commit message | Port from the 2.2.0 tag. Use trunk only as reference. |
+| 11 | Vendored third-party code: QR encoder | `packages/app/src/vendor/qrcodegen.ts`, Project Nayuki, MIT | MIT is compatible with GPLv3-or-later. Permission notice kept in the file; credit in `NOTICE.md`. Dev-only test dependency `jsqr` (Apache-2.0) is not shipped. |
 
 ## Obligations when distributing
 

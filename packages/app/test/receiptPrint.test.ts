@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { RECEIPT_CARD_HEIGHT, RECEIPT_WIDTH, planReceiptStrips, prepareReceiptCards, receiptZip, splitReceiptCards } from '../src/receiptPrint';
+import {
+  RECEIPT_CARDS_PER_STRIP,
+  RECEIPT_CARD_HEIGHT,
+  RECEIPT_FOOTER_HEIGHT,
+  RECEIPT_SLOT_HEIGHT,
+  RECEIPT_WIDTH,
+  planReceiptStrips,
+  prepareReceiptCards,
+  receiptStripHeight,
+  receiptZip,
+  splitReceiptCards,
+} from '../src/receiptPrint';
 import type { PrintSudoku } from '../src/protocol';
 
 const puzzle = (level: number, score: number): PrintSudoku => ({
@@ -16,6 +27,14 @@ describe('receipt print layout', () => {
   it('keeps the reference 384x476px geometry', () => {
     expect(RECEIPT_WIDTH).toBe(384);
     expect(RECEIPT_CARD_HEIGHT).toBe(476);
+  });
+
+  it('adds a 206px scan footer and keeps strips under 4800px', () => {
+    expect(RECEIPT_FOOTER_HEIGHT).toBe(206);
+    expect(RECEIPT_SLOT_HEIGHT).toBe(682);
+    expect(RECEIPT_CARDS_PER_STRIP).toBe(6);
+    expect(receiptStripHeight(RECEIPT_CARDS_PER_STRIP)).toBe(4148);
+    expect(receiptStripHeight(RECEIPT_CARDS_PER_STRIP + 1)).toBeGreaterThan(4760);
   });
 
   it('numbers puzzles within each level without mutating the input order', () => {
@@ -36,7 +55,7 @@ describe('receipt print layout', () => {
     expect(input.map((c) => c.score)).toEqual([200, 500, 240, 1000, 550]);
   });
 
-  it('creates seven difficulty-homogeneous strips for a 20/30/10/10 batch', () => {
+  it('creates difficulty-homogeneous strips of at most six for a 20/30/10/10 batch', () => {
     const input = [
       ...Array.from({ length: 20 }, (_, i) => puzzle(1, 100 + i)),
       ...Array.from({ length: 30 }, (_, i) => puzzle(2, 200 + i)),
@@ -44,18 +63,17 @@ describe('receipt print layout', () => {
       ...Array.from({ length: 10 }, (_, i) => puzzle(5, 500 + i)),
     ];
     const strips = planReceiptStrips(prepareReceiptCards(input, true, () => 0));
-    expect(strips).toHaveLength(7);
-    expect(strips.map((s) => s.level)).toEqual([1, 1, 2, 2, 2, 3, 5]);
-    expect(strips.map((s) => s.part)).toEqual([1, 2, 1, 2, 3, 1, 1]);
-    expect(strips.map((s) => s.cards.length)).toEqual(Array(7).fill(10));
+    expect(strips.map((s) => s.level)).toEqual([1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 5, 5]);
+    expect(strips.map((s) => s.part)).toEqual([1, 2, 3, 4, 1, 2, 3, 4, 5, 1, 2, 1, 2]);
+    expect(strips.map((s) => s.cards.length)).toEqual([6, 6, 6, 2, 6, 6, 6, 6, 6, 6, 4, 6, 4]);
     expect(strips.every((s) => s.cards.every((card) => card.puzzle.level === s.level))).toBe(true);
     expect(strips.flatMap((s) => s.cards)).toHaveLength(70);
   });
 
-  it('splits long jobs into ten-puzzle sheets with no missing puzzles', () => {
+  it('splits long jobs into six-puzzle sheets with no missing puzzles', () => {
     const cards = prepareReceiptCards(Array.from({ length: 23 }, (_, i) => puzzle((i % 5) + 1, i * 10)));
     const strips = splitReceiptCards(cards);
-    expect(strips.map((s) => s.length)).toEqual([10, 10, 3]);
+    expect(strips.map((s) => s.length)).toEqual([6, 6, 6, 5]);
     expect(strips.flat().map((c) => c.order)).toEqual(Array.from({ length: 23 }, (_, i) => i + 1));
     expect(() => splitReceiptCards(cards, 0)).toThrow(RangeError);
   });

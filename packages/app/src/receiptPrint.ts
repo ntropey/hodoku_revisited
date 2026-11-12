@@ -3,10 +3,19 @@
  * Compact, single-column receipt PNG export using the existing print puzzles.
  */
 import { LEVEL_NAMES, type PrintSudoku } from './protocol';
+import { drawQr, encodePuzzleQr } from './qrPuzzle';
 
 export const RECEIPT_WIDTH = 384;
 export const RECEIPT_CARD_HEIGHT = 476;
-export const RECEIPT_CARDS_PER_STRIP = 10;
+/** Scan-to-open footer under each grid: a version 6 QR code at 4px per module (41 + 2x4 quiet modules). */
+export const RECEIPT_FOOTER_HEIGHT = 206;
+export const RECEIPT_SLOT_HEIGHT = RECEIPT_CARD_HEIGHT + RECEIPT_FOOTER_HEIGHT;
+/** Blank paper with a dashed cut line below the last puzzle of each strip. */
+export const RECEIPT_TEAR_HEIGHT = 56;
+export const RECEIPT_CARDS_PER_STRIP = 6;
+
+/** Pixel height of a strip holding this many puzzles. */
+export const receiptStripHeight = (cards: number): number => cards * RECEIPT_SLOT_HEIGHT + RECEIPT_TEAR_HEIGHT;
 
 /** Coordinates from the 384px thermal-printer reference sheet. */
 export const RECEIPT_X_LINES = [13, 52, 92, 133, 172, 212, 253, 292, 332, 373] as const;
@@ -130,14 +139,56 @@ function drawCard(ctx: CanvasRenderingContext2D, card: ReceiptCard, y: number, a
   }
 }
 
-/** A printable 384px-wide PNG containing a vertical strip of up to ten puzzles. */
+const FOOTER_FONT = '"DejaVu Sans Mono", monospace';
+const SITE_TEXT = 'hodokurevisited.com';
+
+/** QR code on the left, "scan for hints & solution" and the site name on the right. */
+function drawFooter(ctx: CanvasRenderingContext2D, card: ReceiptCard, top: number): void {
+  const qr = encodePuzzleQr(card.puzzle.givens);
+  const scale = Math.max(1, Math.floor((RECEIPT_FOOTER_HEIGHT - 10) / (qr.size + 8)));
+  const side = drawQr(ctx, qr, 8, top + 5, scale);
+
+  const x = 8 + side + 6;
+  const room = RECEIPT_WIDTH - 8 - x;
+  ctx.fillStyle = '#000000';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = '700 16px ' + FOOTER_FONT;
+  ['SCAN FOR', 'HINTS &', 'SOLUTION'].forEach((line, i) => ctx.fillText(line, x, top + 36 + i * 22));
+  let px = 15;
+  ctx.font = '700 ' + px + 'px ' + FOOTER_FONT;
+  while (ctx.measureText(SITE_TEXT).width > room && px > 9) {
+    px -= 1;
+    ctx.font = '700 ' + px + 'px ' + FOOTER_FONT;
+  }
+  ctx.fillText(SITE_TEXT, x, top + 114);
+}
+
+/** Dashed cut line and the website, below the last puzzle of a strip. */
+function drawTearOff(ctx: CanvasRenderingContext2D, top: number): void {
+  ctx.fillStyle = '#000000';
+  for (let x = 0; x < RECEIPT_WIDTH; x += 12) ctx.fillRect(x, top + 6, 6, 2);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = '700 13px ' + FOOTER_FONT;
+  ctx.fillText('Check solution & hints: ' + SITE_TEXT, RECEIPT_WIDTH / 2, top + 20);
+}
+
+/** A printable 384px-wide PNG containing a vertical strip of puzzles, each with a scan code. */
 async function makeStrip(cards: readonly ReceiptCard[], answer: boolean): Promise<Uint8Array> {
   const canvas = document.createElement('canvas');
   canvas.width = RECEIPT_WIDTH;
-  canvas.height = RECEIPT_CARD_HEIGHT * cards.length;
+  canvas.height = receiptStripHeight(cards.length);
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not create the receipt image.');
-  cards.forEach((card, index) => drawCard(ctx, card, index * RECEIPT_CARD_HEIGHT, answer));
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  cards.forEach((card, index) => {
+    const top = index * RECEIPT_SLOT_HEIGHT;
+    drawCard(ctx, card, top, answer);
+    drawFooter(ctx, card, top + RECEIPT_CARD_HEIGHT);
+  });
+  drawTearOff(ctx, cards.length * RECEIPT_SLOT_HEIGHT);
   const blob = await new Promise<Blob>((resolve, reject) =>
     canvas.toBlob((data) => data ? resolve(data) : reject(new Error('Could not encode the receipt PNG.')), 'image/png'),
   );
@@ -258,7 +309,8 @@ export async function downloadReceiptPngs(puzzles: readonly PrintSudoku[], shuff
       'Hodoku Revisited - 384px thermal receipt export\n' +
       'Puzzle strips are grouped by difficulty and optionally shuffled *within* that difficulty.\n' +
       'The puzzle PNGs come first, followed by paired answer PNGs in the same difficulty order.\n' +
-      'Each puzzle is 384x476px; strips contain up to 10 puzzles (4760px maximum).\n' +
+      'Each puzzle is 384x476px plus a 206px scan footer; strips contain up to 6 puzzles (4148px maximum).\n' +
+      'Scan the QR code under a puzzle to open it at hodokurevisited.com with hints and the solution.\n' +
       'Difficulty numbers start at #01 within each export; scores come from the HoDoKu engine.\n' +
       'Learning/practicing sections export original givens, not partly solved training boards.\n' +
       'White background; the original desktop glyphs use DejaVu Sans Bold/DejaVu Sans Mono Bold.\n',

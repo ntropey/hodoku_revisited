@@ -145,6 +145,23 @@ test('manual chapters exist and every guide has an Open in app link with a valid
   assert.ok(readdirSync(new URL('fonts/', dist)).length >= 7);
 });
 
+test('thermal printing guide documents the scan code and keeps shop links out of the app', async () => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const dist = new URL('../dist/', import.meta.url);
+  assert.ok(existsSync(new URL('manual/thermal-printing.html', dist)));
+  const guide = readFileSync(new URL('manual/thermal-printing.html', dist), 'utf8');
+  assert.match(guide, /384 dots/);
+  assert.match(guide, /QR code/);
+  assert.match(guide, /amazon\.co\.jp\/s\?k=/);
+  // shop links are plain searches until an affiliate tag is configured, and then carry a disclosure
+  assert.equal(/[?&]tag=/.test(guide), /affiliate links/.test(guide));
+  const appJs = readdirSync(new URL('play/assets/', dist)).filter((f) => f.endsWith('.js'));
+  for (const f of appJs) {
+    const text = readFileSync(new URL('play/assets/' + f, dist), 'utf8');
+    assert.ok(!/amazon\.|aliexpress/i.test(text), `no shop links in ${f}`);
+  }
+});
+
 test('learn pages exist and the level page lists every technique under its level', () => {
   const dist = new URL('../dist/', import.meta.url);
   for (const f of ['learn/index.html', 'learn/how-to-solve-sudoku.html', 'learn/sudoku-glossary.html', 'learn/sudoku-notation.html']) {

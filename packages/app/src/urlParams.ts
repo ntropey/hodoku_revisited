@@ -8,11 +8,16 @@ export function todayIso(now: Date = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
-/** A puzzle given in the address (?p=81 characters), used by the "open in app" links of the guides. */
+/**
+ * A puzzle given in the address (?p=81 characters), used by the "open in app" links of the guides.
+ * `?P=` is accepted too: the QR codes on receipt strips use it so they can stay in QR alphanumeric mode.
+ */
 export function puzzleFromSearch(search: string): string | null {
-  const p = new URLSearchParams(search).get('p');
+  const params = new URLSearchParams(search);
+  const p = params.get('p') ?? params.get('P');
   return p && /^[.0-9]{81}$/.test(p) ? p : null;
 }
+
 
 /** A difficulty in the address (?level=1..5), used by the start page: begins a new puzzle of that level. */
 export function levelFromSearch(search: string): number | null {

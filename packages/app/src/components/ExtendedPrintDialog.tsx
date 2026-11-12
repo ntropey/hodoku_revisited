@@ -115,7 +115,9 @@ export function ExtendedPrintDialog({ settings, busy, onPrint, onExportReceipt, 
           <input type="checkbox" checked={shuffleReceipt} onChange={(e) => setShuffleReceipt(e.target.checked)} />
           Shuffle puzzle order within each difficulty
         </label>
-        <p className="note">384px receipt PNGs use the original givens, with a matching answer strip and engine rating. Strips contain up to 10 puzzles; both sets download in one ZIP.</p>
+        <p className="note">384px receipt PNGs use the original givens, with a matching answer strip and engine rating. Each puzzle has a QR code that opens it in the app. Strips contain up to 6 puzzles; both sets download in one ZIP.{' '}
+          <a href="https://hodokurevisited.com/manual/thermal-printing" target="_blank" rel="noopener noreferrer">Thermal printer setup guide ↗</a>
+        </p>
         <div className="row">
           <span className="note">
             {total} {total === 1 ? 'puzzle' : 'puzzles'}

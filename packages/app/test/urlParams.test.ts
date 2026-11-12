@@ -10,6 +10,10 @@ describe('address parameters', () => {
     expect(puzzleFromSearch('?p=123')).toBeNull();
     expect(puzzleFromSearch('')).toBeNull();
   });
+  it('reads the uppercase key and ignores the scan marker of receipt QR codes', () => {
+    expect(puzzleFromSearch(`?P=${P}&q=1`)).toBe(P);
+    expect(puzzleFromSearch(`?p=${P}&q=1`)).toBe(P);
+  });
   it('reads a level from 1 to 5', () => {
     expect(levelFromSearch('?level=3')).toBe(3);
     expect(levelFromSearch('?level=0')).toBeNull();

@@ -35,6 +35,14 @@ header, so this port may be distributed under GPLv3-or-later.
 - ddyer and CCV: contributions credited in the original About dialog.
 - MaNik-e Team: co-copyright holder of `RegressionTester.java`.
 
+## Third-party code
+
+- QR Code generator library (TypeScript), Copyright (c) Project Nayuki, MIT License:
+  `packages/app/src/vendor/qrcodegen.ts`. Draws the scan codes on receipt strips.
+  Upstream: <https://github.com/nayuki/QR-Code-generator>. The permission notice is
+  kept in the file header. The only change is that the two top-level `namespace`
+  declarations are `export`ed so the file works as an ES module.
+
 ## Changes
 
 This port is a rewrite in TypeScript. All files in this repository that derive

@@ -103,10 +103,8 @@ export function useNewGame({ solver, settingsRef, setSettings, setBusy, setMessa
     if (dailyDate) {
       window.history.replaceState(null, '', window.location.pathname);
       void startDaily(dailyDate, lv ?? 2, auto);
-    } else if (lv) {
-      window.history.replaceState(null, '', window.location.pathname);
-      void startNew(lv);
     } else if (p) {
+      // a given puzzle wins over a level, so a printed puzzle's link never opens a different one
       window.history.replaceState(null, '', window.location.pathname);
       setBusy('Checking puzzle...');
       startFromText(p, auto)
@@ -114,6 +112,9 @@ export function useNewGame({ solver, settingsRef, setSettings, setBusy, setMessa
           if (!isCancelled(e)) setMessage(e.message);
         })
         .finally(() => setBusy(null));
+    } else if (lv) {
+      window.history.replaceState(null, '', window.location.pathname);
+      void startNew(lv);
     } else if (!hasGame) void startNew(settingsRef.current.level);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

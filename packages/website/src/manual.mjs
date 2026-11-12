@@ -5,6 +5,29 @@
  * `body` is trusted HTML.
  */
 
+/*
+ * Store search links for the Thermal printing chapter. They are plain links on a guide page, never in the
+ * app. Fill in a tag (Amazon Associates store ID, or an AliExpress portal link) to earn a commission; with
+ * every tag empty the links are ordinary searches and no disclosure is shown. Amazon needs a separate
+ * Associates account per marketplace. Never put an affiliate link in anything that is printed.
+ */
+const SHOPS = [
+  { name: 'Amazon (US)', url: (q, tag) => `https://www.amazon.com/s?k=${q}${tag ? '&tag=' + tag : ''}`, tag: '' },
+  { name: 'Amazon (Japan)', url: (q, tag) => `https://www.amazon.co.jp/s?k=${q}${tag ? '&tag=' + tag : ''}`, tag: '' },
+  { name: 'Amazon (Germany)', url: (q, tag) => `https://www.amazon.de/s?k=${q}${tag ? '&tag=' + tag : ''}`, tag: '' },
+  { name: 'Amazon (UK)', url: (q, tag) => `https://www.amazon.co.uk/s?k=${q}${tag ? '&tag=' + tag : ''}`, tag: '' },
+  { name: 'AliExpress', url: (q) => `https://www.aliexpress.com/wholesale?SearchText=${q}`, tag: '' },
+];
+const earnsCommission = () => SHOPS.some((s) => s.tag);
+const shopRow = (shop, queries) =>
+  `<tr><td>${shop.name}</td>${queries.map((q) => `<td><a href="${shop.url(encodeURIComponent(q), shop.tag)}" target="_blank" rel="${shop.tag ? 'sponsored ' : ''}noopener noreferrer">Search</a></td>`).join('')}</tr>`;
+const shopTable = (...queries) =>
+  `<table><thead><tr><th>Store</th>${queries.map((q) => `<th>${q}</th>`).join('')}</tr></thead><tbody>${SHOPS.map((s) => shopRow(s, queries)).join('')}</tbody></table>`;
+const shopDisclosure = () =>
+  earnsCommission()
+    ? '<p><small>Some of these links are affiliate links: if you buy through them we may earn a commission, at no extra cost to you. As an Amazon Associate we earn from qualifying purchases.</small></p>'
+    : '';
+
 export const MANUAL = [
   {
     slug: 'getting-started',
@@ -48,7 +71,39 @@ export const MANUAL = [
 <h2>Printing</h2>
 <p><em>Print</em> prints the board with the givens only, without candidates or the side panel; <em>Print solution</em> prints the board and the solved grid after it. <em>Export PNG</em> saves the board as a <code>.png</code> image file.</p>
 <p><em>Extended print</em> builds a book of puzzles. Add up to five sections; for each, choose how many puzzles (0 to 30), the level, the mode (Playing, Learning or Practicing) and whether to print the candidates. A Learning section uses the techniques from the Training dialog. Then pick a layout: one, two or four puzzles per page, portrait or landscape. <em>Print the rating</em> writes the level and score under each puzzle. <em>Booklet</em> is offered for the landscape layouts only; it imposes the pages so that printing them double-sided and folding in the middle makes a booklet.</p>
-<p>For narrow thermal receipt printers, choose <em>Download 384px PNG ZIP</em> in Extended print. It creates a single-column strip of up to ten 384×476px puzzles per PNG, with matching answer strips in one ZIP file. Optionally shuffle puzzle order within each difficulty, while keeping difficulty groups separate; the difficulty, sequential number within that difficulty, and actual puzzle rating appear above each grid. The background is white. Learning and Practicing sections export the original givens. You can also export the current puzzle's original givens from Share → <em>Export current puzzle as 384px receipt ZIP</em>.</p>`,
+<p>For narrow thermal receipt printers, choose <em>Download 384px PNG ZIP</em> in Extended print. It creates a single-column strip of up to six puzzles per PNG, each 384×476px with a 206px scan footer, with matching answer strips in one ZIP file. The footer holds a QR code that opens that puzzle in the app. Optionally shuffle puzzle order within each difficulty, while keeping difficulty groups separate; the difficulty, sequential number within that difficulty, and actual puzzle rating appear above each grid. The background is white. Learning and Practicing sections export the original givens. You can also export the current puzzle's original givens from Share → <em>Export current puzzle as 384px receipt ZIP</em>. See <a href="thermal-printing">Thermal printing</a> for printers, paper and the scan codes.</p>`,
+  },
+  {
+    slug: 'thermal-printing',
+    title: 'Thermal printing',
+    summary: 'Print puzzle strips on a receipt printer: printers, paper, settings and the scan codes.',
+    body: `
+<p>The <em>Download 384px PNG ZIP</em> button in Extended print is free, needs no account and works offline. This chapter covers what to print it on.</p>
+<h2>How the strips are sized</h2>
+<ul>
+<li>A <strong>58mm</strong> printer at <strong>203 DPI</strong> prints 48mm across, which is <strong>384 dots</strong>. The strips are exactly 384px wide, so they print 1:1. This is the size to buy.</li>
+<li>An <strong>80mm</strong> printer at 203 DPI prints 72mm across, which is 576 dots. A 384px strip is narrower than that; what happens next depends on the printer app (some center it, some stretch it). Turn off scaling in the app if it offers that option, or the grid lines blur.</li>
+<li>Each puzzle is 384×476px plus a 206px footer, and a strip holds up to six puzzles (4148px at most). Some printer apps refuse very tall images; the strips stay under 4800px for that reason.</li>
+</ul>
+<h2>Printing the ZIP</h2>
+<ol>
+<li>Unzip the download. The problem strips come first, then the matching answer strips.</li>
+<li>Open a PNG in your printer's app (for example Phomemo Print, PeriPage, Paperang or a Cat Printer app), or send it with a print utility on a desktop.</li>
+<li>The strips are pure black on white. If the app offers a choice, pick <em>black and white</em> or <em>threshold</em> rather than <em>dither</em> or <em>photo</em>.</li>
+<li>Raise the print density one step if the thin cell lines look faint.</li>
+</ol>
+<h2>The scan code under each puzzle</h2>
+<p>Each puzzle ends with a QR code. Scanning it with a phone camera opens that exact puzzle in the app, where you can check your answer and ask for hints. The link carries the 81 givens, so the app does not need a server to look the puzzle up. A strip ends with a dashed cut line and the line <em>Check solution &amp; hints: hodokurevisited.com</em>.</p>
+<p>If a code will not scan: hold the phone about 20 to 30 cm from the paper, avoid glare, and raise the print density. A worn print head or a cold, low-battery printer makes the small squares run together.</p>
+<h2>Paper and printers</h2>
+<p>Look for these specifications. The links open searches on the stores, so they do not go out of date when a listing disappears.</p>
+<ul>
+<li><strong>Printer:</strong> 58mm, 203 DPI, Bluetooth or USB thermal receipt printer.</li>
+<li><strong>Paper:</strong> 57mm wide thermal paper rolls, labeled <em>BPA-free</em> if you care about that. Check the maximum roll diameter your printer takes (small portable models take rolls of about 30mm).</li>
+</ul>
+${shopTable('58mm 203dpi thermal receipt printer bluetooth', '57mm BPA free thermal paper roll')}
+${shopDisclosure()}
+<p>Hodoku Revisited is not affiliated with any printer or paper maker, and printing works with any printer that can print a PNG.</p>`,
   },
   {
     slug: 'candidates-and-filters',
