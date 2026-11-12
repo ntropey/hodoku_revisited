@@ -155,10 +155,17 @@ test('thermal printing guide documents the scan code and keeps shop links out of
   assert.match(guide, /amazon\.co\.jp\/s\?k=/);
   // shop links are plain searches until an affiliate tag is configured, and then carry a disclosure
   assert.equal(/[?&]tag=/.test(guide), /affiliate links/.test(guide));
-  const appJs = readdirSync(new URL('play/assets/', dist)).filter((f) => f.endsWith('.js'));
+  const assetsDir = new URL('play/assets/', dist);
+  const appJs = existsSync(assetsDir) ? readdirSync(assetsDir).filter((f) => f.endsWith('.js')) : [];
   for (const f of appJs) {
     const text = readFileSync(new URL('play/assets/' + f, dist), 'utf8');
     assert.ok(!/amazon\.|aliexpress/i.test(text), `no shop links in ${f}`);
+  }
+  const appSrc = new URL('../../app/src/', import.meta.url);
+  const srcFiles = readdirSync(appSrc, { recursive: true }).filter((f) => typeof f === 'string' && (f.endsWith('.ts') || f.endsWith('.tsx')));
+  for (const f of srcFiles) {
+    const text = readFileSync(new URL(f, appSrc), 'utf8');
+    assert.ok(!/amazon\.|aliexpress/i.test(text), `no shop links in src/${f}`);
   }
 });
 
