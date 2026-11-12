@@ -78,7 +78,7 @@ jobs:
 
           echo "Configuring exportOptions.plist with profile: '$PROFILE_NAME' (Bundle ID: $BUNDLE_ID)"
 
-          cat <<EOF > exportOptions.plist
+          cat <<EOF > $RUNNER_TEMP/exportOptions.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -113,7 +113,7 @@ jobs:
 
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App.xcarchive \
-            -exportOptionsPlist ../../../exportOptions.plist \
+            -exportOptionsPlist $RUNNER_TEMP/exportOptions.plist \
             -exportPath $RUNNER_TEMP/build
 
       - name: Upload IPA to App Store Connect / TestFlight
