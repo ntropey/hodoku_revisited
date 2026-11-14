@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import { boardSvg, downloadSvg } from '../boardImage';
 import { imposePages } from '../extendedPrint';
-import { downloadReceiptPngs } from '../receiptPrint';
+import { downloadReceiptPngs, type ReceiptExportOptions } from '../receiptPrint';
 import type { GameState } from '../game';
 import type { PrintSection, PrintSudoku } from '../protocol';
 import { isCancelled, type SolverClient } from '../solverClient';
@@ -100,13 +100,13 @@ export function usePrinting({ solver, settingsRef, setBusy, setMessage }: Deps) 
 
   /** Export a batch of compact receipt strips and its answer strips into one ZIP. */
   const exportReceiptBook = useCallback(
-    async (sections: PrintSection[], shuffle: boolean) => {
+    async (sections: PrintSection[], shuffle: boolean, options: ReceiptExportOptions) => {
       setExtendedPrintOpen(false);
       setMessage(null);
       setBusy('Preparing the receipt PNGs...');
       try {
         const puzzles = await solver.current.book(sections, settingsRef.current.trainingTechniques ?? []);
-        await downloadReceiptPngs(puzzles, shuffle);
+        await downloadReceiptPngs(puzzles, shuffle, options);
         setMessage('Saved hodoku-receipt-384px.zip.');
       } catch (e) {
         if (!isCancelled(e)) setMessage((e as Error).message);

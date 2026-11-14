@@ -4,9 +4,14 @@ import {
   RECEIPT_CARD_HEIGHT,
   RECEIPT_FOOTER_HEIGHT,
   RECEIPT_SLOT_HEIGHT,
+  RECEIPT_QR_OVERLAP,
+  RECEIPT_PLAIN_CARDS_PER_STRIP,
+  RECEIPT_WEBSITE_LABEL,
   RECEIPT_WIDTH,
   planReceiptStrips,
   prepareReceiptCards,
+  receiptCardsPerStrip,
+  receiptPageLinkMode,
   receiptStripHeight,
   receiptZip,
   splitReceiptCards,
@@ -29,12 +34,40 @@ describe('receipt print layout', () => {
     expect(RECEIPT_CARD_HEIGHT).toBe(476);
   });
 
-  it('adds a 206px scan footer and keeps strips under 4800px', () => {
+  it('reduces empty space under the grid while preserving its 384x476 geometry', () => {
     expect(RECEIPT_FOOTER_HEIGHT).toBe(206);
-    expect(RECEIPT_SLOT_HEIGHT).toBe(682);
+    expect(RECEIPT_QR_OVERLAP).toBe(28);
+    expect(RECEIPT_SLOT_HEIGHT).toBe(654);
     expect(RECEIPT_CARDS_PER_STRIP).toBe(6);
-    expect(receiptStripHeight(RECEIPT_CARDS_PER_STRIP)).toBe(4148);
-    expect(receiptStripHeight(RECEIPT_CARDS_PER_STRIP + 1)).toBeGreaterThan(4760);
+    expect(receiptStripHeight(6)).toBe(3980);
+    expect(receiptStripHeight(10, false)).toBe(4760);
+    expect(RECEIPT_PLAIN_CARDS_PER_STRIP).toBe(10);
+  });
+
+  it('selects link modes independently on puzzle and answer sheets', () => {
+    const both = { linkMode: 'qr', placement: 'both' } as const;
+    expect(receiptPageLinkMode(false, both)).toBe('qr');
+    expect(receiptPageLinkMode(true, both)).toBe('qr');
+    const onPuzzles = { linkMode: 'qr', placement: 'problems' } as const;
+    expect(receiptPageLinkMode(false, onPuzzles)).toBe('qr');
+    expect(receiptPageLinkMode(true, onPuzzles)).toBe('none');
+    const onAnswers = { linkMode: 'website', placement: 'answers' } as const;
+    expect(receiptPageLinkMode(false, onAnswers)).toBe('none');
+    expect(receiptPageLinkMode(true, onAnswers)).toBe('website');
+    expect(receiptPageLinkMode(false, { linkMode: 'none', placement: 'both' })).toBe('none');
+    expect(receiptCardsPerStrip(both)).toBe(6);
+    expect(receiptCardsPerStrip(onPuzzles)).toBe(6);
+    expect(receiptCardsPerStrip(onAnswers)).toBe(10);
+    expect(receiptCardsPerStrip({ linkMode: 'none', placement: 'both' })).toBe(10);
+  });
+
+  it('prints only the short website name in website mode, not puzzle data', () => {
+    expect(RECEIPT_WEBSITE_LABEL).toBe('hodokurevisited.com');
+    expect(RECEIPT_WEBSITE_LABEL).not.toContain('/play/');
+    expect(RECEIPT_WEBSITE_LABEL).not.toContain('?P=');
+    expect(RECEIPT_WEBSITE_LABEL).not.toContain('&q=1');
+    expect(receiptPageLinkMode(false, { linkMode: 'website', placement: 'problems' })).toBe('website');
+    expect(receiptPageLinkMode(true, { linkMode: 'website', placement: 'problems' })).toBe('none');
   });
 
   it('numbers puzzles within each level without mutating the input order', () => {
@@ -68,6 +101,17 @@ describe('receipt print layout', () => {
     expect(strips.map((s) => s.cards.length)).toEqual([6, 6, 6, 2, 6, 6, 6, 6, 6, 6, 4, 6, 4]);
     expect(strips.every((s) => s.cards.every((card) => card.puzzle.level === s.level))).toBe(true);
     expect(strips.flatMap((s) => s.cards)).toHaveLength(70);
+  });
+
+  it('keeps paired strips aligned when only one side has a QR footer', () => {
+    const cards = prepareReceiptCards(Array.from({ length: 21 }, (_, i) => puzzle(i < 12 ? 1 : 2, i)));
+    const qrOnlyOnAnswers = planReceiptStrips(cards, receiptCardsPerStrip({ linkMode: 'qr', placement: 'answers' }));
+    const websiteOnlyOnAnswers = planReceiptStrips(cards, receiptCardsPerStrip({ linkMode: 'website', placement: 'answers' }));
+    expect(qrOnlyOnAnswers.map((strip) => strip.cards.length)).toEqual([6, 6, 6, 3]);
+    expect(websiteOnlyOnAnswers.map((strip) => strip.cards.length)).toEqual([10, 2, 9]);
+    expect(qrOnlyOnAnswers.flatMap((strip) => strip.cards).map((c) => c.order)).toEqual(
+      websiteOnlyOnAnswers.flatMap((strip) => strip.cards).map((c) => c.order),
+    );
   });
 
   it('splits long jobs into six-puzzle sheets with no missing puzzles', () => {

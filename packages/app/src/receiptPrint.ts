@@ -7,15 +7,40 @@ import { drawQr, encodePuzzleQr } from './qrPuzzle';
 
 export const RECEIPT_WIDTH = 384;
 export const RECEIPT_CARD_HEIGHT = 476;
-/** Scan-to-open footer under each grid: a version 6 QR code at 4px per module (41 + 2x4 quiet modules). */
+/** Move the QR footer into unused space below the grid without changing its quiet zone. */
+export const RECEIPT_QR_OVERLAP = 28;
 export const RECEIPT_FOOTER_HEIGHT = 206;
-export const RECEIPT_SLOT_HEIGHT = RECEIPT_CARD_HEIGHT + RECEIPT_FOOTER_HEIGHT;
-/** Blank paper with a dashed cut line below the last puzzle of each strip. */
+export const RECEIPT_SLOT_HEIGHT = RECEIPT_CARD_HEIGHT + RECEIPT_FOOTER_HEIGHT - RECEIPT_QR_OVERLAP;
 export const RECEIPT_TEAR_HEIGHT = 56;
 export const RECEIPT_CARDS_PER_STRIP = 6;
+export const RECEIPT_PLAIN_CARDS_PER_STRIP = 10;
 
-/** Pixel height of a strip holding this many puzzles. */
-export const receiptStripHeight = (cards: number): number => cards * RECEIPT_SLOT_HEIGHT + RECEIPT_TEAR_HEIGHT;
+export type ReceiptLinkMode = 'qr' | 'website' | 'none';
+export type ReceiptLinkPlacement = 'problems' | 'answers' | 'both';
+
+export interface ReceiptExportOptions {
+  linkMode: ReceiptLinkMode;
+  placement: ReceiptLinkPlacement;
+}
+
+/** Preserve PR #81's QR on puzzles and answers by default. */
+export const DEFAULT_RECEIPT_OPTIONS: Readonly<ReceiptExportOptions> = { linkMode: 'qr', placement: 'both' };
+
+export const receiptCardsPerStrip = (options: ReceiptExportOptions): number =>
+  options.linkMode === 'qr' ? RECEIPT_CARDS_PER_STRIP : RECEIPT_PLAIN_CARDS_PER_STRIP;
+
+/** Both sheets always use matching puzzle chunks even if only one sheet displays a link. */
+export function receiptPageLinkMode(answer: boolean, options: ReceiptExportOptions): ReceiptLinkMode {
+  if (options.linkMode === 'none') return 'none';
+  if (options.placement === 'both' || (answer ? options.placement === 'answers' : options.placement === 'problems')) {
+    return options.linkMode;
+  }
+  return 'none';
+}
+
+/** Strip height including QR footer/cut line only when QR is printed on that sheet. */
+export const receiptStripHeight = (cards: number, withQr = true): number =>
+  cards * (withQr ? RECEIPT_SLOT_HEIGHT : RECEIPT_CARD_HEIGHT) + (withQr ? RECEIPT_TEAR_HEIGHT : 0);
 
 /** Coordinates from the 384px thermal-printer reference sheet. */
 export const RECEIPT_X_LINES = [13, 52, 92, 133, 172, 212, 253, 292, 332, 373] as const;
@@ -139,8 +164,19 @@ function drawCard(ctx: CanvasRenderingContext2D, card: ReceiptCard, y: number, a
   }
 }
 
+/** Brand/domain label in the card margin; only QR codes open individual puzzles. */
+export const RECEIPT_WEBSITE_LABEL = 'hodokurevisited.com';
+
+function drawWebsiteAddress(ctx: CanvasRenderingContext2D, top: number): void {
+  ctx.fillStyle = '#000000';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.font = '700 16px "DejaVu Sans Mono", monospace';
+  ctx.fillText(RECEIPT_WEBSITE_LABEL, RECEIPT_WIDTH / 2, top + 445);
+}
+
 const FOOTER_FONT = '"DejaVu Sans Mono", monospace';
-const SITE_TEXT = 'hodokurevisited.com';
+const SITE_TEXT = RECEIPT_WEBSITE_LABEL;
 
 /** QR code on the left, "scan for hints & solution" and the site name on the right. */
 function drawFooter(ctx: CanvasRenderingContext2D, card: ReceiptCard, top: number): void {
@@ -174,25 +210,28 @@ function drawTearOff(ctx: CanvasRenderingContext2D, top: number): void {
   ctx.fillText('Check solution & hints: ' + SITE_TEXT, RECEIPT_WIDTH / 2, top + 20);
 }
 
-/** A printable 384px-wide PNG containing a vertical strip of puzzles, each with a scan code. */
-async function makeStrip(cards: readonly ReceiptCard[], answer: boolean): Promise<Uint8Array> {
+/** Render a strip using the selected format for this side of the puzzle/answer pair. */
+async function makeStrip(cards: readonly ReceiptCard[], answer: boolean, options: ReceiptExportOptions): Promise<Uint8Array> {
+  const mode = receiptPageLinkMode(answer, options);
+  const withQr = mode === 'qr';
+  const step = withQr ? RECEIPT_SLOT_HEIGHT : RECEIPT_CARD_HEIGHT;
   const canvas = document.createElement('canvas');
   canvas.width = RECEIPT_WIDTH;
-  canvas.height = receiptStripHeight(cards.length);
+  canvas.height = receiptStripHeight(cards.length, withQr);
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not create the receipt image.');
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   cards.forEach((card, index) => {
-    const top = index * RECEIPT_SLOT_HEIGHT;
+    const top = index * step;
     drawCard(ctx, card, top, answer);
-    drawFooter(ctx, card, top + RECEIPT_CARD_HEIGHT);
+    if (withQr) drawFooter(ctx, card, top + RECEIPT_CARD_HEIGHT - RECEIPT_QR_OVERLAP);
+    else if (mode === 'website') drawWebsiteAddress(ctx, top);
   });
-  drawTearOff(ctx, cards.length * RECEIPT_SLOT_HEIGHT);
+  if (withQr) drawTearOff(ctx, cards.length * step);
   const blob = await new Promise<Blob>((resolve, reject) =>
     canvas.toBlob((data) => data ? resolve(data) : reject(new Error('Could not encode the receipt PNG.')), 'image/png'),
   );
-  // Release the potentially tall canvas before starting the next strip.
   canvas.width = 0;
   canvas.height = 0;
   return new Uint8Array(await blob.arrayBuffer());
@@ -282,10 +321,14 @@ export function receiptZip(entries: readonly ZipEntry[]): Blob {
 }
 
 /** Export grouped puzzle sheets followed by their matching answer sheets. */
-export async function downloadReceiptPngs(puzzles: readonly PrintSudoku[], shuffle: boolean): Promise<void> {
+export async function downloadReceiptPngs(
+  puzzles: readonly PrintSudoku[],
+  shuffle: boolean,
+  options: ReceiptExportOptions = DEFAULT_RECEIPT_OPTIONS,
+): Promise<void> {
   if (puzzles.length === 0) throw new Error('No puzzles to export.');
   const cards = prepareReceiptCards(puzzles, shuffle);
-  const strips = planReceiptStrips(cards);
+  const strips = planReceiptStrips(cards, receiptCardsPerStrip(options));
   const files: ZipEntry[] = [];
 
   for (let i = 0; i < strips.length; i++) {
@@ -293,14 +336,14 @@ export async function downloadReceiptPngs(puzzles: readonly PrintSudoku[], shuff
     const level = String(LEVEL_NAMES[strip.level] ?? 'sudoku').toLowerCase();
     const part = String(strip.part).padStart(2, '0');
     const number = String(i + 1).padStart(2, '0');
-    files.push({ name: number + '. ' + level + '_problems_' + part + '.png', bytes: await makeStrip(strip.cards, false) });
+    files.push({ name: number + '. ' + level + '_problems_' + part + '.png', bytes: await makeStrip(strip.cards, false, options) });
   }
   for (let i = 0; i < strips.length; i++) {
     const strip = strips[i];
     const level = String(LEVEL_NAMES[strip.level] ?? 'sudoku').toLowerCase();
     const part = String(strip.part).padStart(2, '0');
     const number = String(i + strips.length + 1).padStart(2, '0');
-    files.push({ name: number + '. ' + level + '_answers_' + part + '.png', bytes: await makeStrip(strip.cards, true) });
+    files.push({ name: number + '. ' + level + '_answers_' + part + '.png', bytes: await makeStrip(strip.cards, true, options) });
   }
 
   files.push({
@@ -309,8 +352,11 @@ export async function downloadReceiptPngs(puzzles: readonly PrintSudoku[], shuff
       'Hodoku Revisited - 384px thermal receipt export\n' +
       'Puzzle strips are grouped by difficulty and optionally shuffled *within* that difficulty.\n' +
       'The puzzle PNGs come first, followed by paired answer PNGs in the same difficulty order.\n' +
-      'Each puzzle is 384x476px plus a 206px scan footer; strips contain up to 6 puzzles (4148px maximum).\n' +
-      'Scan the QR code under a puzzle to open it at hodokurevisited.com with hints and the solution.\n' +
+      'Each 384x476px puzzle can have a QR code, a website address, or no link.\n' +
+      'QR mode: up to 6 puzzles per strip; the 206px QR footer overlaps 28px of unused card margin.\n' +
+      'Website address and no-link modes: up to 10 plain cards per strip.\n' +
+      'Link mode: ' + options.linkMode + '; placement: ' + options.placement + '.\n' +
+      'QR codes open the exact puzzle; website address prints hodokurevisited.com only.\n' +
       'Difficulty numbers start at #01 within each export; scores come from the HoDoKu engine.\n' +
       'Learning/practicing sections export original givens, not partly solved training boards.\n' +
       'White background; the original desktop glyphs use DejaVu Sans Bold/DejaVu Sans Mono Bold.\n',
