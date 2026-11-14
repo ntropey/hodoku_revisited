@@ -214,3 +214,33 @@ test('emits an Android App Links template', () => {
   assert.equal(links[0].target.package_name, 'com.revisitedlabs.hodoku');
   assert.ok(links[0].target.sha256_cert_fingerprints.includes('DB:D8:6C:C6:6A:8D:8C:14:93:90:6C:10:8D:22:F5:2F:3A:58:37:C4:32:54:DB:E7:A5:46:F8:44:5B:05:B6:CE'));
 });
+
+test('every indexable page has <=160 char meta description, og:locale en_US, and valid top-level JSON-LD', () => {
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (e.name === 'play' ? [] : walk(join(d, e.name))) : [join(d, e.name)]));
+  for (const file of walk(dist).filter((f) => f.endsWith('.html') && !f.endsWith('404.html'))) {
+    const html = readFileSync(file, 'utf8');
+    const descMatch = html.match(/<meta name="description" content="([^"]+)"/);
+    assert.ok(descMatch, `${file}: has meta description`);
+    const unescapedDesc = descMatch[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    assert.ok(unescapedDesc.length <= 160, `${file}: description <= 160 chars (got ${unescapedDesc.length})`);
+    assert.match(html, /<meta property="og:locale" content="en_US">/, `${file}: has og:locale en_US`);
+
+    const scripts = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+    assert.ok(scripts.length >= 1, `${file}: has JSON-LD structured data`);
+    for (const [, raw] of scripts) {
+      const parsed = JSON.parse(raw);
+      assert.equal(parsed['@context'], 'https://schema.org', `${file}: JSON-LD @context`);
+      assert.ok(typeof parsed['@type'] === 'string' && parsed['@type'].length > 0, `${file}: JSON-LD top-level @type`);
+    }
+  }
+
+  const homeHtml = readFileSync(join(dist, 'index.html'), 'utf8');
+  const homeSchemas = [...homeHtml.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(([, s]) => JSON.parse(s));
+  const webApp = homeSchemas.find((s) => s['@type'] === 'WebApplication');
+  assert.ok(webApp, 'home page has WebApplication schema');
+  assert.equal(webApp.name, 'Hodoku Revisited');
+  assert.equal(webApp.applicationCategory, 'GameApplication');
+  assert.equal(webApp.operatingSystem, 'Any');
+  assert.deepEqual(webApp.offers, { '@type': 'Offer', price: '0', priceCurrency: 'USD' });
+});
+

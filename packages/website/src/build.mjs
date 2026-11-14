@@ -21,7 +21,7 @@ const examples = existsSync(new URL('./examples.json', import.meta.url))
 const here = dirname(fileURLToPath(import.meta.url));
 const out = join(here, '..', 'dist');
 const appDist = join(here, '..', '..', 'app', 'dist');
-const siteUrl = (process.env.SITE_URL ?? '').replace(/\/?$/, '/');
+const siteUrl = (process.env.SITE_URL || 'https://hodokurevisited.com/').replace(/\/?$/, '/');
 const REPO = 'https://github.com/ntropey/hodoku_revisited';
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -48,6 +48,14 @@ const groupOf = (t) => GROUPS.find((g) => g.items.includes(t));
 
 const LOGO = (root) => `<a class="brand" href="${root}"><img src="${root}icon.svg" alt="" width="32" height="32"><span class="wordmark">Hodoku<small>Revisited</small></span></a>`;
 
+function renderJsonLd(jsonld) {
+  if (!jsonld) return '';
+  const items = Array.isArray(jsonld) ? jsonld : [jsonld];
+  return items
+    .map((item) => `<script type="application/ld+json">${JSON.stringify(item).replace(/</g, '\\u003c')}</script>`)
+    .join('\n');
+}
+
 /** `root` is the path back to the site root from the page, e.g. '../' */
 function page({ title, description, root, body, path, wide, jsonld }) {
   const canonical = siteUrl && path != null ? `<link rel="canonical" href="${siteUrl}${path}">` : '';
@@ -61,6 +69,7 @@ function page({ title, description, root, body, path, wide, jsonld }) {
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
 <meta property="og:site_name" content="Hodoku Revisited">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
@@ -73,7 +82,7 @@ ${siteUrl ? `<meta property="og:url" content="${siteUrl}${path ?? ''}">\n<meta p
 <link rel="preload" href="${root}fonts/newsreader-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${root}site.css">
 ${canonical}
-${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(/</g, '\\u003c')}</script>` : ''}
+${renderJsonLd(jsonld)}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -191,55 +200,55 @@ add(
   'index.html',
   page({
     title: 'Hodoku Revisited: the sudoku solver that explains every step',
-    description: 'Free sudoku solver and trainer in your browser, now with an AI Super Solver & Coach: progressive Socratic nudges, step-by-step walkthroughs, contradiction proofs, analyzer and technique library.',
+    description: 'Free browser sudoku solver and trainer with an AI Super Solver & Coach. Progressive hints, step-by-step solving, and practice modes.',
     root: '',
     path: '',
     wide: true,
     jsonld: siteUrl
-      ? {
-          '@context': 'https://schema.org',
-          '@graph': [
-            {
-              '@type': 'WebApplication',
-              name: 'Hodoku Revisited',
-              alternateName: 'Hodoku Revisited sudoku solver',
-              url: siteUrl,
-              applicationCategory: 'GameApplication',
-              operatingSystem: 'Any (web browser)',
-              description:
-                'Free sudoku solver and trainer with AI Coach step-by-step logical hints, contradiction proofs, daily puzzles, difficulty rating and technique guides.',
-              featureList: [
-                'AI Coach four-stage Socratic hints',
-                'Why not? candidate contradiction prover',
-                'Daily sudoku puzzle with shareable results',
-                'HoDoKu 2.2.0 exact logical step engine (90+ techniques)',
-                'Offline-ready progressive web app',
-              ],
-              offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-            },
-            {
-              '@type': 'FAQPage',
-              mainEntity: [
-                {
-                  '@type': 'Question',
-                  name: 'How does the AI Sudoku Coach explain steps without spoiling the answer?',
-                  acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'Click Coach me to walk through the next logical deduction in four Socratic stages: Where to look, The pattern, The logic, and Conclusion.',
-                  },
+      ? [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: 'Hodoku Revisited',
+            alternateName: 'Hodoku Revisited sudoku solver',
+            url: siteUrl,
+            applicationCategory: 'GameApplication',
+            operatingSystem: 'Any',
+            isAccessibleForFree: true,
+            description:
+              'Free browser sudoku solver and trainer with an AI Super Solver & Coach. Progressive hints, step-by-step solving, and practice modes.',
+            featureList: [
+              'AI Coach four-stage Socratic hints',
+              'Why not? candidate contradiction prover',
+              'Daily sudoku puzzle with shareable results',
+              'HoDoKu 2.2.0 exact logical step engine (90+ techniques)',
+              'Offline-ready progressive web app',
+            ],
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+          },
+          {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              {
+                '@type': 'Question',
+                name: 'How does the AI Sudoku Coach explain steps without spoiling the answer?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Click Coach me to walk through the next logical deduction in four Socratic stages: Where to look, The pattern, The logic, and Conclusion.',
                 },
-                {
-                  '@type': 'Question',
-                  name: 'How can I check why a candidate cannot go in a specific sudoku cell?',
-                  acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'Select any cell and click Why not D? in the AI Coach panel. The solver places that candidate, propagates forced singles, and highlights the exact house or cell where a contradiction occurs.',
-                  },
+              },
+              {
+                '@type': 'Question',
+                name: 'How can I check why a candidate cannot go in a specific sudoku cell?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Select any cell and click Why not D? in the AI Coach panel. The solver places that candidate, propagates forced singles, and highlights the exact house or cell where a contradiction occurs.',
                 },
-              ],
-            },
-          ],
-        }
+              },
+            ],
+          },
+        ]
       : undefined,
     body: `<section class="hero">
   <div>
@@ -340,27 +349,26 @@ ORDERED.forEach((t, i) => {
       path: `techniques/${t.slug}`,
       wide: true,
       jsonld: siteUrl
-        ? {
-            '@context': 'https://schema.org',
-            '@graph': [
-              {
-                '@type': 'TechArticle',
-                headline: `${t.name}: sudoku solving technique`,
-                description: t.summary,
-                proficiencyLevel: t.level,
-                url: `${siteUrl}techniques/${t.slug}`,
-                author: { '@type': 'Organization', name: 'Hodoku Revisited', url: siteUrl },
-              },
-              {
-                '@type': 'BreadcrumbList',
-                itemListElement: [
-                  { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
-                  { '@type': 'ListItem', position: 2, name: 'Techniques', item: `${siteUrl}techniques/` },
-                  { '@type': 'ListItem', position: 3, name: t.name, item: `${siteUrl}techniques/${t.slug}` },
-                ],
-              },
-            ],
-          }
+        ? [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'TechArticle',
+              headline: `${t.name}: sudoku solving technique`,
+              description: t.summary,
+              proficiencyLevel: t.level,
+              url: `${siteUrl}techniques/${t.slug}`,
+              author: { '@type': 'Organization', name: 'Hodoku Revisited', url: siteUrl },
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+                { '@type': 'ListItem', position: 2, name: 'Techniques', item: `${siteUrl}techniques/` },
+                { '@type': 'ListItem', position: 3, name: t.name, item: `${siteUrl}techniques/${t.slug}` },
+              ],
+            },
+          ]
         : undefined,
       body: `<div class="with-rail">
 ${rail('../', t)}
@@ -409,6 +417,15 @@ add(
     root: '../',
     path: 'learn/',
     wide: true,
+    jsonld: siteUrl
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Learn sudoku',
+          url: `${siteUrl}learn/`,
+          description: 'Learn how to solve sudoku step by step, what the difficulty levels mean, and the words and notation used in sudoku guides.',
+        }
+      : undefined,
     body: `<div class="with-rail">${learnRail(null)}<div class="content"><h1>Learn sudoku</h1>
 <p class="lead">Start here if you are new, or if a guide uses a word you do not know.</p>
 <div class="tgrid">${LEARN.map((c, i) => `<a class="tcard" href="${c.slug}"><span class="band">${String(i + 1).padStart(2, '0')}</span><strong>${esc(c.title)}</strong><span>${esc(c.summary)}</span></a>`).join('\n')}</div>
@@ -427,26 +444,25 @@ LEARN.forEach((c, i) => {
       path: `learn/${c.slug}`,
       wide: true,
       jsonld: siteUrl
-        ? {
-            '@context': 'https://schema.org',
-            '@graph': [
-              {
-                '@type': 'Article',
-                headline: c.title,
-                description: c.summary,
-                url: `${siteUrl}learn/${c.slug}`,
-                author: { '@type': 'Organization', name: 'Hodoku Revisited', url: siteUrl },
-              },
-              {
-                '@type': 'BreadcrumbList',
-                itemListElement: [
-                  { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
-                  { '@type': 'ListItem', position: 2, name: 'Learn', item: `${siteUrl}learn/` },
-                  { '@type': 'ListItem', position: 3, name: c.title, item: `${siteUrl}learn/${c.slug}` },
-                ],
-              },
-            ],
-          }
+        ? [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'Article',
+              headline: c.title,
+              description: c.summary,
+              url: `${siteUrl}learn/${c.slug}`,
+              author: { '@type': 'Organization', name: 'Hodoku Revisited', url: siteUrl },
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+                { '@type': 'ListItem', position: 2, name: 'Learn', item: `${siteUrl}learn/` },
+                { '@type': 'ListItem', position: 3, name: c.title, item: `${siteUrl}learn/${c.slug}` },
+              ],
+            },
+          ]
         : undefined,
       body: `<div class="with-rail">${learnRail(c)}<article class="content guide"><p class="crumbs"><a href="./">Learn</a></p><h1>${esc(c.title)}</h1><p class="lead">${esc(c.summary)}</p><div class="prose">${c.body(TECHNIQUES)}</div>
 <nav class="pager">${prev ? `<a href="${prev.slug}"><small>Previous</small>← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a href="${next.slug}"><small>Next</small>${esc(next.title)} →</a>` : '<span></span>'}</nav></article></div>`,
@@ -465,6 +481,15 @@ add(
     root: '../',
     path: 'manual/',
     wide: true,
+    jsonld: siteUrl
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Hodoku Revisited Manual',
+          url: `${siteUrl}manual/`,
+          description: 'How to use the Hodoku Revisited sudoku solver: hints, candidates, filters, importing puzzles, shortcuts and settings.',
+        }
+      : undefined,
     body: `<div class="with-rail">${manualRail(null)}<div class="content"><h1>Manual</h1>
 <p class="lead">How to use the solver, one chapter at a time.</p>
 <div class="tgrid">${MANUAL.map((c, i) => `<a class="tcard" href="${c.slug}"><span class="band">${String(i + 1).padStart(2, '0')}</span><strong>${esc(c.title)}</strong><span>${esc(c.summary)}</span></a>`).join('\n')}</div></div></div>`,
@@ -481,6 +506,27 @@ MANUAL.forEach((c, i) => {
       root: '../',
       path: `manual/${c.slug}`,
       wide: true,
+      jsonld: siteUrl
+        ? [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'TechArticle',
+              headline: c.title,
+              description: `${c.summary} Part of the Hodoku Revisited sudoku solver manual.`,
+              url: `${siteUrl}manual/${c.slug}`,
+              author: { '@type': 'Organization', name: 'Hodoku Revisited', url: siteUrl },
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+                { '@type': 'ListItem', position: 2, name: 'Manual', item: `${siteUrl}manual/` },
+                { '@type': 'ListItem', position: 3, name: c.title, item: `${siteUrl}manual/${c.slug}` },
+              ],
+            },
+          ]
+        : undefined,
       body: `<div class="with-rail">${manualRail(c)}<article class="content guide"><p class="crumbs"><a href="./">Manual</a></p><h1>${esc(c.title)}</h1><p class="lead">${esc(c.summary)}</p><div class="prose">${c.body}</div>
 <nav class="pager">${prev ? `<a href="${prev.slug}"><small>Previous</small>← ${esc(prev.title)}</a>` : '<span></span>'}${next ? `<a href="${next.slug}"><small>Next</small>${esc(next.title)} →</a>` : '<span></span>'}</nav></article></div>`,
     }),
@@ -495,6 +541,15 @@ add(
     description: 'Hodoku Revisited is a free, open source sudoku solver and trainer based on HoDoKu. Where it comes from, how it is licensed, and how to get the source.',
     root: '',
     path: 'about',
+    jsonld: siteUrl
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'AboutPage',
+          name: 'About Hodoku Revisited',
+          url: `${siteUrl}about`,
+          description: 'Hodoku Revisited is a free, open source sudoku solver and trainer based on HoDoKu. Where it comes from, how it is licensed, and how to get the source.',
+        }
+      : undefined,
     body: `<h1>About</h1>
 <p>Hodoku Revisited is a free sudoku solver and trainer. It is a TypeScript port of <a href="https://hodoku.sourceforge.net/">HoDoKu</a>, the Sudoku generator, solver and trainer by Bernhard Hobiger (2008-2012). HoDoKu has not been updated since 2013 and runs only as a Java desktop program. This project brings its solving engine to the web and mobile with a new interface.</p>
 <h2>Accuracy</h2>
@@ -514,6 +569,15 @@ add(
     description: 'What data Hodoku Revisited stores and what it does not.',
     root: '',
     path: 'privacy',
+    jsonld: siteUrl
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: 'Privacy | Hodoku Revisited',
+          url: `${siteUrl}privacy`,
+          description: 'What data Hodoku Revisited stores and what it does not.',
+        }
+      : undefined,
     body: `<h1>Privacy</h1>
 <p>The app runs entirely in your browser. Puzzles are generated and solved on your device. Your current game and settings are saved in your browser's local storage so you can continue later; they are never sent to a server.</p>
 <h2>Advertising</h2>
