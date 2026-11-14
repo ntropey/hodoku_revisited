@@ -621,7 +621,7 @@ export function App() {
           settings={settings}
           busy={!!busy}
           onPrint={(sections, layout, rating, booklet) => void printing.printBook(sections, layout, rating, booklet)}
-          onExportReceipt={(sections, shuffle) => void printing.exportReceiptBook(sections, shuffle)}
+          onExportReceipt={(sections, shuffle, options) => void printing.exportReceiptBook(sections, shuffle, options)}
           onClose={() => printing.setExtendedPrintOpen(false)}
         />
       )}

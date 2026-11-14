@@ -7,13 +7,14 @@
 import { useState } from 'react';
 import { canBooklet, PRINT_LAYOUTS } from '../extendedPrint';
 import { LEVEL_NAMES, type PrintSection } from '../protocol';
+import type { ReceiptExportOptions, ReceiptLinkMode, ReceiptLinkPlacement } from '../receiptPrint';
 import type { Settings } from '../ui';
 
 interface Props {
   settings: Settings;
   busy: boolean;
   onPrint: (sections: PrintSection[], layout: number, rating: boolean, booklet: boolean) => void;
-  onExportReceipt: (sections: PrintSection[], shuffle: boolean) => void;
+  onExportReceipt: (sections: PrintSection[], shuffle: boolean, options: ReceiptExportOptions) => void;
   onClose: () => void;
 }
 
@@ -37,6 +38,8 @@ export function ExtendedPrintDialog({ settings, busy, onPrint, onExportReceipt, 
   const [rating, setRating] = useState(false);
   const [booklet, setBooklet] = useState(false);
   const [shuffleReceipt, setShuffleReceipt] = useState(true);
+  const [linkMode, setLinkMode] = useState<ReceiptLinkMode>('qr');
+  const [linkPlacement, setLinkPlacement] = useState<ReceiptLinkPlacement>('both');
 
   const set = (i: number, patch: Partial<PrintSection>) => setSections((all) => all.map((s, k) => (k === i ? { ...s, ...patch } : s)));
   const changeLayout = (n: number) => {
@@ -46,7 +49,7 @@ export function ExtendedPrintDialog({ settings, busy, onPrint, onExportReceipt, 
   };
   const total = sections.reduce((n, s) => n + s.count, 0);
   const print = () => onPrint(sections.filter((s) => s.count > 0), layout, rating, booklet);
-  const receipt = () => onExportReceipt(sections.filter((s) => s.count > 0), shuffleReceipt);
+  const receipt = () => onExportReceipt(sections.filter((s) => s.count > 0), shuffleReceipt, { linkMode, placement: linkPlacement });
 
   return (
     <div className="modal" role="dialog" aria-label="Extended print" aria-modal="true">
@@ -115,7 +118,26 @@ export function ExtendedPrintDialog({ settings, busy, onPrint, onExportReceipt, 
           <input type="checkbox" checked={shuffleReceipt} onChange={(e) => setShuffleReceipt(e.target.checked)} />
           Shuffle puzzle order within each difficulty
         </label>
-        <p className="note">384px receipt PNGs use the original givens, with a matching answer strip and engine rating. Each puzzle has a QR code that opens it in the app. Strips contain up to 6 puzzles; both sets download in one ZIP.{' '}
+        <label className="field">
+          Receipt puzzle link
+          <select value={linkMode} aria-label="Receipt puzzle link" onChange={(e) => setLinkMode(e.target.value as ReceiptLinkMode)}>
+            <option value="qr">QR code</option>
+            <option value="website">Website address</option>
+            <option value="none">No link</option>
+          </select>
+        </label>
+        <label className="field">
+          Link placement
+          <select value={linkPlacement} disabled={linkMode === 'none'} aria-label="Receipt link placement" onChange={(e) => setLinkPlacement(e.target.value as ReceiptLinkPlacement)}>
+            <option value="both">Puzzles and answers</option>
+            <option value="problems">Puzzles only</option>
+            <option value="answers">Answers only</option>
+          </select>
+        </label>
+        <p className="note">
+          384px receipt PNGs use original givens, matching answer strips and engine ratings.
+          QR strips hold up to 6 puzzles; website address or no-link strips hold up to 10.
+          QR codes open each exact puzzle; website address prints only hodokurevisited.com.{' '}
           <a href="https://hodokurevisited.com/manual/thermal-printing" target="_blank" rel="noopener noreferrer">Thermal printer setup guide ↗</a>
         </p>
         <div className="row">
