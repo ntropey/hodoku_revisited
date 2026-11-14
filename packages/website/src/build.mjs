@@ -773,8 +773,24 @@ if (!gated && siteUrl !== '/') {
   // Puzzle permalinks (?p=...) are an unbounded set of URLs: every board state is a valid
   // address. They canonicalize to /play/, so keep crawlers out of the space instead of spending
   // crawl budget on it.
-  writeFileSync(join(out, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /play/?p=\nSitemap: ${siteUrl}sitemap.xml\n`);
+  writeFileSync(join(out, 'robots.txt'), `User-agent: *\nContent-Signal: search=yes, ai-input=yes, ai-train=no\nAllow: /\nDisallow: /play/?p=\nSitemap: ${siteUrl}sitemap.xml\n`);
 }
+writeFileSync(
+  join(out, 'llms.txt'),
+  [
+    '# HoDoKu Revisited',
+    '',
+    '> Classic desktop Sudoku solver, trainer, and step-by-step symbolic logic coach rebuilt for the modern web.',
+    '',
+    '## Links',
+    '- [Home](https://hodokurevisited.com/)',
+    '- [Play & Train](/play/)',
+    '- [Techniques](/techniques/)',
+    '- [Manual](/manual/)',
+    '- [Revisited Labs](https://revisitedlabs.com/)',
+    '',
+  ].join('\n'),
+);
 // Android App Links: template with placeholder package name and SHA256 signing fingerprint.
 mkdirSync(join(out, '.well-known'), { recursive: true });
 writeFileSync(
