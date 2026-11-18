@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { isNativeApp } from '../platform';
 import { LEVEL_NAMES } from '../protocol';
 import { formatTime, type CopyWhat, type GameMode } from '../ui';
 
@@ -130,14 +131,25 @@ export function TopBar(p: Props) {
     </>
   );
 
+  const brand = (
+    <>
+      <Logo />
+      <span className="wordmark">
+        Hodoku<small>Revisited</small>
+      </span>
+    </>
+  );
+
   return (
     <header className="topbar">
-      <a className="brand" href="../" aria-label="Hodoku Revisited home">
-        <Logo />
-        <span className="wordmark">
-          Hodoku<small>Revisited</small>
-        </span>
-      </a>
+      {/* In the native shell "../" reloads the app; on the website it is the site home. */}
+      {isNativeApp() ? (
+        <span className="brand">{brand}</span>
+      ) : (
+        <a className="brand" href="../" aria-label="Hodoku Revisited home">
+          {brand}
+        </a>
+      )}
 
       <div className="actions wide">
         <Menu label="New puzzle ▾" className="primary-menu">

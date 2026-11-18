@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { cellName } from '@hodoku/core';
 import { candidateContradictions, isGiven, type GameState } from '../game';
+import { isNativeApp, shareUrl } from '../platform';
 import type { HintResult, ProofResult } from '../protocol';
 
 interface Props {
@@ -138,9 +139,7 @@ export function HintView({
   const [copiedLink, setCopiedLink] = useState(false);
 
   const copyShareLink = (params: Record<string, string>, label: string) => {
-    const u = new URL(window.location.href);
-    u.search = new URLSearchParams(params).toString();
-    const text = `Hodoku Revisited · ${label}\n${u.toString()}`;
+    const text = `Hodoku Revisited · ${label}\n${shareUrl(params)}`;
     void navigator.clipboard?.writeText(text).then(() => {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
@@ -306,7 +305,7 @@ export function HintView({
               {n}
             </code>
           ))}
-          {hint.slug && (
+          {hint.slug && !isNativeApp() && (
             <a className="guide" href={`../techniques/${hint.slug}.html`} target="_blank" rel="noreferrer">
               Read the guide for {hint.name} →
             </a>
