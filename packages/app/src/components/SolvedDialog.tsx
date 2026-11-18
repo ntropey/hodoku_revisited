@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { shareUrl } from '../platform';
 import { LEVEL_NAMES } from '../protocol';
 import { formatTime } from '../ui';
 
@@ -19,10 +20,9 @@ export function SolvedDialog({ givens, daily, seconds, level, score, hints, busy
   const harder = level < 5 ? level + 1 : null;
 
   const shareResult = () => {
-    const u = new URL(window.location.href);
-    u.search = daily ? `daily=${daily}&level=${level}` : `p=${givens}`;
+    const link = shareUrl(daily ? { daily, level: String(level) } : { p: givens });
     const title = daily ? `Hodoku Revisited · Daily ${daily}` : `Hodoku Revisited · ${LEVEL_NAMES[level]}`;
-    const text = `${title}\n${LEVEL_NAMES[level]} (${score}) · ⏱ ${formatTime(seconds)} · 💡 ${hints} hint${hints === 1 ? '' : 's'}\n${u.toString()}`;
+    const text = `${title}\n${LEVEL_NAMES[level]} (${score}) · ⏱ ${formatTime(seconds)} · 💡 ${hints} hint${hints === 1 ? '' : 's'}\n${link}`;
     void navigator.clipboard?.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

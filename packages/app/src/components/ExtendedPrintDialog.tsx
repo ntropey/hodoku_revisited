@@ -6,6 +6,7 @@
  */
 import { useState } from 'react';
 import { canBooklet, PRINT_LAYOUTS } from '../extendedPrint';
+import { isNativeApp } from '../platform';
 import { LEVEL_NAMES, type PrintSection } from '../protocol';
 import type { ReceiptExportOptions, ReceiptLinkMode, ReceiptLinkPlacement } from '../receiptPrint';
 import type { Settings } from '../ui';
@@ -138,7 +139,11 @@ export function ExtendedPrintDialog({ settings, busy, onPrint, onExportReceipt, 
           384px receipt PNGs use original givens, matching answer strips and engine ratings.
           QR strips hold up to 6 puzzles; website address or no-link strips hold up to 10.
           QR codes open each exact puzzle; website address prints only hodokurevisited.com.{' '}
-          <a href="https://hodokurevisited.com/manual/thermal-printing" target="_blank" rel="noopener noreferrer">Thermal printer setup guide ↗</a>
+          {!isNativeApp() && (
+            <a href="https://hodokurevisited.com/manual/thermal-printing" target="_blank" rel="noopener noreferrer">
+              Thermal printer setup guide ↗
+            </a>
+          )}
         </p>
         <div className="row">
           <span className="note">

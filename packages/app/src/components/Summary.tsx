@@ -1,4 +1,5 @@
 import type { GameState } from '../game';
+import { isNativeApp } from '../platform';
 import { LEVEL_NAMES } from '../protocol';
 
 export function Summary({ game }: { game: GameState | null }) {
@@ -24,7 +25,13 @@ export function Summary({ game }: { game: GameState | null }) {
         <ul className="techlist">
           {game.path.map((p, i) => (
             <li key={p.type} className={i === 0 ? 'hardest' : ''}>
-              {p.slug ? <a href={`../techniques/${p.slug}.html`} target="_blank" rel="noreferrer">{p.name}</a> : <span>{p.name}</span>}
+              {p.slug && !isNativeApp() ? (
+                <a href={`../techniques/${p.slug}.html`} target="_blank" rel="noreferrer">
+                  {p.name}
+                </a>
+              ) : (
+                <span>{p.name}</span>
+              )}
               <span className="n">{p.count}</span>
               {i === 0 && hardest && <span className="tag">hardest</span>}
             </li>

@@ -1,3 +1,4 @@
+import { isNativeApp } from '../platform';
 import { HINT_LEVEL_NAMES, LEVEL_NAMES } from '../protocol';
 import { TECHNIQUE_GROUPS } from '../techniqueGroups';
 import { DEFAULT_COLORKU_COLORS, type NotesToggleKey, type Settings, type Theme } from '../ui';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, onClose }: Props) {
+  const native = isNativeApp();
   const disabled = new Set(settings.disabledTechniques);
   const toggle = (type: string, enabled: boolean) => {
     const next = new Set(disabled);
@@ -131,24 +133,43 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
         <details className="about">
           <summary>About and license</summary>
           <p>
-            Hodoku Revisited is part of <a href="https://revisitedlabs.com/" target="_blank" rel="noopener noreferrer">Revisited Labs</a> and based on <a href="https://hodoku.sourceforge.net/">HoDoKu</a> by Bernhard Hobiger (2008-12).
+            Hodoku Revisited is part of <a href="https://revisitedlabs.com/" target="_blank" rel="noopener noreferrer">Revisited Labs</a> and based on <a href="https://hodoku.sourceforge.net/" target="_blank" rel="noopener noreferrer">HoDoKu</a> by Bernhard Hobiger (2008-12).
             Copyright (C) 2026 Hodoku Revisited contributors. This program comes with ABSOLUTELY NO WARRANTY. It is free software
             under the GNU General Public License, version 3 or later; you may redistribute it under those terms. Not affiliated with
             or endorsed by the original author.
           </p>
           <p>
-            <a href="https://www.gnu.org/licenses/gpl-3.0.html">License text</a> ·{' '}
-            <a href="https://github.com/ntropey/hodoku_revisited">Source code</a> · <a href="../privacy.html">Privacy</a> ·{' '}
-            <button
-              type="button"
-              className="linkbtn"
-              onClick={() => {
-                onClose();
-                (window as unknown as { hodokuOpenConsent?: () => void }).hodokuOpenConsent?.();
-              }}
+            <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">
+              License text
+            </a>{' '}
+            ·{' '}
+            <a href="https://github.com/ntropey/hodoku_revisited" target="_blank" rel="noopener noreferrer">
+              Source code
+            </a>{' '}
+            ·{' '}
+            <a
+              href={native ? 'https://hodokurevisited.com/privacy' : '../privacy.html'}
+              target={native ? '_blank' : undefined}
+              rel={native ? 'noopener noreferrer' : undefined}
             >
-              Cookie settings
-            </button>
+              Privacy
+            </a>
+            {!native && (
+              <>
+                {' '}
+                ·{' '}
+                <button
+                  type="button"
+                  className="linkbtn"
+                  onClick={() => {
+                    onClose();
+                    (window as unknown as { hodokuOpenConsent?: () => void }).hodokuOpenConsent?.();
+                  }}
+                >
+                  Cookie settings
+                </button>
+              </>
+            )}
           </p>
         </details>
       </div>
