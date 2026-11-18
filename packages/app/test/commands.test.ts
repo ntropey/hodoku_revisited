@@ -45,6 +45,7 @@ function context(over: Partial<CommandContext> = {}): { ctx: CommandContext; cal
     savePuzzle: (w) => void calls.push(`save:${w}`),
     printBoard: note('print'),
     printSolution: note('printSolution'),
+    canPrint: true,
     openExtendedPrint: note('extended'),
     exportPng: note('png'),
     openSettings: note('settings'),
@@ -101,6 +102,14 @@ describe('command list', () => {
     byLabel(cmds, 'Practicing mode…').run();
     byLabel(cmds, 'Coach me (step-by-step hint)').run();
     expect(calls).toEqual(['daily', 'new:3', 'copy:library', 'save:pm', 'mode:notes', 'training', 'coach']);
+  });
+
+  it('hides print commands in the native shell but keeps export and extended print', () => {
+    const cmds = buildCommands(context({ canPrint: false }).ctx);
+    expect(cmds.some((c) => c.label === 'Print')).toBe(false);
+    expect(cmds.some((c) => c.label === 'Print solution')).toBe(false);
+    expect(byLabel(cmds, 'Export PNG')).toBeTruthy();
+    expect(byLabel(cmds, 'Extended print…')).toBeTruthy();
   });
 
   it('toggles settings and names the state it will switch to', () => {

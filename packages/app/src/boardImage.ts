@@ -1,7 +1,8 @@
 /*
  * Hodoku Revisited. GPL-3.0-or-later; see LICENSE.
- * Board to SVG (pure) and SVG to a downloaded PNG (DOM).
+ * Board to SVG (pure) and SVG to a saved/shared PNG (DOM).
  */
+import { saveBytes, type ExportOutcome } from './files';
 import { colorKuColor } from './ui';
 
 export interface BoardImageOptions {
@@ -113,8 +114,8 @@ export function boardSvg(values: readonly number[], cands: readonly number[], op
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">${parts.join('')}</svg>`;
 }
 
-/** Draw the SVG onto a canvas and download it as a PNG. Uses the DOM only. */
-export function downloadSvg(svg: string, filename: string): Promise<void> {
+/** Draw the SVG onto a canvas and return the PNG bytes. Uses the DOM only. */
+export function svgPngBytes(svg: string): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
     const img = new Image();
@@ -136,12 +137,7 @@ export function downloadSvg(svg: string, filename: string): Promise<void> {
           reject(new Error('Could not create the PNG.'));
           return;
         }
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(link.href);
-        resolve();
+        blob.arrayBuffer().then((buffer) => resolve(new Uint8Array(buffer)), reject);
       }, 'image/png');
     };
     img.onerror = () => {
@@ -150,4 +146,9 @@ export function downloadSvg(svg: string, filename: string): Promise<void> {
     };
     img.src = url;
   });
+}
+
+/** Render the SVG and save it as a PNG: browser download on the web, share sheet in the shell. */
+export async function exportSvgPng(svg: string, filename: string): Promise<ExportOutcome> {
+  return saveBytes(filename, await svgPngBytes(svg), 'image/png');
 }
