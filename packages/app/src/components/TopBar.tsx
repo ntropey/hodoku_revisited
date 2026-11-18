@@ -89,6 +89,7 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 export function TopBar(p: Props) {
+  const native = isNativeApp();
   const item = (close: () => void, label: string, run: () => void, disabled = false) => (
     <button key={label} role="menuitem" disabled={disabled} onClick={() => (close(), run())}>
       {label}
@@ -112,11 +113,13 @@ export function TopBar(p: Props) {
     <>
       <Label>Copy</Label>
       {COPY_ITEMS.map(([w, l]) => item(close, l, () => p.onCopy(w)))}
-      <Label>Save to a file</Label>
+      <Label>{native ? 'Save or share' : 'Save to a file'}</Label>
       {COPY_ITEMS.map(([w, l]) => item(close, l, () => p.onSave(w)))}
       <Label>Print and export</Label>
-      {item(close, 'Print', p.onPrint)}
-      {item(close, 'Print solution', p.onPrintSolution)}
+      {native
+        ? item(close, 'Printing is available on the web/desktop.', () => undefined, true)
+        : item(close, 'Print', p.onPrint)}
+      {!native && item(close, 'Print solution', p.onPrintSolution)}
       {item(close, 'Extended print…', p.onExtendedPrint)}
       {item(close, 'Export as PNG', p.onExportPng)}
       {item(close, 'Export current puzzle as 384px receipt ZIP', p.onExportReceiptCurrent, !p.badge)}
@@ -143,7 +146,7 @@ export function TopBar(p: Props) {
   return (
     <header className="topbar">
       {/* In the native shell "../" reloads the app; on the website it is the site home. */}
-      {isNativeApp() ? (
+      {native ? (
         <span className="brand">{brand}</span>
       ) : (
         <a className="brand" href="../" aria-label="Hodoku Revisited home">

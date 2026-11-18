@@ -1,5 +1,5 @@
 import { useCallback, type Dispatch, type RefObject, type SetStateAction } from 'react';
-import { downloadText } from '../files';
+import { saveTextFile } from '../files';
 import type { GameState } from '../game';
 import type { CopyFormat } from '../protocol';
 import { isCancelled, type SolverClient } from '../solverClient';
@@ -48,13 +48,21 @@ export function usePuzzleText(game: GameState | null, solver: RefObject<SolverCl
     [puzzleText, setMessage],
   );
 
-  /** Save one of the text formats to a file (the browser's own download). */
+  /** Save one of the text formats: browser download on the web, native share/save sheet in the shell. */
   const savePuzzle = useCallback(
     async (what: CopyWhat) => {
       const text = await puzzleText(what);
       if (text === null) return;
-      downloadText(`hodoku-${what}.txt`, text);
-      setMessage(`Saved the ${COPY_LABELS[what]} to a file.`);
+      try {
+        const outcome = await saveTextFile(`hodoku-${what}.txt`, text);
+        setMessage(
+          outcome === 'shared'
+            ? `Shared the ${COPY_LABELS[what]} file.`
+            : `Saved the ${COPY_LABELS[what]} to a file.`,
+        );
+      } catch (e) {
+        setMessage((e as Error).message);
+      }
     },
     [puzzleText, setMessage],
   );

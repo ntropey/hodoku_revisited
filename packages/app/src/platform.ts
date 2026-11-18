@@ -8,6 +8,12 @@ import { Capacitor } from '@capacitor/core';
 /** The public address of the web app. Share links from the native shell must use it. */
 export const PUBLIC_APP_URL = 'https://hodokurevisited.com/play/';
 
+/**
+ * Shown wherever a print action cannot work. WKWebView does not present the JavaScript print
+ * dialog, so the shell hides those actions instead of pretending to print.
+ */
+export const PRINTING_NATIVE_MESSAGE = 'Printing is available on the web/desktop.';
+
 /** True inside the Capacitor iOS/Android shell, false on the website and the PWA. */
 export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform() || (typeof window !== 'undefined' && window.location.protocol === 'capacitor:');

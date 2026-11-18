@@ -6,7 +6,7 @@
  */
 import { useState } from 'react';
 import { canBooklet, PRINT_LAYOUTS } from '../extendedPrint';
-import { isNativeApp } from '../platform';
+import { isNativeApp, PRINTING_NATIVE_MESSAGE } from '../platform';
 import { LEVEL_NAMES, type PrintSection } from '../protocol';
 import type { ReceiptExportOptions, ReceiptLinkMode, ReceiptLinkPlacement } from '../receiptPrint';
 import type { Settings } from '../ui';
@@ -34,6 +34,7 @@ const clampCount = (n: number): number => Math.min(30, Math.max(0, Math.floor(Nu
 
 /** Pick up to five sections of puzzles, a layout and the two options, then generate and print them. */
 export function ExtendedPrintDialog({ settings, busy, onPrint, onExportReceipt, onClose }: Props) {
+  const native = isNativeApp();
   const [sections, setSections] = useState<PrintSection[]>(() => defaultSections(settings.level));
   const [layout, setLayout] = useState(0);
   const [rating, setRating] = useState(false);
@@ -149,12 +150,17 @@ export function ExtendedPrintDialog({ settings, busy, onPrint, onExportReceipt, 
           <span className="note">
             {total} {total === 1 ? 'puzzle' : 'puzzles'}
           </span>
+          {native && <span className="note">{PRINTING_NATIVE_MESSAGE}</span>}
           <span className="spacer" />
           <button onClick={onClose}>Cancel</button>
-          <button disabled={busy || total === 0} onClick={receipt}>Download 384px PNG ZIP</button>
-          <button className="primary" disabled={busy || total === 0} onClick={print}>
-            Print
+          <button disabled={busy || total === 0} onClick={receipt}>
+            {native ? 'Save or share 384px PNG ZIP' : 'Download 384px PNG ZIP'}
           </button>
+          {!native && (
+            <button className="primary" disabled={busy || total === 0} onClick={print}>
+              Print
+            </button>
+          )}
         </div>
       </div>
     </div>

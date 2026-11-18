@@ -2,6 +2,7 @@
  * Hodoku Revisited. GPL-3.0-or-later; see LICENSE.
  * Compact, single-column receipt PNG export using the existing print puzzles.
  */
+import { saveBytes, type ExportOutcome } from './files';
 import { LEVEL_NAMES, type PrintSudoku } from './protocol';
 import { drawQr, encodePuzzleQr } from './qrPuzzle';
 
@@ -320,12 +321,12 @@ export function receiptZip(entries: readonly ZipEntry[]): Blob {
   return new Blob([result], { type: 'application/zip' });
 }
 
-/** Export grouped puzzle sheets followed by their matching answer sheets. */
-export async function downloadReceiptPngs(
+/** Export grouped puzzle sheets followed by their matching answer sheets as one ZIP. */
+export async function exportReceiptPngs(
   puzzles: readonly PrintSudoku[],
   shuffle: boolean,
   options: ReceiptExportOptions = DEFAULT_RECEIPT_OPTIONS,
-): Promise<void> {
+): Promise<ExportOutcome> {
   if (puzzles.length === 0) throw new Error('No puzzles to export.');
   const cards = prepareReceiptCards(puzzles, shuffle);
   const strips = planReceiptStrips(cards, receiptCardsPerStrip(options));
@@ -362,12 +363,6 @@ export async function downloadReceiptPngs(
       'White background; the original desktop glyphs use DejaVu Sans Bold/DejaVu Sans Mono Bold.\n',
     ),
   });
-  const url = URL.createObjectURL(receiptZip(files));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'hodoku-receipt-384px.zip';
-  document.body.append(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  const archive = receiptZip(files);
+  return saveBytes('hodoku-receipt-384px.zip', new Uint8Array(await archive.arrayBuffer()), 'application/zip');
 }

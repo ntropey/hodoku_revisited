@@ -36,6 +36,8 @@ export interface CommandContext {
   savePuzzle: (what: CopyWhat) => void;
   printBoard: () => void;
   printSolution: () => void;
+  /** false in the native shell, where WKWebView has no print dialog */
+  canPrint: boolean;
   openExtendedPrint: () => void;
   exportPng: () => void;
   openSettings: () => void;
@@ -91,8 +93,12 @@ export function buildCommands(c: CommandContext): Command[] {
     { label: 'Open puzzles…', run: c.openPuzzles },
     ...FORMATS.map(([w, l]) => ({ label: `Copy ${l}`, run: () => c.copyPuzzle(w) })),
     ...FORMATS.map(([w]) => ({ label: `Save puzzle: ${SAVE_LABELS[w]}`, run: () => c.savePuzzle(w) })),
-    { label: 'Print', run: c.printBoard },
-    { label: 'Print solution', run: c.printSolution },
+    ...(c.canPrint
+      ? [
+          { label: 'Print', run: c.printBoard },
+          { label: 'Print solution', run: c.printSolution },
+        ]
+      : []),
     { label: 'Extended print…', run: c.openExtendedPrint },
     { label: 'Export PNG', run: c.exportPng },
     { label: 'Settings', run: c.openSettings },

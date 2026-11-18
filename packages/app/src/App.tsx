@@ -60,6 +60,7 @@ import { usePrinting } from './hooks/usePrinting';
 import { usePuzzleText } from './hooks/usePuzzleText';
 import { useSolverPanel } from './hooks/useSolverPanel';
 import { useTimer } from './hooks/useTimer';
+import { isNativeApp } from './platform';
 import { LEVEL_NAMES, type HintLevel, type HintResult } from './protocol';
 import { isCancelled, SolverClient } from './solverClient';
 import { load, save, SAVE_KEY, SETTINGS_KEY } from './storage';
@@ -472,8 +473,8 @@ export function App() {
         onPuzzles={() => setPuzzlesOpen(true)}
         onCopy={(what) => void copyPuzzle(what)}
         onSave={(what) => void savePuzzle(what)}
-        onPrint={() => window.print()}
-        onPrintSolution={() => printing.setPrintSolution(true)}
+        onPrint={printing.printBoard}
+        onPrintSolution={printing.printSolutionAction}
         onExtendedPrint={() => printing.setExtendedPrintOpen(true)}
         onExportPng={() => void printing.exportPng(game)}
         onExportReceiptCurrent={() => void printing.exportReceiptCurrent(game)}
@@ -672,8 +673,9 @@ export function App() {
             openPuzzles: () => setPuzzlesOpen(true),
             copyPuzzle: (w) => void copyPuzzle(w),
             savePuzzle: (w) => void savePuzzle(w),
-            printBoard: () => window.print(),
-            printSolution: () => printing.setPrintSolution(true),
+            printBoard: printing.printBoard,
+            printSolution: printing.printSolutionAction,
+            canPrint: !isNativeApp(),
             openExtendedPrint: () => printing.setExtendedPrintOpen(true),
             exportPng: () => void printing.exportPng(game),
             openSettings: () => setSettingsOpen(true),
