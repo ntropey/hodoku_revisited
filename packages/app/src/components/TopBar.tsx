@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { isNativeApp } from '../platform';
+import { isAppShell, isNativeApp } from '../platform';
 import { LEVEL_NAMES } from '../protocol';
 import { formatTime, type CopyWhat, type GameMode } from '../ui';
 
@@ -90,6 +90,7 @@ function Label({ children }: { children: React.ReactNode }) {
 
 export function TopBar(p: Props) {
   const native = isNativeApp();
+  const appShell = isAppShell();
   const item = (close: () => void, label: string, run: () => void, disabled = false) => (
     <button key={label} role="menuitem" disabled={disabled} onClick={() => (close(), run())}>
       {label}
@@ -145,8 +146,8 @@ export function TopBar(p: Props) {
 
   return (
     <header className="topbar">
-      {/* In the native shell "../" reloads the app; on the website it is the site home. */}
-      {native ? (
+      {/* In an app shell (Capacitor, TWA, installed PWA) "../" leaves the app; on the website it is the site home. */}
+      {appShell ? (
         <span className="brand">{brand}</span>
       ) : (
         <a className="brand" href="../" aria-label="Hodoku Revisited home">

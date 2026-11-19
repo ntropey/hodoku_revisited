@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { buildShareUrl, PUBLIC_APP_URL } from '../src/platform';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { buildShareUrl, isAppShell, isNativeApp, PUBLIC_APP_URL } from '../src/platform';
 
 const P = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
 
@@ -13,5 +13,78 @@ describe('share addresses', () => {
     expect(buildShareUrl(false, 'https://hodokurevisited.com/play/?daily=2026-01-01', { p: P })).toBe(
       `https://hodokurevisited.com/play/?p=${P}`,
     );
+  });
+});
+
+describe('isAppShell', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('returns false when window and document are undefined (SSR/node)', () => {
+    vi.stubGlobal('window', undefined);
+    vi.stubGlobal('document', undefined);
+    expect(isAppShell()).toBe(false);
+    expect(isNativeApp()).toBe(false);
+  });
+
+  it('returns false in a regular browser tab, even without matchMedia', () => {
+    vi.stubGlobal('window', { location: { protocol: 'https:' }, navigator: {} });
+    vi.stubGlobal('document', { referrer: 'https://hodokurevisited.com/' });
+    expect(isAppShell()).toBe(false);
+    expect(isNativeApp()).toBe(false);
+  });
+
+  it('returns true for standalone display-mode PWA without marking as native', () => {
+    vi.stubGlobal('window', {
+      location: { protocol: 'https:' },
+      navigator: {},
+      matchMedia: (q: string) => ({ matches: q === '(display-mode: standalone)' }),
+    });
+    vi.stubGlobal('document', { referrer: '' });
+    expect(isAppShell()).toBe(true);
+    expect(isNativeApp()).toBe(false);
+  });
+
+  it('returns true for fullscreen display-mode PWA without marking as native', () => {
+    vi.stubGlobal('window', {
+      location: { protocol: 'https:' },
+      navigator: {},
+      matchMedia: (q: string) => ({ matches: q === '(display-mode: fullscreen)' }),
+    });
+    vi.stubGlobal('document', { referrer: '' });
+    expect(isAppShell()).toBe(true);
+    expect(isNativeApp()).toBe(false);
+  });
+
+  it('returns true for iOS standalone PWA (navigator.standalone)', () => {
+    vi.stubGlobal('window', {
+      location: { protocol: 'https:' },
+      navigator: { standalone: true },
+    });
+    vi.stubGlobal('document', { referrer: '' });
+    expect(isAppShell()).toBe(true);
+    expect(isNativeApp()).toBe(false);
+  });
+
+  it('returns true for Android TWA referrer (android-app://)', () => {
+    vi.stubGlobal('window', {
+      location: { protocol: 'https:' },
+      navigator: {},
+      matchMedia: () => ({ matches: false }),
+    });
+    vi.stubGlobal('document', { referrer: 'android-app://com.revisitedlabs.hodoku' });
+    expect(isAppShell()).toBe(true);
+    expect(isNativeApp()).toBe(false);
+  });
+
+  it('returns true for Capacitor native shell', () => {
+    vi.stubGlobal('window', {
+      location: { protocol: 'capacitor:' },
+      navigator: {},
+    });
+    vi.stubGlobal('document', { referrer: '' });
+    expect(isNativeApp()).toBe(true);
+    expect(isAppShell()).toBe(true);
   });
 });

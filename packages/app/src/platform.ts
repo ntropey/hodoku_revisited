@@ -20,6 +20,23 @@ export function isNativeApp(): boolean {
 }
 
 /**
+ * True inside an app-like shell: Capacitor native app, Android TWA, or an installed
+ * standalone/fullscreen PWA. Used to avoid navigating out of the app (e.g. "../" links).
+ */
+export function isAppShell(): boolean {
+  if (isNativeApp()) return true;
+  if (typeof window !== 'undefined') {
+    if (window.matchMedia?.('(display-mode: standalone)')?.matches) return true;
+    if (window.matchMedia?.('(display-mode: fullscreen)')?.matches) return true;
+    if ((window.navigator as { standalone?: boolean } | undefined)?.standalone === true) return true;
+  }
+  if (typeof document !== 'undefined' && typeof document.referrer === 'string' && document.referrer.startsWith('android-app://')) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * A shareable address for `params`: the public app page in the native shell, where window.location
  * is capacitor://localhost, otherwise the current page. `native` and `href` are explicit so this
  * stays a pure function.

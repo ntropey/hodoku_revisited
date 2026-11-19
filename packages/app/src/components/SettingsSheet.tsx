@@ -1,4 +1,4 @@
-import { isNativeApp } from '../platform';
+import { isAppShell, isNativeApp } from '../platform';
 import { HINT_LEVEL_NAMES, LEVEL_NAMES } from '../protocol';
 import { TECHNIQUE_GROUPS } from '../techniqueGroups';
 import { DEFAULT_COLORKU_COLORS, type NotesToggleKey, type Settings, type Theme } from '../ui';
@@ -13,6 +13,7 @@ interface Props {
 
 export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, onClose }: Props) {
   const native = isNativeApp();
+  const appShell = isAppShell();
   const disabled = new Set(settings.disabledTechniques);
   const toggle = (type: string, enabled: boolean) => {
     const next = new Set(disabled);
@@ -148,9 +149,9 @@ export function SettingsSheet({ settings, onChange, onResetNotes, onClearNotes, 
             </a>{' '}
             ·{' '}
             <a
-              href={native ? 'https://hodokurevisited.com/privacy' : '../privacy.html'}
-              target={native ? '_blank' : undefined}
-              rel={native ? 'noopener noreferrer' : undefined}
+              href={appShell ? 'https://hodokurevisited.com/privacy' : '../privacy.html'}
+              target={appShell ? '_blank' : undefined}
+              rel={appShell ? 'noopener noreferrer' : undefined}
             >
               Privacy
             </a>
