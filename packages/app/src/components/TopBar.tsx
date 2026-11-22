@@ -39,12 +39,12 @@ function Menu({ label, children, className }: { label: React.ReactNode; children
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const away = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    const away = (e: PointerEvent | MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', away);
+    document.addEventListener('pointerdown', away);
     document.addEventListener('keydown', esc);
     return () => {
-      document.removeEventListener('mousedown', away);
+      document.removeEventListener('pointerdown', away);
       document.removeEventListener('keydown', esc);
     };
   }, [open]);

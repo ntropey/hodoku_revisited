@@ -19,6 +19,16 @@ export function isNativeApp(): boolean {
   return Capacitor.isNativePlatform() || (typeof window !== 'undefined' && window.location.protocol === 'capacitor:');
 }
 
+/** True inside the Capacitor iOS native shell. */
+export function isIosNativeApp(): boolean {
+  if (!isNativeApp()) return false;
+  if (typeof Capacitor.getPlatform === 'function' && Capacitor.getPlatform() === 'ios') return true;
+  if (typeof window !== 'undefined' && typeof window.navigator?.userAgent === 'string') {
+    return /iPhone|iPad|iPod/i.test(window.navigator.userAgent);
+  }
+  return false;
+}
+
 /**
  * True inside an app-like shell: Capacitor native app, Android TWA, or an installed
  * standalone/fullscreen PWA. Used to avoid navigating out of the app (e.g. "../" links).

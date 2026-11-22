@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildShareUrl, isAppShell, isNativeApp, PUBLIC_APP_URL } from '../src/platform';
+import { buildShareUrl, isAppShell, isIosNativeApp, isNativeApp, PUBLIC_APP_URL } from '../src/platform';
 
 const P = '97....4..2..4718.3........5....5..8.5.1.4.2.9.4..8....8........3.9762..8..5....67';
 
@@ -26,6 +26,7 @@ describe('isAppShell', () => {
     vi.stubGlobal('document', undefined);
     expect(isAppShell()).toBe(false);
     expect(isNativeApp()).toBe(false);
+    expect(isIosNativeApp()).toBe(false);
   });
 
   it('returns false in a regular browser tab, even without matchMedia', () => {
@@ -33,6 +34,7 @@ describe('isAppShell', () => {
     vi.stubGlobal('document', { referrer: 'https://hodokurevisited.com/' });
     expect(isAppShell()).toBe(false);
     expect(isNativeApp()).toBe(false);
+    expect(isIosNativeApp()).toBe(false);
   });
 
   it('returns true for standalone display-mode PWA without marking as native', () => {
@@ -78,13 +80,14 @@ describe('isAppShell', () => {
     expect(isNativeApp()).toBe(false);
   });
 
-  it('returns true for Capacitor native shell', () => {
+  it('returns true for Capacitor native shell and detects iOS native shell', () => {
     vi.stubGlobal('window', {
       location: { protocol: 'capacitor:' },
-      navigator: {},
+      navigator: { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 27_3 like Mac OS X)' },
     });
     vi.stubGlobal('document', { referrer: '' });
     expect(isNativeApp()).toBe(true);
     expect(isAppShell()).toBe(true);
+    expect(isIosNativeApp()).toBe(true);
   });
 });
